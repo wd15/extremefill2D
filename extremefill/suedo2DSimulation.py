@@ -2,9 +2,10 @@
 
 __docformat__ = 'restructuredtext'
 
-import fipy
-from fipy import numerix
-import numpy
+import fipy as fp
+from fipy import numerix as nx
+import numpy as np
+
 class Suedo2DSimulation(object):
     r"""
 
@@ -96,8 +97,6 @@ class Suedo2DSimulation(object):
     feature) with the simple 1D ODE for solving the electrical equation
     with no suppressor and no cupric depeletion.
 
-    >>> import numpy
-
     >>> i0 = 40.
     >>> alpha = 0.4
     >>> F = 9.6485e4 ## C / mol = J / V / mol
@@ -121,8 +120,9 @@ class Suedo2DSimulation(object):
     ...                dtMax=.5e-7,
     ...                sweeps=5)
 
-    >>> timesScipy, potentialsScipy = SimulationODE().run(deltaRef=200e-6)
-    >>> print numpy.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
+    >>> from simulation1DODE import Simulation1DODE
+    >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6)
+    >>> print np.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
     True
 
     >>> ##import pylab
@@ -169,10 +169,10 @@ class Suedo2DSimulation(object):
     >>> def iF0():
     ...     Fbar = F / R / T
     ...     V = simulation.parameters['potentials'][-1] 
-    ...     return i0 * (numpy.exp(-alpha * Fbar * V) - numpy.exp((2 - alpha) * Fbar * V))
+    ...     return i0 * (np.exp(-alpha * Fbar * V) - np.exp((2 - alpha) * Fbar * V))
 
     >>> cupric = simulation.parameters['cupric']
-    >>> print numpy.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric[0] / cinf, rtol=1e-3)
+    >>> print np.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric[0] / cinf, rtol=1e-3)
     True
 
     """
@@ -258,32 +258,32 @@ class Suedo2DSimulation(object):
         L = delta + featureDepth
         N = 1000
         dx = L / N 
-        mesh = fipy.Grid1D(nx=N, dx=dx) - [[featureDepth]]
+        mesh = fp.Grid1D(nx=N, dx=dx) - [[featureDepth]]
 
-        potential = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$\psi$')
+        potential = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$\psi$')
         potential[:] = -appliedPotential
 
-        cupric = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{cu}$')
+        cupric = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{cu}$')
         cupric[:] = bulkCupric
         cupric.constrain(bulkCupric, mesh.facesRight)
 
-        suppressor = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
+        suppressor = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
         suppressor[:] = bulkSuppressor
         suppressor.constrain(bulkSuppressor, mesh.facesRight)
 
-        theta = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$\theta$')
+        theta = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$\theta$')
 
         I0 = (i0 + i1 * theta)
-        baseCurrent = I0 * (numerix.exp(alpha * Fbar * potential) \
-                                - numerix.exp(-(2 - alpha) * Fbar * potential))
+        baseCurrent = I0 * (nx.exp(alpha * Fbar * potential) \
+                                - nx.exp(-(2 - alpha) * Fbar * potential))
         cbar =  cupric / bulkCupric
         current = cbar * baseCurrent
-        currentDerivative = cbar * I0 * (alpha * Fbar *  numerix.exp(alpha * Fbar * potential) \
-                                             + (2 - alpha) * Fbar * numerix.exp(-(2 - alpha) * Fbar * potential))
+        currentDerivative = cbar * I0 * (alpha * Fbar *  nx.exp(alpha * Fbar * potential) \
+                                             + (2 - alpha) * Fbar * nx.exp(-(2 - alpha) * Fbar * potential))
 
         def dirac(x):
-            value = numerix.zeros(mesh.numberOfCells, 'd')
-            ID = numerix.argmin(abs(mesh.x - x))
+            value = nx.zeros(mesh.numberOfCells, 'd')
+            ID = nx.argmin(abs(mesh.x - x))
             if mesh.x[ID] < x:
                 ID = ID + 1
             value[ID] = 1. / dx
@@ -291,22 +291,22 @@ class Suedo2DSimulation(object):
 
         THETA = (mesh.x < 0) * perimeterRatio + dirac(0) * (1 - areaRatio) + dirac(-featureDepth) * areaRatio
         AREA = (mesh.x < 0) * (areaRatio - 1) + 1 
-        THETA_UPPER = fipy.CellVariable(mesh=mesh)
+        THETA_UPPER = fp.CellVariable(mesh=mesh)
         THETA_UPPER[-1] = kappa / dx / (deltaRef - delta)
 
-        potentialEq = fipy.TransientTerm(capacitance * THETA) == fipy.DiffusionTerm(kappa * AREA) \
+        potentialEq = fp.TransientTerm(capacitance * THETA) == fp.DiffusionTerm(kappa * AREA) \
             - THETA * (current - potential * currentDerivative) \
-            - fipy.ImplicitSourceTerm(THETA * currentDerivative) \
-            - THETA_UPPER * appliedPotential - fipy.ImplicitSourceTerm(THETA_UPPER) 
+            - fp.ImplicitSourceTerm(THETA * currentDerivative) \
+            - THETA_UPPER * appliedPotential - fp.ImplicitSourceTerm(THETA_UPPER) 
 
-        cupricEq = fipy.TransientTerm(AREA) == fipy.DiffusionTerm(diffusionCupric * AREA) \
-            - fipy.ImplicitSourceTerm(baseCurrent * THETA / (bulkCupric * charge * faradaysConstant))
+        cupricEq = fp.TransientTerm(AREA) == fp.DiffusionTerm(diffusionCupric * AREA) \
+            - fp.ImplicitSourceTerm(baseCurrent * THETA / (bulkCupric * charge * faradaysConstant))
 
-        suppressorEq = fipy.TransientTerm(AREA) == fipy.DiffusionTerm(diffusionSuppressor * AREA) \
-            - fipy.ImplicitSourceTerm(gamma * kPlus * (1 - theta) * THETA)
+        suppressorEq = fp.TransientTerm(AREA) == fp.DiffusionTerm(diffusionSuppressor * AREA) \
+            - fp.ImplicitSourceTerm(gamma * kPlus * (1 - theta) * THETA)
 
-        thetaEq =  fipy.TransientTerm(THETA + epsilon) == kPlus * suppressor * THETA \
-            - fipy.ImplicitSourceTerm(THETA * (kPlus * suppressor + kMinus * current * (omega / charge / faradaysConstant)))
+        thetaEq =  fp.TransientTerm(THETA + epsilon) == kPlus * suppressor * THETA \
+            - fp.ImplicitSourceTerm(THETA * (kPlus * suppressor + kMinus * current * (omega / charge / faradaysConstant)))
 
         t = 0.
 
@@ -317,7 +317,7 @@ class Suedo2DSimulation(object):
             suppressorBar = suppressor / bulkSuppressor
             suppressorBar.name = r'$\bar{c_{\theta}}$'
 
-            viewer = fipy.Viewer((theta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
+            viewer = fp.Viewer((theta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
 
         potentials = []
         for step in range(totalSteps):
@@ -335,7 +335,7 @@ class Suedo2DSimulation(object):
                 cupricRes = cupricEq.sweep(cupric, dt=dt)
                 suppressorRes = suppressorEq.sweep(suppressor, dt=dt)
                 thetaRes = thetaEq.sweep(theta, dt=dt)
-                res = numpy.array((potentialRes, cupricRes, suppressorRes, thetaRes))
+                res = np.array((potentialRes, cupricRes, suppressorRes, thetaRes))
                 if sweep == 0:
                     res0 = res
                 else:
@@ -368,61 +368,11 @@ class Suedo2DSimulation(object):
         if view:
             viewer.plot()
 
-        self.parameters['potential'] = numpy.array(potential)
-        self.parameters['cupric'] = numpy.array(cupric)
-        self.parameters['suppressor'] = numpy.array(suppressor)
-        self.parameters['theta'] = numpy.array(theta)
-        self.parameters['potentials'] = numpy.array(potentials)
-
-class SimulationODE(object):
-    def run(self,
-            delta = 100e-6, ## m
-            deltaRef = 50e-6, ## m
-            faradaysConstant = 9.6485e4, ## C / mol = J / V / mol
-            gasConstant = 8.314, ## J / K / mol
-            temperature = 298., ## K
-            alpha = 0.4,
-            appliedVoltage = -0.275,  ## V
-            i0 = 40., ## A / m**2 
-            capacitance = 0.3, ## F / m**2 = A s / V / m**2  
-            kappa = 15.26): ## S / m = A / V / m):
-
-        Fbar = faradaysConstant / gasConstant / temperature ## 1 / V
-    
-        def iF(potential):
-            return i0 * (numpy.exp(alpha * Fbar * potential) - numpy.exp(-(2 - alpha) * Fbar * potential))
-
-        def iFderivative(potential):
-            return i0 * (alpha * Fbar * numpy.exp(alpha * Fbar * potential) \
-                   + (2 - alpha) * Fbar * numpy.exp(-(2 - alpha) * Fbar * potential))
-
-        def RHS(t, y):
-            potential = y[0]
-            return numpy.array((-iF(potential) / capacitance  - kappa * (potential + appliedVoltage) / deltaRef / capacitance,))
-
-        def jacobian(t, y):
-            potential = y[0]
-            return numpy.array((-iFderivative(potential) / capacitance  - kappa / deltaRef / capacitance,))
-
-        from scipy.integrate import ode
-        integrator = ode(RHS, jacobian).set_integrator('vode', method='bdf', with_jacobian=True)
-        initialValue = -appliedVoltage # + (delta - deltaRef) / deltaRef * appliedVoltage
-        s = integrator.set_initial_value((initialValue,), 0.)
-
-        totalSteps = 200
-        dt = .5e-7
-        times = numpy.zeros(totalSteps)
-        potentialSciPy = numpy.zeros(totalSteps)
-        step = 0
-
-        while integrator.successful() and step < totalSteps:
-            null = integrator.integrate(integrator.t + dt)
-            times[step] = integrator.t
-            potential =  integrator.y[0]
-            potentialSciPy[step] = -potential
-            step += 1
-
-        return numpy.array(times), numpy.array(potentialSciPy) 
+        self.parameters['potential'] = np.array(potential)
+        self.parameters['cupric'] = np.array(cupric)
+        self.parameters['suppressor'] = np.array(suppressor)
+        self.parameters['theta'] = np.array(theta)
+        self.parameters['potentials'] = np.array(potentials)
  
 if __name__ == '__main__':
     import doctest
