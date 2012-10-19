@@ -1,7 +1,7 @@
 import pylab
 
 from matplotlib.patches import FancyArrowPatch
-from extremefill.simulation import Simulation
+from extremefill.suedo2DSimulation import Suedo2DSimulation
 
 # from matplotlib import rc
 # matplotlib.use('Agg')
@@ -20,7 +20,7 @@ class SchematicViewer(object):
         
 
         scale = 1e6
-        simulation = Simulation()
+        simulation = Suedo2DSimulation()
         simulation.run(totalSteps=0)
         parameters = simulation.parameters
         d = parameters['delta'] * scale * 0.5
