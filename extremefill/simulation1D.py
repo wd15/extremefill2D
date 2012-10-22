@@ -279,7 +279,7 @@ class Simulation1D(object):
         
         theta = fp.SurfactantVariable(distanceVar=distance, hasOld=True, name=r'$\theta$', value=0.)
 
-        I0 = (i0 + i1 * theta)
+        I0 = (i0 + i1 * theta.interfaceVar)
         baseCurrent = I0 * (nx.exp(alpha * Fbar * potential) \
                                 - nx.exp(-(2 - alpha) * Fbar * potential))
         cbar =  cupric / bulkCupric
@@ -322,7 +322,7 @@ class Simulation1D(object):
             suppressorBar = suppressor / bulkSuppressor
             suppressorBar.name = r'$\bar{c_{\theta}}$'
 
-            viewer = fp.Viewer((theta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
+            viewer = fp.Viewer((theta.interfaceVar, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
 
         potentials = []
         for step in range(totalSteps):
@@ -334,20 +334,22 @@ class Simulation1D(object):
             cupric.updateOld()
             suppressor.updateOld()
             theta.updateOld()
+            
+            distance.calcDistanceFunction()
 
             for sweep in range(sweeps):
                 potentialRes = potentialEq.sweep(potential, dt=dt)
                 cupricRes = cupricEq.sweep(cupric, dt=dt)
                 suppressorRes = suppressorEq.sweep(suppressor, dt=dt)
-                thetaRes = thetaEq.sweep(theta, dt=dt)
-                thetaRes = 0.0
+                thetaRes = thetaEq.sweep(theta, dt=1.)
                 res = nx.array((potentialRes, cupricRes, suppressorRes, thetaRes))
+
                 if sweep == 0:
                     res0 = res
                 else:
                     if ((res / res0) < tol).all():
                         break
-
+                    
                 if PRINT:
                     print res / res0
 

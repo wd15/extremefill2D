@@ -18,7 +18,7 @@ required. If you are having issues with installation and missing
 packages this would be a good place to start looking. If the plots are
 not generated correctly for some reason or latex errors are occurring,
 it might be worth checking the maintainer's matplotlibrc_ file for
-clues on the correct latex packages to install and the correct
+clues on the `correct latex packages`_ to install and the correct
 matplotlib configuration.
 
 Installation
@@ -64,3 +64,4 @@ to generate this documentation.
 .. _Github project page: https://github.com/wd15/extremefill
 .. _PyTables: http://www.pytables.org/moin
 .. _matplotlibrc: https://github.com/wd15/env/blob/021e67f5acf1344a727f3b9eb012d9f615856f23/matplotlibrc
+.. _correct latex packages: https://github.com/wd15/env/blob/021e67f5acf1344a727f3b9eb012d9f615856f23/matplotlibrc#L142

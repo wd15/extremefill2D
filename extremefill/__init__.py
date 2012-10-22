@@ -22,7 +22,7 @@ viewers = (None,
            BulkSuppressorViewer,
            AppliedPotentialVbulkSuppressorViewer)
 
-def generateFigures(filesuffix=('.png',), datafile='data.h5', fignumbers=(2, 3, 4, 5, 6, 7, 8, 9, 10)):
+def generateFigures(fignumbers=(2, 3, 4, 5, 6, 7, 8, 9, 10), filesuffix=('.png',), datafile='data.h5'):
     r"""
     Generate all the figures in the paper. By default PNG images are
     generated.
@@ -42,8 +42,9 @@ def generateFigures(filesuffix=('.png',), datafile='data.h5', fignumbers=(2, 3, 
       - `datafile`: path to the cached HDF5 data file to either read from or write to.
       - `fignumbers` : tuple of figure numbers to generate. 
     """
-    if fignumbers is int:
-        fignumbers = (fignumbers,)
+
+    if type(fignumbers) is int:
+        fignumbers = [fignumbers]
 
     for number in fignumbers:
         Viewer = viewers[number - 1]
@@ -55,7 +56,8 @@ def test():
     Run all the doctests available.
     """
     import doctest
-    doctest.testmod(extremefill.simulation)
+    doctest.testmod(extremefill.suedoSimulation2D)
+    doctest.testmod(extremefill.simulation1D)
        
 def run(view=True, **parameters):
     r"""
