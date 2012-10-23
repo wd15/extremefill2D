@@ -178,6 +178,25 @@ class Simulation1D(object):
     >>> print np.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric0 / cinf, rtol=1e-3)
     True
 
+    >>> simulation = Simulation1D()
+    >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25.)
+
+    >>> from extremefill.suedo2DSimulation import Suedo2DSimulation
+    >>> suedo2DSimulation = Suedo2DSimulation()
+    >>> suedo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
+
+    >>> print np.allclose(simulation.parameters['cupric0'], 795.07614163)
+    True
+    
+    >>> print np.allclose(suedo2DSimulation.parameters['cupric'][0], 795.03555797)
+    True
+
+    >>> print np.allclose(simulation.parameters['theta0'],  0.61933832)
+    True
+
+    >>> print np.allclose(suedo2DSimulation.parameters['theta'][0], 0.619260676616)
+    True
+    
     """
 
     def run(self,
@@ -382,7 +401,11 @@ class Simulation1D(object):
         self.parameters['suppressor'] = nx.array(suppressor)
         self.parameters['theta'] = nx.array(theta)
         self.parameters['potentials'] = nx.array(potentials)
+
+        self.parameters['potential0'] = nx.array(potential([[dx / 2]]))
         self.parameters['cupric0'] = nx.array(cupric([[dx / 2]]))
+        self.parameters['suppressor0'] = nx.array(suppressor([[dx / 2]]))
+        self.parameters['theta0'] = nx.array(theta.interfaceVar([[dx / 2]]))
 
 if __name__ == '__main__':
     import doctest
