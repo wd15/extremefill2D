@@ -8,6 +8,7 @@ from extremefill.appliedPotentialVbulkSuppressorViewer import AppliedPotentialVb
 from extremefill.bulkSuppressorViewer import BulkSuppressorViewer
 from extremefill.schematicViewer import SchematicViewer
 import extremefill.suedo2DSimulation
+import extremefill.simulation1D
 from extremefill.suedo2DSimulation import Suedo2DSimulation
 
 ## figure ordering from the paper
@@ -56,7 +57,7 @@ def test():
     Run all the doctests available.
     """
     import doctest
-    doctest.testmod(extremefill.suedoSimulation2D)
+    doctest.testmod(extremefill.suedo2DSimulation)
     doctest.testmod(extremefill.simulation1D)
        
 def run(view=True, **parameters):

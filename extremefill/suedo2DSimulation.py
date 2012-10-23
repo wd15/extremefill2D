@@ -5,8 +5,9 @@ __docformat__ = 'restructuredtext'
 import fipy as fp
 from fipy import numerix as nx
 import numpy as np
+from extremefill.simulation import Simulation
 
-class Suedo2DSimulation(object):
+class Suedo2DSimulation(Simulation):
     r"""
 
     This class solves the suedo 2D extreme fill problem modeled with the
@@ -120,7 +121,7 @@ class Suedo2DSimulation(object):
     ...                dtMax=.5e-7,
     ...                sweeps=5)
 
-    >>> from simulation1DODE import Simulation1DODE
+    >>> from extremefill.simulation1DODE import Simulation1DODE
     >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6)
     >>> print np.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
     True
@@ -177,112 +178,18 @@ class Suedo2DSimulation(object):
 
     """
 
-    def run(self,
-            dt=.5e-7,
-            dtMax=1e+20,
-            dtMin=.5e-7,
-            totalSteps=400,
-            view=False,
-            PRINT=False,
-            sweeps=5,
-            tol=1e-10,
-            delta=150e-6,
-            deltaRef=0.03,
-            featureDepth=56e-6,
-            i1=-40.,
-            i0=40.,
-            diffusionCupric=2.65e-10,
-            appliedPotential=-0.25,
-            faradaysConstant=9.6485e4,
-            gasConstant=8.314,
-            temperature=298.,
-            alpha=0.4,
-            charge=2,
-            bulkCupric=1000.,
-            bulkSuppressor=.02,
-            diffusionSuppressor=9.2e-11,
-            kappa=15.26,
-            kPlus=150.,
-            kMinus=2.45e7,
-            omega=7.1e-6,
-            gamma=2.5e-7,
-            perimeterRatio=1. / 2.8e-6 * 0.093,
-            areaRatio=0.093,
-            capacitance=0.3):
+    def getDistanceBelowTrench(self, delta):
+        return 0.
 
-        r"""
-        Run an individual simulation.
+    def getTheta(self, mesh, name, distance):
+        theta = fp.CellVariable(mesh=mesh, hasOld=True, name=name)
+        return theta, theta
 
-        :Parameters:
-          - `dt`: time step size
-          - `dtMax`: maximum time step size
-          - `dtMin`: minimum time step size
-          - `totalSteps`: total time steps
-          - `view`: whether to view the simulation while running
-          - `PRINT`: print convergence data
-          - `sweeps`: number of sweeps at each time step
-          - `tol`: tolerance to exit sweep loop
-          - `delta`: boundary layer depth
-          - `deltaRef`: distance to reference electrode
-          - `featureDepth`: depth of the feature
-          - `i1`: current density constant
-          - `i0`: current density constant
-          - `diffusionCupric`: cupric diffusion
-          - `appliedPotential`: applied potential
-          - `faradaysConstant`: Faraday's constant
-          - `gasConstant`: gas constant
-          - `temperature`: temperature
-          - `alpha`: kinetic factor
-          - `charge`: charge
-          - `bulkCupric`: bulk cupric concentration
-          - `bulkSuppressor`: bulk suppressor concentration
-          - `diffusionSuppressor`: suppressor diffusion
-          - `kappa`: conductivity
-          - `kPlus`: suppressor adsorption factor
-          - `kMinus`: suppressor incorporation factor
-          - `omega`: copper molar volume
-          - `gamma`: saturation suppressor coverage,
-          - `perimeterRatio`: feature perimeter ratio
-          - `areaRatio`: feature area ratio
-          - `capacitance`: capacitance
-        """
-
-        Fbar = faradaysConstant / gasConstant / temperature
-        self.parameters = locals().copy()
-        del self.parameters['self']
-        self.parameters['trenchWidth'] = 2 * 0.093 / perimeterRatio
-        self.parameters['fieldWidth'] = 2 / perimeterRatio
-        
-        epsilon = 1e-30 
-
-        L = delta + featureDepth
-        N = 1000
-        dx = L / N 
-        mesh = fp.Grid1D(nx=N, dx=dx) - [[featureDepth]]
-
-        potential = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$\psi$')
-        potential[:] = -appliedPotential
-
-        cupric = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{cu}$')
-        cupric[:] = bulkCupric
-        cupric.constrain(bulkCupric, mesh.facesRight)
-
-        suppressor = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
-        suppressor[:] = bulkSuppressor
-        suppressor.constrain(bulkSuppressor, mesh.facesRight)
-
-        theta = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$\theta$')
-
-        I0 = (i0 + i1 * theta)
-        baseCurrent = I0 * (nx.exp(alpha * Fbar * potential) \
-                                - nx.exp(-(2 - alpha) * Fbar * potential))
-        cbar =  cupric / bulkCupric
-        current = cbar * baseCurrent
-        currentDerivative = cbar * I0 * (alpha * Fbar *  nx.exp(alpha * Fbar * potential) \
-                                             + (2 - alpha) * Fbar * nx.exp(-(2 - alpha) * Fbar * potential))
-
+    def getCoeffs(self, distance, perimeterRatio, areaRatio, featureDepth):
+        mesh = distance.mesh
+        dx = mesh.dx
         def dirac(x):
-            value = nx.zeros(mesh.numberOfCells, 'd')
+            value = nx.zeros(distance.mesh.numberOfCells, 'd')
             ID = nx.argmin(abs(mesh.x - x))
             if mesh.x[ID] < x:
                 ID = ID + 1
@@ -291,89 +198,20 @@ class Suedo2DSimulation(object):
 
         THETA = (mesh.x < 0) * perimeterRatio + dirac(0) * (1 - areaRatio) + dirac(-featureDepth) * areaRatio
         AREA = (mesh.x < 0) * (areaRatio - 1) + 1 
-        THETA_UPPER = fp.CellVariable(mesh=mesh)
-        THETA_UPPER[-1] = kappa / dx / (deltaRef - delta)
 
-        potentialEq = fp.TransientTerm(capacitance * THETA) == fp.DiffusionTerm(kappa * AREA) \
-            - THETA * (current - potential * currentDerivative) \
-            - fp.ImplicitSourceTerm(THETA * currentDerivative) \
-            - THETA_UPPER * appliedPotential - fp.ImplicitSourceTerm(THETA_UPPER) 
+        return THETA, AREA, 1.
 
-        cupricEq = fp.TransientTerm(AREA) == fp.DiffusionTerm(diffusionCupric * AREA) \
-            - fp.ImplicitSourceTerm(baseCurrent * THETA / (bulkCupric * charge * faradaysConstant))
+    def getThetaEq(self, depositionRate, dt, kPlus, suppressor, distance, surface, kMinus, theta):
+        epsilon = 1e-30
+        return fp.TransientTerm(surface + epsilon) == kPlus * suppressor * surface \
+          - fp.ImplicitSourceTerm(surface * (kPlus * suppressor + kMinus * depositionRate))
 
-        suppressorEq = fp.TransientTerm(AREA) == fp.DiffusionTerm(diffusionSuppressor * AREA) \
-            - fp.ImplicitSourceTerm(gamma * kPlus * (1 - theta) * THETA)
+    def getThetaDt(self, dt):
+        return dt
 
-        thetaEq =  fp.TransientTerm(THETA + epsilon) == kPlus * suppressor * THETA \
-            - fp.ImplicitSourceTerm(THETA * (kPlus * suppressor + kMinus * current * (omega / charge / faradaysConstant)))
-
-        t = 0.
-
-        if view:
-            potentialBar = -potential / appliedPotential
-            potentialBar.name = r'$\bar{\eta}$'
-            cbar.name = r'$\bar{c_{cu}}$'
-            suppressorBar = suppressor / bulkSuppressor
-            suppressorBar.name = r'$\bar{c_{\theta}}$'
-
-            viewer = fp.Viewer((theta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
-
-        potentials = []
-        for step in range(totalSteps):
-            if view:
-                viewer.axes.set_title(r'$t=%1.2e$' % t)
-                viewer.plot()
-
-            potential.updateOld()
-            cupric.updateOld()
-            suppressor.updateOld()
-            theta.updateOld()
-
-            for sweep in range(sweeps):
-                potentialRes = potentialEq.sweep(potential, dt=dt)
-                cupricRes = cupricEq.sweep(cupric, dt=dt)
-                suppressorRes = suppressorEq.sweep(suppressor, dt=dt)
-                thetaRes = thetaEq.sweep(theta, dt=dt)
-                res = np.array((potentialRes, cupricRes, suppressorRes, thetaRes))
-                if sweep == 0:
-                    res0 = res
-                else:
-                    if ((res / res0) < tol).all():
-                        break
-
-                if PRINT:
-                    print res / res0
-
-            if sweep == sweeps - 1 and PRINT:
-                print 'Did not reach sufficient tolerance'
-                print 'kPlus',kPlus
-                print 'kMinus',kMinus
-                print 'res',res
-
-            if PRINT:
-                print 'theta',theta[0]
-                print 'cBar_supp',suppressor[0] / bulkSuppressor
-                print 'cBar_cu',cupric[0] / bulkCupric
-                print 'potentialBar',-potential[0] / appliedPotential
-                print 'dt',dt
-                print 'step',step
-
-            t += dt
-
-            dt = dt * 1e+10
-            dt = min((dt, dtMax))
-            dt = max((dt, dtMin))
-            potentials.append(-float(potential[0]))
-        if view:
-            viewer.plot()
-
-        self.parameters['potential'] = np.array(potential)
-        self.parameters['cupric'] = np.array(cupric)
-        self.parameters['suppressor'] = np.array(suppressor)
-        self.parameters['theta'] = np.array(theta)
-        self.parameters['potentials'] = np.array(potentials)
- 
+    def calcDistanceFunction(self, distance):
+        pass
+     
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
