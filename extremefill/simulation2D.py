@@ -133,41 +133,42 @@ class Simulation2D(SimulationXD):
 
     Another test is to check that the steady state cupric concentration is
     correct in the absence of any suppressor.
-    """
     
-    # >>> delta = 150e-6
-    # >>> D = 5.6e-10
-    # >>> charge = 2
-    # >>> cinf = 1000.
+    >>> delta = 150e-6
+    >>> D = 5.6e-10
+    >>> charge = 2
+    >>> cinf = 1000.
 
-    # >>> simulation = Simulation1D()
-    # >>> simulation.run(featureDepth=0.0,
-    # ...                i0=i0,
-    # ...                alpha=alpha,
-    # ...                i1=0.0,
-    # ...                view=False,
-    # ...                dt=1e-6,
-    # ...                dtMax=10.,
-    # ...                totalSteps=200,
-    # ...                PRINT=False,
-    # ...                appliedPotential=appliedPotential,
-    # ...                faradaysConstant=F,
-    # ...                gasConstant=R,
-    # ...                delta=delta,
-    # ...                diffusionCupric=D,
-    # ...                charge=charge,
-    # ...                bulkCupric=cinf)
+    >>> simulation = Simulation2D()
+    >>> simulation.run(featureDepth=0.0,
+    ...                i0=i0,
+    ...                alpha=alpha,
+    ...                i1=0.0,
+    ...                view=False,
+    ...                dt=1e-6,
+    ...                dtMax=10.,
+    ...                totalSteps=20,
+    ...                PRINT=False,
+    ...                appliedPotential=appliedPotential,
+    ...                faradaysConstant=F,
+    ...                gasConstant=R,
+    ...                delta=delta,
+    ...                diffusionCupric=D,
+    ...                charge=charge,
+    ...                bulkCupric=cinf,
+    ...                Nx=100)
 
-    # >>> def iF0():
-    # ...     Fbar = F / R / T
-    # ...     V = simulation.parameters['potentials'][-1] 
-    # ...     return i0 * (np.exp(-alpha * Fbar * V) - np.exp((2 - alpha) * Fbar * V))
+    >>> def iF0():
+    ...     Fbar = F / R / T
+    ...     V = simulation.parameters['potentials'][-1] 
+    ...     return i0 * (np.exp(-alpha * Fbar * V) - np.exp((2 - alpha) * Fbar * V))
 
-    # >>> cupric0 = simulation.parameters['cupric0']
+    >>> cupric0 = simulation.parameters['cupric0']
 
-    # >>> print np.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric0 / cinf, rtol=1e-3)
-    # True
+    >>> print np.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric0 / cinf, rtol=1e-3)
+    True
 
+    """
     # The full base line simulation for a flat substrate.
     
     # >>> simulation = Simulation1D()
