@@ -2,16 +2,17 @@ import numpy as np
     
 class Simulation1DODE(object):
     def run(self,
-            delta = 100e-6, ## m
-            deltaRef = 50e-6, ## m
-            faradaysConstant = 9.6485e4, ## C / mol = J / V / mol
-            gasConstant = 8.314, ## J / K / mol
-            temperature = 298., ## K
-            alpha = 0.4,
-            appliedVoltage = -0.275,  ## V
-            i0 = 40., ## A / m**2 
-            capacitance = 0.3, ## F / m**2 = A s / V / m**2  
-            kappa = 15.26): ## S / m = A / V / m):
+            delta=100e-6, ## m
+            deltaRef=50e-6, ## m
+            faradaysConstant=9.6485e4, ## C / mol=J / V / mol
+            gasConstant=8.314, ## J / K / mol
+            temperature=298., ## K
+            alpha=0.4,
+            appliedVoltage=-0.275,  ## V
+            i0=40., ## A / m**2 
+            capacitance=0.3, ## F / m**2=A s / V / m**2  
+            kappa=15.26, ## S / m=A / V / m
+            totalSteps=200):
 
         Fbar = faradaysConstant / gasConstant / temperature ## 1 / V
     
@@ -35,7 +36,6 @@ class Simulation1DODE(object):
         initialValue = -appliedVoltage # + (delta - deltaRef) / deltaRef * appliedVoltage
         integrator.set_initial_value((initialValue,), 0.)
 
-        totalSteps = 200
         dt = .5e-7
         times = np.zeros(totalSteps)
         potentialSciPy = np.zeros(totalSteps)

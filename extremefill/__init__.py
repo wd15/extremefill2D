@@ -9,6 +9,7 @@ from extremefill.bulkSuppressorViewer import BulkSuppressorViewer
 from extremefill.schematicViewer import SchematicViewer
 import extremefill.suedo2DSimulation
 import extremefill.simulation1D
+import extremefill.simulation2D
 from extremefill.suedo2DSimulation import Suedo2DSimulation
 
 ## figure ordering from the paper
@@ -59,6 +60,7 @@ def test():
     import doctest
     doctest.testmod(extremefill.suedo2DSimulation)
     doctest.testmod(extremefill.simulation1D)
+    doctest.testmod(extremefill.simulation2D)
        
 def run(view=True, **parameters):
     r"""

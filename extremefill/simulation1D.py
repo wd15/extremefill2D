@@ -3,9 +3,9 @@
 __docformat__ = 'restructuredtext'
 
 import fipy as fp
-from extremefill.simulation import Simulation
+from extremefill.simulationXD import SimulationXD
 
-class Simulation1D(Simulation):
+class Simulation1D(SimulationXD):
     r"""
 
     This class solves the 1D extreme fill problem modeled with the
@@ -119,13 +119,13 @@ class Simulation1D(Simulation):
     ...                gasConstant=R,
     ...                alpha=alpha,
     ...                temperature=T,
-    ...                totalSteps=200,
+    ...                totalSteps=20,
     ...                dt=.5e-7,
     ...                dtMax=.5e-7,
     ...                sweeps=5)
 
     >>> from extremefill.simulation1DODE import Simulation1DODE
-    >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6)
+    >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6, totalSteps=20)
     >>> print np.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
     True
 
@@ -203,31 +203,8 @@ class Simulation1D(Simulation):
     
     """
 
-    def getDistanceBelowTrench(self, delta):
-        return delta * 0.1
-
-    def getTheta(self, mesh, name, distance):   
-        theta = fp.SurfactantVariable(distanceVar=distance, hasOld=True, name=r'$\theta$', value=0.)
-        return theta, theta.interfaceVar
-
-    def getCoeffs(self, distance, perimeterRatio, areaRatio, featureDepth):
-        return distance.cellInterfaceAreas / distance.mesh.cellVolumes, 1., (distance >= 0).harmonicFaceValue
-
-    def getThetaEq(self, depositionRate, dt, kPlus, suppressor, distance, surface, kMinus, theta):
-        adsorptionCoeff = dt * suppressor * kPlus
-        thetaEq = fp.TransientTerm() == fp.ExplicitUpwindConvectionTerm(fp.SurfactantConvectionVariable(distance)) \
-          + adsorptionCoeff * surface \
-          - fp.ImplicitSourceTerm(adsorptionCoeff * distance._cellInterfaceFlag) \
-          - fp.ImplicitSourceTerm(kMinus * depositionRate * dt)
-        theta.constrain(0, distance.mesh.exteriorFaces)
-
-        return thetaEq
-
-    def getThetaDt(self, dt):
-        return 1.
-
-    def calcDistanceFunction(self, distance):
-        distance.calcDistanceFunction()
+    def getMesh(self, *args):
+        return self.getMesh1D(*args)
     
 if __name__ == '__main__':
     import doctest

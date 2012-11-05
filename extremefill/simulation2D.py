@@ -3,12 +3,13 @@
 __docformat__ = 'restructuredtext'
 
 import fipy as fp
-from extremefill.simulation import Simulation
+import fipy.tools.numerix as nx
+from extremefill.simulationXD import SimulationXD
 
-class Simulation1D(Simulation):
+class Simulation2D(SimulationXD):
     r"""
 
-    This class solves the 1D extreme fill problem modeled with the
+    This class solves the 2D extreme fill problem modeled with the
     equations below. It can represent either a via or a trench
     geometry depending on the choice of the geometric parameters. It
     is assumed that there is no lateral variation in any of the fields
@@ -107,7 +108,7 @@ class Simulation1D(Simulation):
     >>> R = 8.314 ## J / K / mol
     >>> T = 298. ## K
     >>> appliedPotential = -0.275
-    >>> simulation = Simulation1D()
+    >>> simulation = Simulation2D()
     >>> simulation.run(featureDepth=0.0,
     ...                delta=100e-6,
     ...                deltaRef=200e-6,
@@ -119,115 +120,92 @@ class Simulation1D(Simulation):
     ...                gasConstant=R,
     ...                alpha=alpha,
     ...                temperature=T,
-    ...                totalSteps=200,
+    ...                totalSteps=20,
     ...                dt=.5e-7,
     ...                dtMax=.5e-7,
-    ...                sweeps=5)
+    ...                sweeps=5,
+    ...                Nx=100)
 
     >>> from extremefill.simulation1DODE import Simulation1DODE
-    >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6)
+    >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6, totalSteps=20)
     >>> print np.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
     True
 
-    >>> ##import pylab
-    >>> ##pylab.figure()
-    >>> ##pylab.plot(timesScipy, simulation.parameters['potentials'], timesScipy, potentialsScipy)
-    >>> ##pylab.ylabel(r'$\phi\left(0\right)$ (V)')
-    >>> ##pylab.xlabel(r'$t$ (s)')
-    >>> ##pylab.savefig('FiPyVScipy.png')
-    >>> ##raw_input('stopped')
-
-    Agreement is good for :math:`\psi`.
-
-    .. image:: FiPyVScipy.*
-       :width: 50%
-       :align: center
-       :alt: comparison of FiPy and SciPy for the potential equation
-
     Another test is to check that the steady state cupric concentration is
     correct in the absence of any suppressor.
-
-    >>> delta = 150e-6
-    >>> D = 5.6e-10
-    >>> charge = 2
-    >>> cinf = 1000.
-
-    >>> simulation = Simulation1D()
-    >>> simulation.run(featureDepth=0.0,
-    ...                i0=i0,
-    ...                alpha=alpha,
-    ...                i1=0.0,
-    ...                view=False,
-    ...                dt=1e-6,
-    ...                dtMax=10.,
-    ...                totalSteps=200,
-    ...                PRINT=False,
-    ...                appliedPotential=appliedPotential,
-    ...                faradaysConstant=F,
-    ...                gasConstant=R,
-    ...                delta=delta,
-    ...                diffusionCupric=D,
-    ...                charge=charge,
-    ...                bulkCupric=cinf)
-
-    >>> def iF0():
-    ...     Fbar = F / R / T
-    ...     V = simulation.parameters['potentials'][-1] 
-    ...     return i0 * (np.exp(-alpha * Fbar * V) - np.exp((2 - alpha) * Fbar * V))
-
-    >>> cupric0 = simulation.parameters['cupric0']
-
-    >>> print np.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric0 / cinf, rtol=1e-3)
-    True
-
-    The full base line simulation for a flat substrate.
-    
-    >>> simulation = Simulation1D()
-    >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
-
-    >>> from extremefill.suedo2DSimulation import Suedo2DSimulation
-    >>> suedo2DSimulation = Suedo2DSimulation()
-    >>> suedo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
-
-    >>> print np.allclose(simulation.parameters['cupric0'], 795.07614163)
-    True
-    
-    >>> print np.allclose(suedo2DSimulation.parameters['cupric'][0], 795.03555797)
-    True
-
-    >>> print np.allclose(simulation.parameters['theta0'],  0.61933832)
-    True
-
-    >>> print np.allclose(suedo2DSimulation.parameters['theta'][0], 0.619260676616)
-    True
-    
     """
+    
+    # >>> delta = 150e-6
+    # >>> D = 5.6e-10
+    # >>> charge = 2
+    # >>> cinf = 1000.
 
-    def getDistanceBelowTrench(self, delta):
-        return delta * 0.1
+    # >>> simulation = Simulation1D()
+    # >>> simulation.run(featureDepth=0.0,
+    # ...                i0=i0,
+    # ...                alpha=alpha,
+    # ...                i1=0.0,
+    # ...                view=False,
+    # ...                dt=1e-6,
+    # ...                dtMax=10.,
+    # ...                totalSteps=200,
+    # ...                PRINT=False,
+    # ...                appliedPotential=appliedPotential,
+    # ...                faradaysConstant=F,
+    # ...                gasConstant=R,
+    # ...                delta=delta,
+    # ...                diffusionCupric=D,
+    # ...                charge=charge,
+    # ...                bulkCupric=cinf)
 
-    def getTheta(self, mesh, name, distance):   
-        theta = fp.SurfactantVariable(distanceVar=distance, hasOld=True, name=r'$\theta$', value=0.)
-        return theta, theta.interfaceVar
+    # >>> def iF0():
+    # ...     Fbar = F / R / T
+    # ...     V = simulation.parameters['potentials'][-1] 
+    # ...     return i0 * (np.exp(-alpha * Fbar * V) - np.exp((2 - alpha) * Fbar * V))
 
-    def getCoeffs(self, distance, perimeterRatio, areaRatio, featureDepth):
-        return distance.cellInterfaceAreas / distance.mesh.cellVolumes, 1., (distance >= 0).harmonicFaceValue
+    # >>> cupric0 = simulation.parameters['cupric0']
 
-    def getThetaEq(self, depositionRate, dt, kPlus, suppressor, distance, surface, kMinus, theta):
-        adsorptionCoeff = dt * suppressor * kPlus
-        thetaEq = fp.TransientTerm() == fp.ExplicitUpwindConvectionTerm(fp.SurfactantConvectionVariable(distance)) \
-          + adsorptionCoeff * surface \
-          - fp.ImplicitSourceTerm(adsorptionCoeff * distance._cellInterfaceFlag) \
-          - fp.ImplicitSourceTerm(kMinus * depositionRate * dt)
-        theta.constrain(0, distance.mesh.exteriorFaces)
+    # >>> print np.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric0 / cinf, rtol=1e-3)
+    # True
 
-        return thetaEq
+    # The full base line simulation for a flat substrate.
+    
+    # >>> simulation = Simulation1D()
+    # >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
 
-    def getThetaDt(self, dt):
-        return 1.
+    # >>> from extremefill.suedo2DSimulation import Suedo2DSimulation
+    # >>> suedo2DSimulation = Suedo2DSimulation()
+    # >>> suedo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
 
-    def calcDistanceFunction(self, distance):
-        distance.calcDistanceFunction()
+    # >>> print np.allclose(simulation.parameters['cupric0'], 795.07614163)
+    # True
+    
+    # >>> print np.allclose(suedo2DSimulation.parameters['cupric'][0], 795.03555797)
+    # True
+
+    # >>> print np.allclose(simulation.parameters['theta0'],  0.61933832)
+    # True
+
+    # >>> print np.allclose(suedo2DSimulation.parameters['theta'][0], 0.619260676616)
+    # True
+    
+    # """
+
+    def getMesh(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
+        Ny = int(1 / perimeterRatio / 2 / dx)
+        return fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [0]]
+
+    def getViewer(self, interfaceTheta, suppressorBar, cbar, potentialBar):
+        mesh2D = interfaceTheta.mesh
+        mesh1D = fp.Grid1D(nx=mesh2D.nx, dx=mesh2D.dx) + mesh2D.origin[[0]]
+        vars1D = []
+        for var2D in interfaceTheta, suppressorBar, cbar, potentialBar:
+            var1D = fp.CellVariable(mesh=mesh1D)
+            var1D[:] = var2D([mesh1D.x, nx.zeros(mesh1D.nx)])
+            var1D.name = var2D.name
+            vars1D.append(var1D)
+            
+        return super(Simulation2D, self).getViewer(*vars1D)
     
 if __name__ == '__main__':
     import doctest

@@ -116,13 +116,13 @@ class Suedo2DSimulation(Simulation):
     ...                gasConstant=R,
     ...                alpha=alpha,
     ...                temperature=T,
-    ...                totalSteps=200,
+    ...                totalSteps=20,
     ...                dt=.5e-7,
     ...                dtMax=.5e-7,
     ...                sweeps=5)
 
     >>> from extremefill.simulation1DODE import Simulation1DODE
-    >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6)
+    >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6, totalSteps=20)
     >>> print np.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
     True
 
@@ -211,7 +211,10 @@ class Suedo2DSimulation(Simulation):
 
     def calcDistanceFunction(self, distance):
         pass
-     
+
+    def getMesh(self, *args):
+        return self.getMesh1D(*args)
+    
 if __name__ == '__main__':
     import doctest
     doctest.testmod()

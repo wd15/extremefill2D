@@ -41,7 +41,8 @@ class Simulation(object):
             gamma=2.5e-7,
             perimeterRatio=1. / 2.8e-6 * 0.093,
             areaRatio=0.093,
-            capacitance=0.3):
+            capacitance=0.3,
+            Nx=1000):
 
         r"""
         Run an individual simulation.
@@ -78,6 +79,8 @@ class Simulation(object):
           - `perimeterRatio`: feature perimeter ratio
           - `areaRatio`: feature area ratio
           - `capacitance`: capacitance
+          - `Nx`: number of grid points in the x-direction
+          
         """
 
         Fbar = faradaysConstant / gasConstant / temperature
@@ -88,9 +91,8 @@ class Simulation(object):
 
         distanceBelowTrench = self.getDistanceBelowTrench(delta)
         L = delta + featureDepth + distanceBelowTrench
-        N = 1000
-        dx = L / N 
-        mesh = fp.Grid1D(nx=N, dx=dx) - [[distanceBelowTrench + featureDepth]]
+        dx = L / Nx
+        mesh = self.getMesh(Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio)
 
         dt = fp.Variable(dt)
 
@@ -106,8 +108,10 @@ class Simulation(object):
         suppressor.constrain(bulkSuppressor, mesh.facesRight)
 
         distance = fp.DistanceVariable(mesh=mesh)
-        distance[:] = 1.
-        distance.setValue(-1., where=mesh.x < -featureDepth)     
+        distance[:] = 1.        
+        distance.setValue(-1., where=mesh.x < -featureDepth)
+        if hasattr(mesh, 'y'):
+            distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio / 2))
 
         theta, interfaceTheta = self.getTheta(mesh, r'$\theta$', distance)
 
@@ -120,7 +124,8 @@ class Simulation(object):
                                              + (2 - alpha) * Fbar * nx.exp(-(2 - alpha) * Fbar * potential))
 
         upper = fp.CellVariable(mesh=mesh)
-        upper[-1] = kappa / dx / (deltaRef - delta)
+        ID = mesh._getNearestCellID(mesh.faceCenters[:,mesh.facesRight.value])
+        upper[ID] = kappa / mesh.dx / (deltaRef - delta)
 
         surface, area, harmonic = self.getCoeffs(distance, perimeterRatio, areaRatio, featureDepth)
         
@@ -148,8 +153,11 @@ class Simulation(object):
             suppressorBar = suppressor / bulkSuppressor
             suppressorBar.name = r'$\bar{c_{\theta}}$'
 
-            viewer = fp.Viewer((interfaceTheta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
+            viewer = self.getViewer(interfaceTheta, suppressorBar, cbar, potentialBar)
 
+        monitorPoint = nx.zeros((mesh.dim, 1), 'd')
+        monitorPoint[0, 0] = dx / 2.
+        
         potentials = []
         for step in range(totalSteps):
             if view:
@@ -198,8 +206,7 @@ class Simulation(object):
             dt.setValue(float(dt) * 1e+10)
             dt.setValue(min((float(dt), dtMax)))
             dt.setValue(max((float(dt), dtMin)))
-            
-            potentials.append(-float(potential([[dx / 2]])))
+            potentials.append(-float(potential(monitorPoint)))
         if view:
             viewer.plot()
 
@@ -209,10 +216,10 @@ class Simulation(object):
         self.parameters['theta'] = nx.array(interfaceTheta)
         self.parameters['potentials'] = nx.array(potentials)
 
-        self.parameters['potential0'] = nx.array(potential([[dx / 2]]))
-        self.parameters['cupric0'] = nx.array(cupric([[dx / 2]]))
-        self.parameters['suppressor0'] = nx.array(suppressor([[dx / 2]]))
-        self.parameters['theta0'] = nx.array(interfaceTheta([[dx / 2]]))
+        self.parameters['potential0'] = nx.array(potential(monitorPoint))
+        self.parameters['cupric0'] = nx.array(cupric(monitorPoint))
+        self.parameters['suppressor0'] = nx.array(suppressor(monitorPoint))
+        self.parameters['theta0'] = nx.array(interfaceTheta(monitorPoint))
 
     def getDistanceBelowTrench(self, delta):
         raise NotImplementedError
@@ -231,6 +238,15 @@ class Simulation(object):
 
     def calcDistanceFunction(self, distance):
         raise NotImplementedError
+
+    def getMesh(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
+        raise NotImplementedError
+
+    def getViewer(self, interfaceTheta, suppressorBar, cbar, potentialBar):        
+        return fp.Viewer((interfaceTheta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
+
+    def getMesh1D(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
+        return fp.Grid1D(nx=Nx, dx=dx) - [[distanceBelowTrench + featureDepth]] 
     
 if __name__ == '__main__':
     import doctest
