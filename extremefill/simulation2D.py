@@ -172,27 +172,27 @@ class Simulation2D(SimulationXD):
     >>> simulation = Simulation2D()
     >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0., Nx=100)
 
-    >>> from extremefill.suedo2DSimulation import Suedo2DSimulation
-    >>> suedo2DSimulation = Suedo2DSimulation()
-    >>> suedo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0., Nx=100)
+    >>> from extremefill.pseudo2DSimulation import Pseudo2DSimulation
+    >>> pseudo2DSimulation = Pseudo2DSimulation()
+    >>> pseudo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0., Nx=100)
 
-    >>> print np.allclose(simulation.parameters['cupric0'], suedo2DSimulation.parameters['cupric0'], rtol=1e-3)
+    >>> print np.allclose(simulation.parameters['cupric0'], pseudo2DSimulation.parameters['cupric0'], rtol=1e-3)
     True
     
-    >>> print np.allclose(simulation.parameters['theta0'], suedo2DSimulation.parameters['theta0'], rtol=1e-3)
+    >>> print np.allclose(simulation.parameters['theta0'], pseudo2DSimulation.parameters['theta0'], rtol=1e-3)
     True
 
     Test for the static 2D case but with an actual trench.
 
-    >>> suedo2Dsimulation = Suedo2DSimulation()
-    >>> suedo2Dsimulation.run(totalSteps=1, sweeps=1, dt=1e+20, tol=1e-4, kPlus=25., Nx=1000)
+    >>> pseudo2Dsimulation = Pseudo2DSimulation()
+    >>> pseudo2Dsimulation.run(totalSteps=1, sweeps=1, dt=1e+20, tol=1e-4, kPlus=25., Nx=1000)
 
     >>> simulation = Simulation2D()
     >>> simulation.run(totalSteps=1, sweeps=1, dt=1e+20, tol=1e-4, kPlus=25., Nx=1000)
 
-    >>> def norm(v, vSuedo):
-    ...     return np.sqrt(((v(vSuedo.mesh.cellCenters) - vSuedo)**2 ).sum() / v.mesh.nx )
-    >>> print (np.array([norm(v, vSuedo) for v, vSuedo in zip(simulation.vars1D, suedo2Dsimulation.vars1D)]) < 1e-2).all()
+    >>> def norm(v, vPseudo):
+    ...     return np.sqrt(((v(vPseudo.mesh.cellCenters) - vPseudo)**2 ).sum() / v.mesh.nx )
+    >>> print (np.array([norm(v, vPseudo) for v, vPseudo in zip(simulation.vars1D, pseudo2Dsimulation.vars1D)]) < 1e-2).all()
     True
     
     """

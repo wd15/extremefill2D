@@ -185,20 +185,20 @@ class Simulation1D(SimulationXD):
     >>> simulation = Simulation1D()
     >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
 
-    >>> from extremefill.suedo2DSimulation import Suedo2DSimulation
-    >>> suedo2DSimulation = Suedo2DSimulation()
-    >>> suedo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
+    >>> from extremefill.pseudo2DSimulation import Pseudo2DSimulation
+    >>> pseudo2DSimulation = Pseudo2DSimulation()
+    >>> pseudo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
 
     >>> print np.allclose(simulation.parameters['cupric0'], 795.07614163)
     True
     
-    >>> print np.allclose(suedo2DSimulation.parameters['cupric'][0], 795.03555797)
+    >>> print np.allclose(pseudo2DSimulation.parameters['cupric'][0], 795.03555797)
     True
 
     >>> print np.allclose(simulation.parameters['theta0'],  0.61933832)
     True
 
-    >>> print np.allclose(suedo2DSimulation.parameters['theta'][0], 0.619260676616)
+    >>> print np.allclose(pseudo2DSimulation.parameters['theta'][0], 0.619260676616)
     True
     
     """

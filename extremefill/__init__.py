@@ -7,10 +7,10 @@ from extremefill.kPlusVkMinusViewer import KPlusVkMinusViewer
 from extremefill.appliedPotentialVbulkSuppressorViewer import AppliedPotentialVbulkSuppressorViewer
 from extremefill.bulkSuppressorViewer import BulkSuppressorViewer
 from extremefill.schematicViewer import SchematicViewer
-import extremefill.suedo2DSimulation
+import extremefill.pseudo2DSimulation
 import extremefill.simulation1D
 import extremefill.simulation2D
-from extremefill.suedo2DSimulation import Suedo2DSimulation
+from extremefill.pseudo2DSimulation import Pseudo2DSimulation
 
 ## figure ordering from the paper
 viewers = (None,
@@ -58,7 +58,7 @@ def test():
     Run all the doctests available.
     """
     import doctest
-    doctest.testmod(extremefill.suedo2DSimulation)
+    doctest.testmod(extremefill.pseudo2DSimulation)
     doctest.testmod(extremefill.simulation1D)
     doctest.testmod(extremefill.simulation2D)
        
@@ -66,7 +66,7 @@ def run(view=True, **parameters):
     r"""
 
     Run a single simulation using
-    :py:meth:`Suedo2DSimulation.run <extremefill.suedo2DSimulation.Suedo2DSimulation.run>`.
+    :py:meth:`Pseudo2DSimulation.run <extremefill.pseudo2DSimulation.Pseudo2DSimulation.run>`.
 
     Run the default simulation for 10 time steps
 
@@ -87,11 +87,11 @@ def run(view=True, **parameters):
     :Parameters:
       - `view` : view the simulation as it is running
       - `parameters` : any of the parameters used in
-        :py:meth:`Suedo2DSimulation.run
-        <extremefill.suedo2DSimulation.Suedo2DSimulation.run>`
+        :py:meth:`Pseudo2DSimulation.run
+        <extremefill.pseudo2DSimulation.Pseudo2DSimulation.run>`
 
     """
-    Suedo2DSimulation().run(view=view, **parameters)
+    Pseudo2DSimulation().run(view=view, **parameters)
     raw_input('press key to continue')
 
 def _getVersion():

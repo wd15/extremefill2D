@@ -7,10 +7,10 @@ from fipy import numerix as nx
 import numpy as np
 from extremefill.simulation import Simulation
 
-class Suedo2DSimulation(Simulation):
+class Pseudo2DSimulation(Simulation):
     r"""
 
-    This class solves the suedo 2D extreme fill problem modeled with the
+    This class solves the pseudo 2D extreme fill problem modeled with the
     equations below. It can represent either a via or a trench
     geometry depending on the choice of the geometric parameters. It
     is assumed that there is no lateral variation in any of the fields
@@ -104,7 +104,7 @@ class Suedo2DSimulation(Simulation):
     >>> R = 8.314 ## J / K / mol
     >>> T = 298. ## K
     >>> appliedPotential = -0.275
-    >>> simulation = Suedo2DSimulation()
+    >>> simulation = Pseudo2DSimulation()
     >>> simulation.run(delta=100e-6,
     ...                deltaRef=200e-6,
     ...                featureDepth=0.0,
@@ -149,7 +149,7 @@ class Suedo2DSimulation(Simulation):
     >>> charge = 2
     >>> cinf = 1000.
 
-    >>> simulation = Suedo2DSimulation()
+    >>> simulation = Pseudo2DSimulation()
     >>> simulation.run(featureDepth=0.0,
     ...                i0=i0,
     ...                alpha=alpha,
