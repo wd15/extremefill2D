@@ -5,6 +5,7 @@ __docformat__ = 'restructuredtext'
 import fipy as fp
 import fipy.tools.numerix as nx
 from extremefill.simulationXD import SimulationXD
+import numpy as np
 
 class Simulation2D(SimulationXD):
     r"""
@@ -99,8 +100,6 @@ class Simulation2D(SimulationXD):
     feature) with the simple 1D ODE for solving the electrical equation
     with no suppressor and no cupric depeletion.
 
-    >>> import numpy as np
-
     
     >>> i0 = 40.
     >>> alpha = 0.4
@@ -168,45 +167,65 @@ class Simulation2D(SimulationXD):
     >>> print np.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric0 / cinf, rtol=1e-3)
     True
 
+    The full base line simulation for a flat substrate.
+    
+    >>> simulation = Simulation2D()
+    >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0., Nx=100)
+
+    >>> from extremefill.suedo2DSimulation import Suedo2DSimulation
+    >>> suedo2DSimulation = Suedo2DSimulation()
+    >>> suedo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0., Nx=100)
+
+    >>> print np.allclose(simulation.parameters['cupric0'], suedo2DSimulation.parameters['cupric0'], rtol=1e-3)
+    True
+    
+    >>> print np.allclose(simulation.parameters['theta0'], suedo2DSimulation.parameters['theta0'], rtol=1e-3)
+    True
+
+    Test for the static 2D case but with an actual trench.
+
+    >>> suedo2Dsimulation = Suedo2DSimulation()
+    >>> suedo2Dsimulation.run(totalSteps=1, sweeps=1, dt=1e+20, tol=1e-4, kPlus=25., Nx=1000)
+
+    >>> simulation = Simulation2D()
+    >>> simulation.run(totalSteps=1, sweeps=1, dt=1e+20, tol=1e-4, kPlus=25., Nx=1000)
+
+    >>> def norm(v, vSuedo):
+    ...     return np.sqrt(((v(vSuedo.mesh.cellCenters) - vSuedo)**2 ).sum() / v.mesh.nx )
+    >>> print (np.array([norm(v, vSuedo) for v, vSuedo in zip(simulation.vars1D, suedo2Dsimulation.vars1D)]) < 1e-2).all()
+    True
+    
     """
-    # The full base line simulation for a flat substrate.
-    
-    # >>> simulation = Simulation1D()
-    # >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
-
-    # >>> from extremefill.suedo2DSimulation import Suedo2DSimulation
-    # >>> suedo2DSimulation = Suedo2DSimulation()
-    # >>> suedo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
-
-    # >>> print np.allclose(simulation.parameters['cupric0'], 795.07614163)
-    # True
-    
-    # >>> print np.allclose(suedo2DSimulation.parameters['cupric'][0], 795.03555797)
-    # True
-
-    # >>> print np.allclose(simulation.parameters['theta0'],  0.61933832)
-    # True
-
-    # >>> print np.allclose(suedo2DSimulation.parameters['theta'][0], 0.619260676616)
-    # True
-    
-    # """
 
     def getMesh(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
-        Ny = int(1 / perimeterRatio / 2 / dx)
+        Ny = int(1 / perimeterRatio / dx)
         return fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [0]]
 
-    def getViewer(self, interfaceTheta, suppressorBar, cbar, potentialBar):
+    def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, featureDepth, distance):
         mesh2D = interfaceTheta.mesh
         mesh1D = fp.Grid1D(nx=mesh2D.nx, dx=mesh2D.dx) + mesh2D.origin[[0]]
-        vars1D = []
-        for var2D in interfaceTheta, suppressorBar, cbar, potentialBar:
-            var1D = fp.CellVariable(mesh=mesh1D)
-            var1D[:] = var2D([mesh1D.x, nx.zeros(mesh1D.nx)])
-            var1D.name = var2D.name
-            vars1D.append(var1D)
+        vars2D = super(self.__class__, self).get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar)
+        return [_Interpolate1DVariable(mesh1D, v, distance, featureDepth) for v in vars2D]
             
-        return super(Simulation2D, self).getViewer(*vars1D)
+class _Interpolate1DVariable(fp.CellVariable):
+    def __init__(self, mesh, var2D, distance, featureDepth):
+        super(self.__class__, self).__init__(mesh=mesh, name=var2D.name)
+        self.var2D = self._requires(var2D)
+        self.distance = distance
+        self.featureDepth = featureDepth
+        
+    def getYpos(self):
+        mesh = self.distance.mesh
+        arr = np.zeros((2, mesh.ny))
+        arr[0] = -self.featureDepth / 2
+        arr[1] = (0.5 + np.arange(mesh.ny)) * mesh.dy
+        distanceArr = self.distance(arr)
+        distanceArr[distanceArr < 0] = 1000.
+        ID = np.argmin(distanceArr)
+        return arr[1, ID]
+        
+    def _calcValue(self):
+        return self.var2D([self.mesh.x, nx.ones(self.mesh.nx) * self.getYpos()])
     
 if __name__ == '__main__':
     import doctest

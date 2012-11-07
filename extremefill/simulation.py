@@ -111,7 +111,7 @@ class Simulation(object):
         distance[:] = 1.        
         distance.setValue(-1., where=mesh.x < -featureDepth)
         if hasattr(mesh, 'y'):
-            distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio / 2))
+            distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio))
 
         theta, interfaceTheta = self.getTheta(mesh, r'$\theta$', distance)
 
@@ -146,19 +146,20 @@ class Simulation(object):
         
         t = 0.
 
+        potentialBar = -potential / appliedPotential
+        potentialBar.name = r'$\bar{\eta}$'
+        cbar.name = r'$\bar{c_{cu}}$'
+        suppressorBar = suppressor / bulkSuppressor
+        suppressorBar.name = r'$\bar{c_{\theta}}$'
+        
         if view:
-            potentialBar = -potential / appliedPotential
-            potentialBar.name = r'$\bar{\eta}$'
-            cbar.name = r'$\bar{c_{cu}}$'
-            suppressorBar = suppressor / bulkSuppressor
-            suppressorBar.name = r'$\bar{c_{\theta}}$'
-
-            viewer = self.getViewer(interfaceTheta, suppressorBar, cbar, potentialBar)
+            viewer = self.getViewer(interfaceTheta, suppressorBar, cbar, potentialBar, featureDepth, distance)
 
         monitorPoint = nx.zeros((mesh.dim, 1), 'd')
         monitorPoint[0, 0] = dx / 2.
         
         potentials = []
+
         for step in range(totalSteps):
             if view:
                 viewer.axes.set_title(r'$t=%1.2e$' % t)
@@ -170,7 +171,7 @@ class Simulation(object):
             theta.updateOld()
 
             self.calcDistanceFunction(distance)
-
+            
             for sweep in range(sweeps):
                 potentialRes = potentialEq.sweep(potential, dt=dt)
                 cupricRes = cupricEq.sweep(cupric, dt=dt)
@@ -201,12 +202,15 @@ class Simulation(object):
                 print 'dt',dt
                 print 'step',step
 
+                
+                
             t += float(dt)
 
             dt.setValue(float(dt) * 1e+10)
             dt.setValue(min((float(dt), dtMax)))
             dt.setValue(max((float(dt), dtMin)))
             potentials.append(-float(potential(monitorPoint)))
+
         if view:
             viewer.plot()
 
@@ -220,6 +224,8 @@ class Simulation(object):
         self.parameters['cupric0'] = nx.array(cupric(monitorPoint))
         self.parameters['suppressor0'] = nx.array(suppressor(monitorPoint))
         self.parameters['theta0'] = nx.array(interfaceTheta(monitorPoint))
+
+        self.vars1D = self.get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar, featureDepth, distance)
 
     def getDistanceBelowTrench(self, delta):
         raise NotImplementedError
@@ -242,8 +248,11 @@ class Simulation(object):
     def getMesh(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
         raise NotImplementedError
 
-    def getViewer(self, interfaceTheta, suppressorBar, cbar, potentialBar):        
-        return fp.Viewer((interfaceTheta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
+    def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, *args):
+        return [interfaceTheta, suppressorBar, cbar, potentialBar]
+    
+    def getViewer(self, *args):
+        return fp.Viewer(self.get1DVars(*args), datamax=1.0, datamin=0.0)
 
     def getMesh1D(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
         return fp.Grid1D(nx=Nx, dx=dx) - [[distanceBelowTrench + featureDepth]] 
