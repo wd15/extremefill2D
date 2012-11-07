@@ -42,8 +42,9 @@ class Simulation(object):
             perimeterRatio=1. / 2.8e-6 * 0.093,
             areaRatio=0.093,
             capacitance=0.3,
-            Nx=1000):
-
+            Nx=1000,
+            CFL=None):
+        
         r"""
         Run an individual simulation.
 
@@ -80,6 +81,7 @@ class Simulation(object):
           - `areaRatio`: feature area ratio
           - `capacitance`: capacitance
           - `Nx`: number of grid points in the x-direction
+          - `CFL`: CFL number
           
         """
 
@@ -113,6 +115,8 @@ class Simulation(object):
         if hasattr(mesh, 'y'):
             distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio))
 
+        extension = fp.CellVariable(mesh=mesh)
+            
         theta, interfaceTheta = self.getTheta(mesh, r'$\theta$', distance)
 
         I0 = (i0 + i1 * interfaceTheta)
@@ -143,6 +147,9 @@ class Simulation(object):
 
         depositionRate = current * omega / charge / faradaysConstant
         thetaEq = self.getThetaEq(depositionRate, dt, kPlus, suppressor, distance, surface, kMinus, theta)
+
+        if CFL is not None:
+            advectionEq = fp.TransientTerm() + fp.AdvectionTerm(extension)
         
         t = 0.
 
@@ -151,9 +158,12 @@ class Simulation(object):
         cbar.name = r'$\bar{c_{cu}}$'
         suppressorBar = suppressor / bulkSuppressor
         suppressorBar.name = r'$\bar{c_{\theta}}$'
-        
+
         if view:
             viewer = self.getViewer(interfaceTheta, suppressorBar, cbar, potentialBar, featureDepth, distance)
+            if CFL is not None:
+                distanceViewer = fp.Viewer(distance, datamax=1e-10, datamin=-1e-10)
+                extensionViewer = fp.Viewer(extension)
 
         monitorPoint = nx.zeros((mesh.dim, 1), 'd')
         monitorPoint[0, 0] = dx / 2.
@@ -170,9 +180,32 @@ class Simulation(object):
             suppressor.updateOld()
             theta.updateOld()
 
-            self.calcDistanceFunction(distance)
-            
+            if CFL is not None:
+                Nnarrow = 20
+                CFL = 0.2
+                LSFrequency = int(0.7 * Nnarrow  / CFL / 2)
+
+                if step % LSFrequency == 0:
+                    self.calcDistanceFunction(distance)
+                
+                extension[:] = depositionRate
+                
+                distance.extendVariable(extension)
+
+                if view:
+                    distanceViewer.plot()
+                    extensionViewer.plot()
+
+                dt.setValue(float(CFL * mesh.dx / max(extension.globalValue)))
+                    
+                advectionEq.solve(distance, dt=dt)
+            else:
+                if step == 0:
+                    self.calcDistanceFunction(distance)
+
+                
             for sweep in range(sweeps):
+            
                 potentialRes = potentialEq.sweep(potential, dt=dt)
                 cupricRes = cupricEq.sweep(cupric, dt=dt)
                 suppressorRes = suppressorEq.sweep(suppressor, dt=dt)
@@ -202,13 +235,13 @@ class Simulation(object):
                 print 'dt',dt
                 print 'step',step
 
-                
-                
             t += float(dt)
 
-            dt.setValue(float(dt) * 1e+10)
-            dt.setValue(min((float(dt), dtMax)))
-            dt.setValue(max((float(dt), dtMin)))
+            if CFL is None:
+                dt.setValue(float(dt) * 1e+10)
+                dt.setValue(min((float(dt), dtMax)))
+                dt.setValue(max((float(dt), dtMin)))
+
             potentials.append(-float(potential(monitorPoint)))
 
         if view:
@@ -256,7 +289,7 @@ class Simulation(object):
 
     def getMesh1D(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
         return fp.Grid1D(nx=Nx, dx=dx) - [[distanceBelowTrench + featureDepth]] 
-    
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
