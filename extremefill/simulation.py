@@ -228,13 +228,22 @@ class Simulation(object):
                 print 'res',res
 
             if PRINT:
+                print
                 print 'theta',theta[0]
                 print 'cBar_supp',suppressor[0] / bulkSuppressor
                 print 'cBar_cu',cupric[0] / bulkCupric
                 print 'potentialBar',-potential[0] / appliedPotential
+                print 'min(extension)',min(extension)
+                print 'min(depositionRate)',min(depositionRate)
+                print 'min(current)',min(current)
+                print 'min(cupric)',min(cupric)
+                print 'min(baseCurrent)',min(baseCurrent)
+                print 'max(interfaceTheta) - 1:',max(interfaceTheta) - 1
+                print 'min(interfaceTheta)',min(interfaceTheta)
+                print 'min(I0)',min(I0)
                 print 'dt',dt
                 print 'step',step
-
+                print
             t += float(dt)
 
             if CFL is None:
