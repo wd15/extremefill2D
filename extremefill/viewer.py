@@ -11,7 +11,6 @@ class Viewer(object):
     def __init__(self, datafile='data.h5'):
         self.datafile = datafile
 
-
     def generateData(self, parameters):
         h5data = DictTable(self.datafile)
         h5key = ''

@@ -4,6 +4,8 @@ __docformat__ = 'restructuredtext'
 
 import fipy as fp
 from fipy import numerix as nx
+import numpy as np
+from extremefill.dicttable import DictTable
 
 class Simulation(object):
     r"""
@@ -43,7 +45,8 @@ class Simulation(object):
             areaRatio=0.093,
             capacitance=0.3,
             Nx=1000,
-            CFL=None):
+            CFL=None,
+            dataFile=None):
         
         r"""
         Run an individual simulation.
@@ -151,7 +154,7 @@ class Simulation(object):
         if CFL is not None:
             advectionEq = fp.TransientTerm() + fp.AdvectionTerm(extension)
         
-        t = 0.
+        elapsedTime = 0.
 
         potentialBar = -potential / appliedPotential
         potentialBar.name = r'$\bar{\eta}$'
@@ -160,7 +163,7 @@ class Simulation(object):
         suppressorBar.name = r'$\bar{c_{\theta}}$'
 
         if view:
-            viewer = self.getViewer(interfaceTheta, suppressorBar, cbar, potentialBar, featureDepth, distance)
+            viewer = self.getViewer(interfaceTheta, suppressorBar, cbar, potentialBar, distance)
             if CFL is not None:
                 distanceViewer = fp.Viewer(distance, datamax=1e-10, datamin=-1e-10)
                 extensionViewer = fp.Viewer(extension)
@@ -169,10 +172,10 @@ class Simulation(object):
         monitorPoint[0, 0] = dx / 2.
         
         potentials = []
-
+            
         for step in range(totalSteps):
             if view:
-                viewer.axes.set_title(r'$t=%1.2e$' % t)
+                viewer.axes.set_title(r'$t=%1.2e$' % elapsedTime)
                 viewer.plot()
 
             potential.updateOld()
@@ -180,32 +183,35 @@ class Simulation(object):
             suppressor.updateOld()
             theta.updateOld()
 
+            if dataFile is not None:
+                self.writeData(dataFile, elapsedTime, distance, step)
+            
             if CFL is not None:
                 Nnarrow = 20
-                CFL = 0.2
                 LSFrequency = int(0.7 * Nnarrow  / CFL / 2)
 
                 if step % LSFrequency == 0:
                     self.calcDistanceFunction(distance)
                 
                 extension[:] = depositionRate
-                
+
                 distance.extendVariable(extension)
 
                 if view:
                     distanceViewer.plot()
                     extensionViewer.plot()
 
-                dt.setValue(float(CFL * mesh.dx / max(extension.globalValue)))
-                    
+                dt.setValue(min(float(CFL * mesh.dx / max(extension.globalValue)), float(dt) * 1.1))
+                dt.setValue(min((float(dt), dtMax)))
+                dt.setValue(max((float(dt), dtMin)))
+
                 advectionEq.solve(distance, dt=dt)
             else:
                 if step == 0:
                     self.calcDistanceFunction(distance)
 
-                
             for sweep in range(sweeps):
-            
+
                 potentialRes = potentialEq.sweep(potential, dt=dt)
                 cupricRes = cupricEq.sweep(cupric, dt=dt)
                 suppressorRes = suppressorEq.sweep(suppressor, dt=dt)
@@ -217,7 +223,7 @@ class Simulation(object):
                 else:
                     if ((res / res0) < tol).all():
                         break
-                    
+
                 if PRINT:
                     print res / res0
 
@@ -242,9 +248,11 @@ class Simulation(object):
                 print 'min(interfaceTheta)',min(interfaceTheta)
                 print 'min(I0)',min(I0)
                 print 'dt',dt
+                print 'elapsed time',elapsedTime
                 print 'step',step
                 print
-            t += float(dt)
+
+            elapsedTime += float(dt)
 
             if CFL is None:
                 dt.setValue(float(dt) * 1e+10)
@@ -267,7 +275,7 @@ class Simulation(object):
         self.parameters['suppressor0'] = nx.array(suppressor(monitorPoint))
         self.parameters['theta0'] = nx.array(interfaceTheta(monitorPoint))
 
-        self.vars1D = self.get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar, featureDepth, distance)
+        self.vars1D = self.get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar, distance)
 
     def getDistanceBelowTrench(self, delta):
         raise NotImplementedError
@@ -299,8 +307,18 @@ class Simulation(object):
     def getMesh1D(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
         return fp.Grid1D(nx=Nx, dx=dx) - [[distanceBelowTrench + featureDepth]] 
 
+    def writeData(self, dataFile, elapsedTime, distance, timeStep):
+        h5data = DictTable(dataFile, 'a')
+        mesh = distance.mesh
+        dataDict = {'elapsedTime' : elapsedTime,
+                    'nx' : mesh.nx,
+                    'ny' : mesh.ny,
+                    'dx' : mesh.dx,
+                    'dy' : mesh.dy,
+                    'distance' : np.array(distance)}
+
+        h5data[timeStep] = dataDict
+    
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-
-

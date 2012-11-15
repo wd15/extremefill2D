@@ -201,32 +201,35 @@ class Simulation2D(SimulationXD):
         Ny = int(1 / perimeterRatio / dx)
         return fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [0]]
 
-    def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, featureDepth, distance):
+    def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, distance):
         mesh2D = interfaceTheta.mesh
         mesh1D = fp.Grid1D(nx=mesh2D.nx, dx=mesh2D.dx) + mesh2D.origin[[0]]
         vars2D = super(self.__class__, self).get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar)
-        return [_Interpolate1DVariable(mesh1D, v, distance, featureDepth) for v in vars2D]
-            
-class _Interpolate1DVariable(fp.CellVariable):
-    def __init__(self, mesh, var2D, distance, featureDepth):
-        super(self.__class__, self).__init__(mesh=mesh, name=var2D.name)
+        listOfVars = [_Interpolate1DVarMax(mesh1D, vars2D[0], distance)]
+        return listOfVars + [_Interpolate1DVar(mesh1D, v, distance) for v in vars2D[1:]]
+
+class _Interpolate1DVarBase(fp.CellVariable):
+    def __init__(self, mesh, var2D, distance):
+        super(_Interpolate1DVarBase, self).__init__(mesh=mesh, name=var2D.name)
         self.var2D = self._requires(var2D)
         self.distance = distance
-        self.featureDepth = featureDepth
         
-    def getYpos(self):
-        mesh = self.distance.mesh
-        arr = np.zeros((2, mesh.ny))
-        arr[0] = -self.featureDepth / 2
-        arr[1] = (0.5 + np.arange(mesh.ny)) * mesh.dy
-        distanceArr = self.distance(arr)
-        distanceArr[distanceArr < 0] = 1000.
-        ID = np.argmin(distanceArr)
-        return arr[1, ID]
-        
+class _Interpolate1DVar(_Interpolate1DVarBase):
     def _calcValue(self):
-        return self.var2D([self.mesh.x, nx.ones(self.mesh.nx) * self.getYpos()])
-    
+        value = self.var2D([self.mesh.x, nx.zeros(self.mesh.nx)])
+        phi = self.distance([self.mesh.x, nx.zeros(self.mesh.nx)])
+        value[phi < 0] = 0.
+        return value
+
+class _Interpolate1DVarMax(_Interpolate1DVarBase):
+    def _calcValue(self):
+        value = np.zeros(self.mesh.nx, 'd')
+        inty = self.var2D.mesh.y[::self.var2D.mesh.nx]
+        onesy = np.ones(self.var2D.mesh.ny, 'd')
+        for i, x in enumerate(self.mesh.x):
+            value[i] = np.max(self.var2D([x * onesy, inty]))
+        return value
+            
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
