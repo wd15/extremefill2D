@@ -16,7 +16,7 @@ class Simulation(object):
             dt=.5e-7,
             dtMax=1e+20,
             dtMin=.5e-7,
-            totalSteps=400,
+            totalSteps=1e+10,
             view=False,
             PRINT=False,
             sweeps=5,
@@ -46,7 +46,8 @@ class Simulation(object):
             capacitance=0.3,
             Nx=1000,
             CFL=None,
-            dataFile=None):
+            dataFile=None,
+            totalTime=1e+100):
         
         r"""
         Run an individual simulation.
@@ -155,7 +156,8 @@ class Simulation(object):
             advectionEq = fp.TransientTerm() + fp.AdvectionTerm(extension)
         
         elapsedTime = 0.
-
+        step = 0
+        
         potentialBar = -potential / appliedPotential
         potentialBar.name = r'$\bar{\eta}$'
         cbar.name = r'$\bar{c_{cu}}$'
@@ -172,8 +174,10 @@ class Simulation(object):
         monitorPoint[0, 0] = dx / 2.
         
         potentials = []
+
+        
+        while (step < totalSteps) and (elapsedTime < totalTime):
             
-        for step in range(totalSteps):
             if view:
                 viewer.axes.set_title(r'$t=%1.2e$' % elapsedTime)
                 viewer.plot()
@@ -259,6 +263,8 @@ class Simulation(object):
                 dt.setValue(min((float(dt), dtMax)))
                 dt.setValue(max((float(dt), dtMin)))
 
+            step += 1
+                
             potentials.append(-float(potential(monitorPoint)))
 
         if view:
