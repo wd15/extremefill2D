@@ -2,47 +2,62 @@ from extremefill.dicttable import DictTable
 import pylab
 import numpy as np
 
-def getNormData():
-    basedata = DictTable("cfl0.05.h5", 'r')
-    data0 = DictTable("cfl0.1.h5", 'r')
-    data1 = DictTable("cfl0.2.h5", 'r')
-    norms = []
-    times = []
-    latestIndex = basedata.getLatestIndex()
-    for index in xrange(0, latestIndex, 10):
-        print 'index',index
-        elapsedTime = basedata[index]['elapsedTime']
-        phiBase = basedata[index]['distance']
-        norm0 = getNorm(data0, elapsedTime, phiBase)
-        norm1 = getNorm(data1, elapsedTime, phiBase)
-        norms.append([norm0, norm1])
-        times.append(elapsedTime)
+class BaseViewer(object):
+    def getInterpolatedDistanceFunction(self, time, data):
+        if hasattr(data, 'index'):
+            index = data.index
+        else:
+            index = 1
+        latestIndex = data.getLatestIndex()
+        while index <= latestIndex and data[index]['elapsedTime'] < time:
+            index += 1
+        data.index = index - 1
+            
+        t0 = data[index - 1]['elapsedTime']
+        t1 = data[index]['elapsedTime']
+        alpha = (time - t0) / (t1 - t0)
+        phi0 = data[index - 1]['distance']
+        phi1 = data[index]['distance']
+        return phi0 * (1 - alpha) + phi1 * alpha
 
-    return np.array(times), np.array(norms)
+class CFLViewer(BaseViewer):
+    def __init__(self, datafiles, basedatafile):
+        self.datafiles = datafiles
+        self.basedatafile = basedatafile
+
+    def plot(self):
+        times, normdata = self.getNormData() 
+        for index in xrange(len(normdata[0])):
+            pylab.plot(times, normdata[:, index])
+        pylab.show()
         
-def getNorm(data, elapsedTime, phiBase):
-    if not hasattr(data, 'previousIndex'):
-        index = 1
-    else:
-        index = data.previousIndex 
-    latestIndex = data.getLatestIndex()
-    while index <= latestIndex and data[index]['elapsedTime'] < elapsedTime:
-        index += 1
-    data.previousIndex = index - 1    
+    def getNormData(self):
+        basedata = DictTable(self.basedatafile, 'r')
+        norms = []
+        times = []
+        latestIndex = basedata.getLatestIndex()
+        datas = [DictTable(datafile, 'r') for datafile in self.datafiles]
+        
+        for index in xrange(0, latestIndex, 30):
+            print index
+            elapsedTime = basedata[index]['elapsedTime']
+            phiBase = basedata[index]['distance']
+            norms0 = []
+            for data in datas:
+                norm = self.getNorm(data, elapsedTime, phiBase)
+                norms0.append(norm)
+            norms.append(norms0)
+            times.append(elapsedTime)
 
-    t0 = data[index - 1]['elapsedTime']
-    t1 = data[index]['elapsedTime']
-    alpha = (elapsedTime - t0) / (t1 - t0)
-    phi0 = data[index - 1]['distance']
-    phi1 = data[index]['distance']
-    phi = phi0 * (1 - alpha) + phi1 * alpha
-    dx = data[index]['dx']
-    if elapsedTime > 1000.:
-        plotContour(data, index)
-    diff = abs(phi - phiBase) / dx
-    diff[abs(phiBase) > 4 * dx] = 0.
+        return np.array(times), np.array(norms)
 
-    return max(diff)
+    def getNorm(self, data, elapsedTime, phiBase):
+        phi = self.getInterpolatedDistanceFunction(elapsedTime, data)
+        dx = data[0]['dx']
+        diff = abs(phi - phiBase) / dx
+        diff[abs(phiBase) > 4 * dx] = 0.
+        
+        return max(diff)
     
 #     if elapsedTime > 1000:
 #         ID = np.argmax(abs(phi - phiBase))
@@ -62,32 +77,45 @@ def getNorm(data, elapsedTime, phiBase):
 #     return max(abs(phi - phiBase)) / dx
 # #    return np.sum((phi - phiBase)**2)
 
-def plotNorms():
-    times, normdata = getNormData() 
-    for index in xrange(len(normdata[0])):
-        pylab.plot(times, normdata[:, index])
-    pylab.show()
 
-def plotContour(data, index):
-    dx = data[index]['dx']
-    dy = data[index]['dy']
-    nx = data[index]['nx']
-    ny = data[index]['ny']
-    import fipy as fp
-    mesh = fp.Grid2D(nx=nx, ny=ny, dx=dx, dy=dy)
-    shape = (ny, nx)
-    x = np.reshape(mesh.x.value, shape)
-    y = np.reshape(mesh.y.value, shape)
-    phi = np.reshape(data[index]['distance'], shape)
-    pylab.contour(x, y, phi, (0.,), colors='black')
-    pylab.show()
-    
-    
-    
+class ContourViewer(BaseViewer):
+    def __init__(self, time, datafiles, contours=(0,)):
+        self.time = time
+        self.datafiles = datafiles
+        self.contours = contours
+
+    def plot(self):
+        for datafile in self.datafiles:
+            self._plot(datafile)
+        pylab.show()
+        
+    def _plot(self, datafile):
+        data = DictTable(datafile, 'r')
+        data0 = data[0]
+        dx = data0['dx']
+        dy = data0['dy']
+        nx = data0['nx']
+        ny = data0['ny']
+        import fipy as fp
+        mesh = fp.Grid2D(nx=nx, ny=ny, dx=dx, dy=dy)
+        shape = (ny, nx)
+        x = np.reshape(mesh.x.value, shape)
+        y = np.reshape(mesh.y.value, shape)
+        phi = self.getInterpolatedDistanceFunction(self.time, data)
+        phi = np.reshape(phi, shape)
+        pylab.contour(x, y, phi, self.contours, colors='black')
+        
 if __name__ == '__main__':
     ##    from profiler import calibrate_profiler
     ##    from profiler import Profiler
     ##    fudge = calibrate_profiler(10000)
     ##    profile = Profiler('profile', fudge=fudge)
-    plotNorms()
+    import os
+    datafiles = []
+    for datafile in ('cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5'):
+        datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
+
+    ContourViewer(4000., datafiles, (-1e-5, 0, 1e-5)).plot()
+    # viewer = CFLViewer(basedatafile=datafiles[0], datafiles=datafiles[1:])
+    # viewer.plot()
     ##    profile.stop()
