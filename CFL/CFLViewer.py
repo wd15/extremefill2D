@@ -21,44 +21,35 @@ class BaseViewer(object):
         return phi0 * (1 - alpha) + phi1 * alpha
 
 class CFLViewer(BaseViewer):
-    def __init__(self, datafiles, basedatafile):
+    def __init__(self, datafiles, times=None):
         self.datafiles = datafiles
-        self.basedatafile = basedatafile
+        self.times = times
 
     def plot(self):
-        times, normdata = self.getNormData() 
-        for index in xrange(len(normdata[0])):
-            pylab.plot(times, normdata[:, index])
+        for datafile in self.datafiles[1:]:
+            data = DictTable(datafile, 'r')
+            label = datafile.strip('.h5').strip('CFL/cfl')
+            t, d = self.getNormData(data)
+            pylab.plot(t, d, label=label)
+        pylab.legend()
         pylab.show()
-        
-    def getNormData(self):
-        basedata = DictTable(self.basedatafile, 'r')
+
+    def getNormData(self, data):
+        basedata = DictTable(self.datafiles[0], 'r')
         norms = []
-        times = []
-        latestIndex = basedata.getLatestIndex()
-        datas = [DictTable(datafile, 'r') for datafile in self.datafiles]
-        
-        for index in xrange(0, latestIndex, 30):
-            print index
-            elapsedTime = basedata[index]['elapsedTime']
-            phiBase = basedata[index]['distance']
-            norms0 = []
-            for data in datas:
-                norm = self.getNorm(data, elapsedTime, phiBase)
-                norms0.append(norm)
-            norms.append(norms0)
-            times.append(elapsedTime)
+        dx = basedata[0]['dx']
+        print dx
+        for time in self.times:
+            print time
+            phiBase = self.getInterpolatedDistanceFunction(time, basedata)
+            phi = self.getInterpolatedDistanceFunction(time, data)
+            diff = abs(phi - phiBase) / dx
+            diff[abs(phiBase) > 10 * dx] = 0.
+            norm2 = np.sqrt(np.sum(diff**2))
+            norms.append(norm2)
 
-        return np.array(times), np.array(norms)
+        return np.array(self.times), np.array(norms)
 
-    def getNorm(self, data, elapsedTime, phiBase):
-        phi = self.getInterpolatedDistanceFunction(elapsedTime, data)
-        dx = data[0]['dx']
-        diff = abs(phi - phiBase) / dx
-        diff[abs(phiBase) > 4 * dx] = 0.
-        
-        return max(diff)
-    
 #     if elapsedTime > 1000:
 #         ID = np.argmax(abs(phi - phiBase))
 #         diff = abs(phi - phiBase)
@@ -112,10 +103,10 @@ if __name__ == '__main__':
     ##    profile = Profiler('profile', fudge=fudge)
     import os
     datafiles = []
-    for datafile in ('cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5'):
+    for datafile in ('cfl0.025.h5', 'cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
         datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
 
-    ContourViewer(4000., datafiles, (-1e-5, 0, 1e-5)).plot()
-    # viewer = CFLViewer(basedatafile=datafiles[0], datafiles=datafiles[1:])
+    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
+    # viewer = CFLViewer(datafiles=datafiles, times=np.arange(100) * 4500. / 99.)
     # viewer.plot()
     ##    profile.stop()
