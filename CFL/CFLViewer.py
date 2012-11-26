@@ -28,19 +28,19 @@ class CFLViewer(BaseViewer):
     def plot(self):
         for datafile in self.datafiles[1:]:
             data = DictTable(datafile, 'r')
-            label = datafile.strip('.h5').strip('CFL/cfl')
             t, d = self.getNormData(data)
-            pylab.plot(t, d, label=label)
+            pylab.plot(t, d, label=datafile[7:-3])
+        pylab.ylabel(r'$\|\frac{\phi - \phi_0}{\Delta x}\|$', rotation='horizontal')
+        pylab.xlabel(r'$t$ (s)')
         pylab.legend()
+        pylab.savefig('CFLNorm2.png')
         pylab.show()
 
     def getNormData(self, data):
         basedata = DictTable(self.datafiles[0], 'r')
         norms = []
         dx = basedata[0]['dx']
-        print dx
         for time in self.times:
-            print time
             phiBase = self.getInterpolatedDistanceFunction(time, basedata)
             phi = self.getInterpolatedDistanceFunction(time, data)
             diff = abs(phi - phiBase) / dx
@@ -49,25 +49,6 @@ class CFLViewer(BaseViewer):
             norms.append(norm2)
 
         return np.array(self.times), np.array(norms)
-
-#     if elapsedTime > 1000:
-#         ID = np.argmax(abs(phi - phiBase))
-#         diff = abs(phi - phiBase)
-#         diff[abs(phiBase) > 2 * dx] = 0.
-#         print 'diff max',max(diff) / dx
-#         print 'max(abs(phi - phiBase)) / dx',max(abs(phi - phiBase)) / dx
-#         print 'elapsedTime',elapsedTime
-#         print 't0',t0,'t1',t1
-#         print 'phi[ID]',phi[ID]
-#         print 'phiBase[ID]',phiBase[ID]
-#         print 'phi0[ID]',phi0[ID]
-#         print 'phi1[ID]',phi1[ID]
-#         print 'dx',dx
-#         print "ID",ID
-#         raw_input('stopped')
-#     return max(abs(phi - phiBase)) / dx
-# #    return np.sum((phi - phiBase)**2)
-
 
 class ContourViewer(BaseViewer):
     def __init__(self, time, datafiles, contours=(0,)):
@@ -106,7 +87,8 @@ if __name__ == '__main__':
     for datafile in ('cfl0.025.h5', 'cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
         datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
 
-    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
-    # viewer = CFLViewer(datafiles=datafiles, times=np.arange(100) * 4500. / 99.)
-    # viewer.plot()
+    # ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
+    Npoints = 10
+    viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
+    viewer.plot()
     ##    profile.stop()
