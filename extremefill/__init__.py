@@ -1,28 +1,29 @@
-from extremefill.kPlusViewer import KPlusViewer
-from extremefill.kMinusViewer import KMinusViewer
-from extremefill.appliedPotentialViewer import AppliedPotentialViewer
-from extremefill.deltaRefViewer import DeltaRefViewer
-from extremefill.featureDepthViewer import FeatureDepthViewer
-from extremefill.kPlusVkMinusViewer import KPlusVkMinusViewer
-from extremefill.appliedPotentialVbulkSuppressorViewer import AppliedPotentialVbulkSuppressorViewer
-from extremefill.bulkSuppressorViewer import BulkSuppressorViewer
-from extremefill.schematicViewer import SchematicViewer
 import extremefill.pseudo2DSimulation
 import extremefill.simulation1D
 import extremefill.simulation2D
 from extremefill.pseudo2DSimulation import Pseudo2DSimulation
 
 ## figure ordering from the paper
-viewers = (None,
-           SchematicViewer,
-           KPlusViewer,
-           KMinusViewer,
-           KPlusVkMinusViewer,
-           FeatureDepthViewer,
-           DeltaRefViewer,
-           AppliedPotentialViewer,
-           BulkSuppressorViewer,
-           AppliedPotentialVbulkSuppressorViewer)
+def getViewers():
+    from extremefill.kPlusViewer import KPlusViewer
+    from extremefill.kMinusViewer import KMinusViewer
+    from extremefill.appliedPotentialViewer import AppliedPotentialViewer
+    from extremefill.deltaRefViewer import DeltaRefViewer
+    from extremefill.featureDepthViewer import FeatureDepthViewer
+    from extremefill.kPlusVkMinusViewer import KPlusVkMinusViewer
+    from extremefill.appliedPotentialVbulkSuppressorViewer import AppliedPotentialVbulkSuppressorViewer
+    from extremefill.bulkSuppressorViewer import BulkSuppressorViewer
+    from extremefill.schematicViewer import SchematicViewer
+    return (None,
+            SchematicViewer,
+            KPlusViewer,
+            KMinusViewer,
+            KPlusVkMinusViewer,
+            FeatureDepthViewer,
+            DeltaRefViewer,
+            AppliedPotentialViewer,
+            BulkSuppressorViewer,
+            AppliedPotentialVbulkSuppressorViewer)
 
 def generateFigures(fignumbers=(2, 3, 4, 5, 6, 7, 8, 9, 10), filesuffix=('.png',), datafile='data.h5'):
     r"""
@@ -49,7 +50,7 @@ def generateFigures(fignumbers=(2, 3, 4, 5, 6, 7, 8, 9, 10), filesuffix=('.png',
         fignumbers = [fignumbers]
 
     for number in fignumbers:
-        Viewer = viewers[number - 1]
+        Viewer = getViewers()[number - 1]
         if Viewer is not None:
             Viewer(datafile=datafile).plot(filesuffix=filesuffix)
 
