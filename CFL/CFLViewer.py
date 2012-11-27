@@ -29,7 +29,7 @@ class CFLViewer(BaseViewer):
         for datafile in self.datafiles[1:]:
             data = DictTable(datafile, 'r')
             t, d = self.getNormData(data)
-            pylab.plot(t, d, label=datafile[7:-3])
+            pylab.plot(t, d, label=datafile[:-3])
         pylab.ylabel(r'$\|\frac{\phi - \phi_0}{\Delta x}\|$', rotation='horizontal')
         pylab.xlabel(r'$t$ (s)')
         pylab.legend()
@@ -84,11 +84,14 @@ if __name__ == '__main__':
     ##    profile = Profiler('profile', fudge=fudge)
     import os
     datafiles = []
-    for datafile in ('cfl0.025.h5', 'cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
-        datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
+    # for datafile in ('cfl0.025.h5', 'cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
+    #     datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
 
-    # ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
-    Npoints = 10
-    viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
-    viewer.plot()
+    for datafile in ('cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
+        datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
+        
+    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
+    # Npoints = 10
+    # viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
+    # viewer.plot()
     ##    profile.stop()

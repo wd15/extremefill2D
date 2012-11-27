@@ -47,7 +47,8 @@ class Simulation(object):
             Nx=1000,
             CFL=None,
             dataFile=None,
-            totalTime=1e+100):
+            totalTime=1e+100,
+            Nnarrow=20):
         
         r"""
         Run an individual simulation.
@@ -86,7 +87,7 @@ class Simulation(object):
           - `capacitance`: capacitance
           - `Nx`: number of grid points in the x-direction
           - `CFL`: CFL number
-          
+          - `Nnarrow` : number of cells front covers before reinitializing
         """
 
         Fbar = faradaysConstant / gasConstant / temperature
@@ -191,7 +192,6 @@ class Simulation(object):
                 self.writeData(dataFile, elapsedTime, distance, step)
             
             if CFL is not None:
-                Nnarrow = 20
                 LSFrequency = int(0.7 * Nnarrow  / CFL / 2)
 
                 if step % LSFrequency == 0:
