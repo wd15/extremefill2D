@@ -1,6 +1,7 @@
 from extremefill.simulation2D import Simulation2D
 import tempfile
 import os
+import shutil
 
 simulation = Simulation2D()
 (f, datafile) = tempfile.mkstemp(suffix='.h5')
@@ -10,9 +11,8 @@ simulation.run(view=False, totalSteps=5, sweeps=30, dt=0.01, tol=1e-1, Nx=300, C
 
 tail, head = os.path.split(datafile)
 tail, tmp = os.path.split(__file__)
-print 'datafile',datafile
-print 'os.path.join(tail, head)', 
-os.rename(datafile, os.path.join(tail, head))
+
+shutil.move(datafile, os.path.join(tail, head))
 
 
 
