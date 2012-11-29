@@ -17,7 +17,7 @@ def run(CFL=0.4, h5file=None):
     shutil.move(datafile, h5file)
 
 def create_qsubfile(pystring):
-    f, filename = tempfile.mkstemp(suffix='', dir='.', text=True)
+    f, filename = tempfile.mkstemp(suffix='', text=True)
     f = os.fdopen(f, 'w')
     commands = ['#!/bin/bash\n',
                 'source ~/.bashrc\n',
@@ -38,7 +38,7 @@ qsub.run(CFL={CFL},
          h5file={h5file})'''.format(CFL=CFLfrac / 1000., h5file=h5file)
         qsubfile = create_qsubfile(pystring)
         subprocess.call(['qsub', '-cwd', qsubfile])
-#        os.remove(qsubfile)
+        os.remove(qsubfile)
 
 if __name__ == '__main__':
     submit()
