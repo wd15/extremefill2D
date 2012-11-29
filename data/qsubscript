@@ -1,4 +1,0 @@
-#!/bin/bash
-source ~/.bashrc
-workon fipy
-python tmp0.4.py
