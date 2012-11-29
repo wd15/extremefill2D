@@ -48,7 +48,8 @@ class Simulation(object):
             CFL=None,
             dataFile=None,
             totalTime=1e+100,
-            Nnarrow=20):
+            Nnarrow=20,
+            data_frequency=1):
         
         r"""
         Run an individual simulation.
@@ -188,7 +189,7 @@ class Simulation(object):
             suppressor.updateOld()
             theta.updateOld()
 
-            if dataFile is not None:
+            if dataFile is not None and step % data_frequency == 0:
                 self.writeData(dataFile, elapsedTime, distance, step)
             
             if CFL is not None:
