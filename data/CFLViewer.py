@@ -41,6 +41,7 @@ class CFLViewer(BaseViewer):
         norms = []
         dx = basedata[0]['dx']
         for time in self.times:
+            print 'time',time
             phiBase = self.getInterpolatedDistanceFunction(time, basedata)
             phi = self.getInterpolatedDistanceFunction(time, data)
             diff = abs(phi - phiBase) / dx
@@ -89,11 +90,11 @@ if __name__ == '__main__':
 
     
 
-    for datafile in ('tmphIql5Ojob-CFL-100.h5', 'tmpil2kLzjob-CFL-200.h5'):
+    for datafile in ('tmprZ6dKLjob-CFL-25.h5', 'tmpzoIMKzjob-CFL-50.h5', 'tmphIql5Ojob-CFL-100.h5', 'tmpil2kLzjob-CFL-200.h5'):
         datafiles += [os.path.join('out', datafile)]
         
 ##    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
-    # Npoints = 10
-    # viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
-    # viewer.plot()  
-  ##    profile.stop()
+    Npoints = 10
+    viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
+    viewer.plot()    ##    
+
