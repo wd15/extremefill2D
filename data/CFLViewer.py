@@ -87,11 +87,13 @@ if __name__ == '__main__':
     # for datafile in ('cfl0.025.h5', 'cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
     #     datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
 
-    for datafile in ('cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
-        datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
+    
+
+    for datafile in ('tmphIql5Ojob-CFL-100.h5', 'tmpil2kLzjob-CFL-200.h5'):
+        datafiles += [os.path.join('out', datafile)]
         
-    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
+##    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
     # Npoints = 10
     # viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
-    # viewer.plot()
-    ##    profile.stop()
+    # viewer.plot()  
+  ##    profile.stop()
