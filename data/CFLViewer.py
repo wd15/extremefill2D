@@ -4,19 +4,23 @@ import numpy as np
 
 class BaseViewer(object):
     def getInterpolatedDistanceFunction(self, time, data):
+        indexJump = 10
+
         if hasattr(data, 'index'):
             index = data.index
         else:
-            index = 1
+            index = indexJump
+
         latestIndex = data.getLatestIndex()
         while index <= latestIndex and data[index]['elapsedTime'] < time:
-            index += 1
-        data.index = index - 1
+            index += indexJump
+
+        data.index = index - indexJump
             
-        t0 = data[index - 1]['elapsedTime']
+        t0 = data[index - indexJump]['elapsedTime']
         t1 = data[index]['elapsedTime']
         alpha = (time - t0) / (t1 - t0)
-        phi0 = data[index - 1]['distance']
+        phi0 = data[index - indexJump]['distance']
         phi1 = data[index]['distance']
         return phi0 * (1 - alpha) + phi1 * alpha
 
@@ -77,24 +81,12 @@ class ContourViewer(BaseViewer):
         phi = self.getInterpolatedDistanceFunction(self.time, data)
         phi = np.reshape(phi, shape)
         pylab.contour(x, y, phi, self.contours, colors='black')
-        
+        pylab.savefig('contour.png')
+
 if __name__ == '__main__':
-    ##    from profiler import calibrate_profiler
-    ##    from profiler import Profiler
-    ##    fudge = calibrate_profiler(10000)
-    ##    profile = Profiler('profile', fudge=fudge)
-    import os
-    datafiles = []
-    # for datafile in ('cfl0.025.h5', 'cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
-    #     datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
-
-    
-
-    for datafile in ('tmprZ6dKLjob-CFL-25.h5', 'tmpzoIMKzjob-CFL-50.h5', 'tmphIql5Ojob-CFL-100.h5', 'tmpil2kLzjob-CFL-200.h5'):
-        datafiles += [os.path.join('out', datafile)]
+    datafiles = ('CFL25.h5', 'CFL50.h5', 'CFL100.h5', 'CFL200.h5', 'CFL400.h5', 'CFL800.h5')
         
-##    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
-    Npoints = 10
+    # ContourViewer(1000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
+    Npoints = 100
     viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
-    viewer.plot()    ##    
-
+    viewer.plot()  

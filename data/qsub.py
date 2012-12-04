@@ -5,7 +5,7 @@ import subprocess
 
 from extremefill.simulation2D import Simulation2D
 
-def run(CFL=0.4, h5file=None):
+def run(CFL=0.4, h5file=None, Nx=300):
     simulation = Simulation2D()
     (f, datafile) = tempfile.mkstemp(suffix='.h5')
 
@@ -14,7 +14,7 @@ def run(CFL=0.4, h5file=None):
                    sweeps=30,
                    dt=0.01,
                    tol=1e-1,
-                   Nx=300,
+                   Nx=Nx,
                    CFL=CFL,
                    PRINT=True,
                    areaRatio=2 * 0.093,
@@ -40,20 +40,22 @@ def write_qsubfile(pystring, qsubfile):
     f.close()
 
 def submit():
-    data_dir = 'out'
-    for CFLfrac in (400, 200, 100, 50, 25):
-        suffix = 'job-CFL-{CFLfrac}'.format(CFLfrac=CFLfrac)
-        f, qsubfile = tempfile.mkstemp(suffix=suffix, dir=data_dir)
-        h5file = os.path.join(data_dir, qsubfile + '.h5')
+
+    CFLfrac = 400
+    for Nx in (150, 300, 600, 1200):
+        suffix = 'CFL{CFLfrac}Nx{Nx}'.format(CFLfrac=CFLfrac, Nx=Nx)
+        qsubfile = suffix + '.qsub'
+        h5file = suffix + '.h5'
 
         pystring = """
 import qsub;
 qsub.run(CFL={CFL},
-         h5file='{h5file}')""".format(CFL=CFLfrac / 1000., h5file=h5file)
+         h5file='{h5file}',
+         Nx={Nx})""".format(CFL=CFLfrac / 1000., h5file=h5file, Nx=Nx)
 
         write_qsubfile(pystring, qsubfile)
-        efile = os.path.join(data_dir, '$JOB_NAME.e$JOB_ID')
-        ofile = os.path.join(data_dir, '$JOB_NAME.o$JOB_ID')
+        efile = '$JOB_NAME.e$JOB_ID'
+        ofile = '$JOB_NAME.o$JOB_ID'
         subprocess.call(['qsub', '-cwd', '-e', efile, '-o', ofile, qsubfile])
 
 if __name__ == '__main__':
