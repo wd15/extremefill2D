@@ -7,16 +7,18 @@ class BaseViewer(object):
         if hasattr(data, 'index'):
             index = data.index
         else:
-            index = 1
+            index = 10
+
         latestIndex = data.getLatestIndex()
+        indexJump = 10
         while index <= latestIndex and data[index]['elapsedTime'] < time:
-            index += 1
-        data.index = index - 1
+            index += indexJump
+        data.index = index - indexJump
             
-        t0 = data[index - 1]['elapsedTime']
+        t0 = data[index - indexJump]['elapsedTime']
         t1 = data[index]['elapsedTime']
         alpha = (time - t0) / (t1 - t0)
-        phi0 = data[index - 1]['distance']
+        phi0 = data[index - indexJump]['distance']
         phi1 = data[index]['distance']
         return phi0 * (1 - alpha) + phi1 * alpha
 
@@ -52,18 +54,19 @@ class CFLViewer(BaseViewer):
         return np.array(self.times), np.array(norms)
 
 class ContourViewer(BaseViewer):
-    def __init__(self, time, datafiles, contours=(0,)):
+    def __init__(self, time, h5nodes, contours=(0,), datafile='data.h5'):
         self.time = time
-        self.datafiles = datafiles
+        self.h5nodes = h5nodes
         self.contours = contours
+        self.datafile = datafile
 
     def plot(self):
-        for datafile in self.datafiles:
-            self._plot(datafile)
+        data = DictTable(self.datafile, 'r')
+        for node in self.h5nodes:
+            self._plot(data)
         pylab.show()
         
-    def _plot(self, datafile):
-        data = DictTable(datafile, 'r')
+    def _plot(self, data):
         data0 = data[0]
         dx = data0['dx']
         dy = data0['dy']
@@ -77,24 +80,12 @@ class ContourViewer(BaseViewer):
         phi = self.getInterpolatedDistanceFunction(self.time, data)
         phi = np.reshape(phi, shape)
         pylab.contour(x, y, phi, self.contours, colors='black')
+        pylab.savefig('contour.png')
         
 if __name__ == '__main__':
-    ##    from profiler import calibrate_profiler
-    ##    from profiler import Profiler
-    ##    fudge = calibrate_profiler(10000)
-    ##    profile = Profiler('profile', fudge=fudge)
-    import os
-    datafiles = []
-    # for datafile in ('cfl0.025.h5', 'cfl0.05.h5', 'cfl0.1.h5', 'cfl0.2.h5', 'cfl0.4.h5'):
-    #     datafiles += [os.path.join(os.path.split(__file__)[0], datafile)]
-
-    
-
-    for datafile in ('tmprZ6dKLjob-CFL-25.h5', 'tmpzoIMKzjob-CFL-50.h5', 'tmphIql5Ojob-CFL-100.h5', 'tmpil2kLzjob-CFL-200.h5'):
-        datafiles += [os.path.join('out', datafile)]
-        
-##    ContourViewer(4000., datafiles, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
-    Npoints = 10
-    viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
-    viewer.plot()    ##    
-
+    h5nodes = ('CFL-25', 'CFL-50', 'CFL-100', 'CFL-200', 'CFL-400')
+    ContourViewer(3000., h5nodes, (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5)).plot()
+    # Npoints = 10
+    # viewer = CFLViewer(datafiles=datafiles, times=np.arange(Npoints) * 4000. / (Npoints - 1))
+    # viewer.plot()    ##   
+ 
