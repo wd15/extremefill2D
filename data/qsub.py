@@ -21,7 +21,6 @@ def run(CFL=0.4, h5file=None, Nx=300):
                    dtMax=100.,
                    dataFile=datafile,
                    totalTime=5000.,
-                   Nnarrow=100000000000,
                    data_frequency=10)
 
     if h5file is None:
@@ -39,27 +38,39 @@ def write_qsubfile(pystring, qsubfile):
     f.writelines(commands)
     f.close()
 
-def submit():
+def submit(Nx, CFLfrac):
+    suffix = 'CFL{CFLfrac}Nx{Nx}'.format(CFLfrac=CFLfrac, Nx=Nx)
+    qsubfile = suffix + '.qsub'
+    h5file = suffix + '.h5'
 
-    CFLfrac = 400
-    for Nx in (150, 300, 600, 1200):
-        suffix = 'CFL{CFLfrac}Nx{Nx}'.format(CFLfrac=CFLfrac, Nx=Nx)
-        qsubfile = suffix + '.qsub'
-        h5file = suffix + '.h5'
-
-        pystring = """
+    pystring = """
 import qsub;
 qsub.run(CFL={CFL},
          h5file='{h5file}',
          Nx={Nx})""".format(CFL=CFLfrac / 1000., h5file=h5file, Nx=Nx)
 
-        write_qsubfile(pystring, qsubfile)
-        efile = '$JOB_NAME.e$JOB_ID'
-        ofile = '$JOB_NAME.o$JOB_ID'
-        subprocess.call(['qsub', '-cwd', '-e', efile, '-o', ofile, qsubfile])
+    write_qsubfile(pystring, qsubfile)
+    efile = '$JOB_NAME.e$JOB_ID'
+    ofile = '$JOB_NAME.o$JOB_ID'
+    subprocess.call(['qsub', '-cwd', '-e', efile, '-o', ofile, qsubfile])
+
+    
+
+
+def submit_multiple_old ():
+
+    CFLfrac = 200
+    for Nx in (150, 600, 1200):
+        submit(Nx, CFLfrac)
+
+    Nx = 300
+    for CFLfrac in (800, 400, 200, 100, 50, 25):
+        submit(Nx, CFLfrac)
+
 
 if __name__ == '__main__':
-    submit()
+    submit(2400, 200)
+#    submit_multiple()
 
                     
                     

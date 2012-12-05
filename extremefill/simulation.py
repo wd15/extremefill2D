@@ -48,7 +48,7 @@ class Simulation(object):
             CFL=None,
             dataFile=None,
             totalTime=1e+100,
-            Nnarrow=20,
+            narrow_distance=None,
             data_frequency=1):
         
         r"""
@@ -88,7 +88,7 @@ class Simulation(object):
           - `capacitance`: capacitance
           - `Nx`: number of grid points in the x-direction
           - `CFL`: CFL number
-          - `Nnarrow` : number of cells front covers before reinitializing
+          - `narrow_distance` : distance front covers before reinitializing
         """
 
         Fbar = faradaysConstant / gasConstant / temperature
@@ -193,7 +193,9 @@ class Simulation(object):
                 self.writeData(dataFile, elapsedTime, distance, step)
             
             if CFL is not None:
-                LSFrequency = int(0.7 * Nnarrow  / CFL / 2)
+                if narrow_distance is None:
+                    narrow_distance = featureDepth / 5.
+                LSFrequency = int(narrow_distance / dx / CFL)
 
                 if step % LSFrequency == 0:
                     self.calcDistanceFunction(distance)
