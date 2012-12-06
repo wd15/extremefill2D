@@ -47,7 +47,9 @@ class Simulation(object):
             Nx=1000,
             CFL=None,
             dataFile=None,
-            totalTime=1e+100):
+            totalTime=1e+100,
+            narrow_distance=None,
+            data_frequency=1):
         
         r"""
         Run an individual simulation.
@@ -86,7 +88,7 @@ class Simulation(object):
           - `capacitance`: capacitance
           - `Nx`: number of grid points in the x-direction
           - `CFL`: CFL number
-          
+          - `narrow_distance` : distance front covers before reinitializing
         """
 
         Fbar = faradaysConstant / gasConstant / temperature
@@ -187,12 +189,13 @@ class Simulation(object):
             suppressor.updateOld()
             theta.updateOld()
 
-            if dataFile is not None:
+            if dataFile is not None and step % data_frequency == 0:
                 self.writeData(dataFile, elapsedTime, distance, step)
             
             if CFL is not None:
-                Nnarrow = 20
-                LSFrequency = int(0.7 * Nnarrow  / CFL / 2)
+                if narrow_distance is None:
+                    narrow_distance = featureDepth / 5.
+                LSFrequency = int(narrow_distance / dx / CFL)
 
                 if step % LSFrequency == 0:
                     self.calcDistanceFunction(distance)
