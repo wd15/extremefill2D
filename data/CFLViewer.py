@@ -12,6 +12,7 @@ class BaseViewer(object):
             index = indexJump
 
         latestIndex = data.getLatestIndex()
+        indexJump = 10
         while index <= latestIndex and data[index]['elapsedTime'] < time:
             index += indexJump
 
@@ -56,18 +57,19 @@ class CFLViewer(BaseViewer):
         return np.array(self.times), np.array(norms)
 
 class ContourViewer(BaseViewer):
-    def __init__(self, time, datafiles, contours=(0,)):
+    def __init__(self, time, h5nodes, contours=(0,), datafile='data.h5'):
         self.time = time
-        self.datafiles = datafiles
+        self.h5nodes = h5nodes
         self.contours = contours
+        self.datafile = datafile
 
     def plot(self):
-        for datafile in self.datafiles:
-            self._plot(datafile)
+        data = DictTable(self.datafile, 'r')
+        for node in self.h5nodes:
+            self._plot(data)
         pylab.show()
         
-    def _plot(self, datafile):
-        data = DictTable(datafile, 'r')
+    def _plot(self, data):
         data0 = data[0]
         dx = data0['dx']
         dy = data0['dy']
