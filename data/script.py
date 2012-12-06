@@ -14,11 +14,10 @@ def run(CFL=0.4):
                    dtMax=100.,
                    dataFile='data.h5',
                    totalTime=5000.,
-                   Nnarrow=100000000000,
                    data_frequency=10)
 
     return 'data.h5'
 
 if __name__ == '__main__':
-    from pygit import qsubmit
+    from gitqsub import qsubmit
     qsubmit(callBack=run, newbranch='CFL0.2', CFL=0.2)
