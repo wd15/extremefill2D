@@ -84,11 +84,12 @@ def gitLaunch(callBack,
     f = open(callbackfile, 'w')
     argList = ['{k}={v}'.format(k=k, v=v) for k, v in kwargs.iteritems()]
     s = 'from ' + callBack.func_globals['__name__'] + ' import ' + callBack.func_name + '\n'
-    s += callBack.func_name + '(' +  ', '.join(argList) + ')'
+    s += 'datafile = ' + callBack.func_name + '(' +  ', '.join(argList) + ')'
     f.write(s)
     f.close()
 
-    datafile = callBack(**kwargs)
+    import callback
+    datafile = callback.datafile
 
     if datafile is not None:
         gitMediaAttributes(os.path.splitext(datafile)[1])
@@ -116,16 +117,16 @@ def write_qsubfile(pystring, qsubfile):
     f.close()
 
 def qsubmit(callBack,
-           oldbranch=gitHEAD(),
-           newbranch=gitHEAD() + '-git-launch-branch',
-           subdirectory=os.path.relpath(os.getcwd(),  gitTopLevel()),
-           **kwargs):
+            oldbranch=gitHEAD(),
+            newbranch=gitHEAD() + '-git-launch-branch',
+            subdirectory=os.path.relpath(os.getcwd(),  gitTopLevel()),
+            **kwargs):
 
     qsubfile = newbranch + '.qsub'
     kwargstring = ','.join(['{k}={v}'.format(k=k, v=v) for k, v in kwargs.iteritems()])
- 
+
     pystring = """
-from pygit import gitLaunch
+from gitqsub import gitLaunch
 from {module} import {callBack} as callBack
 gitLaunch(callBack, oldbranch='{oldbranch}', newbranch='{newbranch}', subdirectory='{subdirectory}', {kwargstring})
 """.format(callBack=callBack.__name__,
