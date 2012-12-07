@@ -29,10 +29,8 @@ def gitClone(path):
 def gitCheckout(branch):
     gitCommand(['checkout', branch])
 
-def gitBranch(branch, oldbranch):
-    print gitCommand(['branch', branch])
-    print gitCommand(['checkout', branch])
-    print gitCommand(['merge', oldbranch])
+def gitBranch(branch):
+    gitCommand(['co', '-b', branch])
 
 def gitAdd(f):
     gitCommand(['add', f])
@@ -44,7 +42,7 @@ def gitMediaSync():
     gitCommand(['media', 'sync'])
 
 def gitPushOrigin():
-    print gitCommand(['push', 'origin', 'HEAD'])
+    gitCommand(['push', '-f', 'origin', 'HEAD'])
 
 def gitLaunch(callBack,
               oldbranch=gitHEAD(),
@@ -79,7 +77,7 @@ def gitLaunch(callBack,
     gitClone(repositoryPath)
     os.chdir(os.path.split(repositoryPath)[1])
     gitCheckout(oldbranch)
-    gitBranch(newbranch, oldbranch)
+    gitBranch(newbranch)
     os.chdir(subdirectory)
     
     callbackfile = 'callback.py'
