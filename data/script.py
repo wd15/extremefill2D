@@ -3,7 +3,7 @@ from extremefill.simulation2D import Simulation2D
 def run(CFL=0.2, Nx=300):
     simulation = Simulation2D()
     simulation.run(view=False,
-                   totalSteps=5,
+                   totalSteps=11,
                    sweeps=30,
                    dt=0.01,
                    tol=1e-1,
