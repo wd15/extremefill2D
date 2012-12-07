@@ -24,26 +24,27 @@ def gitMediaAttributes(mediaext):
     f.close()
 
 def gitClone(path):
-    return gitCommand(['clone', path])
+    gitCommand(['clone', path])
 
 def gitCheckout(branch):
-    return gitCommand(['checkout', branch])
+    gitCommand(['checkout', branch])
 
-def gitBranch(branch):
+def gitBranch(branch, oldbranch):
     gitCommand(['branch', branch])
-    return gitCommand(['checkout', branch])
+    gitCommand(['checkout', branch])
+    gitCommand(['merge', oldbranch])
 
 def gitAdd(f):
-    return gitCommand(['add', f])
+    gitCommand(['add', f])
 
 def gitCommit(message):
-    return gitCommand(['commit', '-m', message])
+    gitCommand(['commit', '-m', message])
 
 def gitMediaSync():
-    return gitCommand(['media', 'sync'])
+    gitCommand(['media', 'sync'])
 
 def gitPushOrigin():
-    return gitCommand(['push', 'origin', 'HEAD'])
+    gitCommand(['push', 'origin', 'HEAD'])
 
 def gitLaunch(callBack,
               oldbranch=gitHEAD(),
@@ -78,7 +79,7 @@ def gitLaunch(callBack,
     gitClone(repositoryPath)
     os.chdir(os.path.split(repositoryPath)[1])
     gitCheckout(oldbranch)
-    gitBranch(newbranch)
+    gitBranch(newbranch, oldbranch)
     os.chdir(subdirectory)
     
     callbackfile = 'callback.py'
