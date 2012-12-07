@@ -20,8 +20,10 @@ def run(CFL=0.2, Nx=300):
 
 if __name__ == '__main__':
     from gitqsub import qsubmit
-    for CFL in (0.025, 0.05, 0.1, 0.2, 0.4, 0.8):
-        qsubmit(callBack=run, newbranch='CFL' + str(CFL), CFL=CFL)
+    # for CFL in (0.025, 0.05, 0.1, 0.2, 0.4, 0.8):
+    #     qsubmit(callBack=run, newbranch='CFL' + str(CFL), CFL=CFL)
 
-    for Nx in (150, 300, 600, 1200):
-        qsubmit(callBack=run, newbranch='Nx' + str(Nx), Nx=Nx)
+    # for Nx in (150, 300, 600, 1200):
+    #     qsubmit(callBack=run, newbranch='Nx' + str(Nx), Nx=Nx)
+    CFL = 0.4
+    qsubmit(callBack=run, newbranch='CFL' + str(CFL), CFL=CFL)
