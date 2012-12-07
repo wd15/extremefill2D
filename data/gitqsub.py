@@ -30,7 +30,8 @@ def gitCheckout(branch):
     return gitCommand(['checkout', branch])
 
 def gitBranch(branch):
-    return gitCommand(['checkout', '-b', branch])
+    gitCommand(['branch', branch])
+    return gitCommand(['checkout', branch])
 
 def gitAdd(f):
     return gitCommand(['add', f])
