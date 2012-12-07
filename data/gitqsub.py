@@ -30,9 +30,9 @@ def gitCheckout(branch):
     gitCommand(['checkout', branch])
 
 def gitBranch(branch, oldbranch):
-    gitCommand(['branch', branch])
-    gitCommand(['checkout', branch])
-    gitCommand(['merge', oldbranch])
+    print gitCommand(['branch', branch])
+    print gitCommand(['checkout', branch])
+    print gitCommand(['merge', oldbranch])
 
 def gitAdd(f):
     gitCommand(['add', f])
@@ -44,7 +44,7 @@ def gitMediaSync():
     gitCommand(['media', 'sync'])
 
 def gitPushOrigin():
-    gitCommand(['push', 'origin', 'HEAD'])
+    print gitCommand(['push', 'origin', 'HEAD'])
 
 def gitLaunch(callBack,
               oldbranch=gitHEAD(),
