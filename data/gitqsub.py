@@ -7,10 +7,14 @@ import os
 from subprocess import Popen, PIPE, call
 import shutil
 
-def gitCommand(cmd):    
+def gitCommand(cmd, verbose=False):    
     p = Popen(['git'] + cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
     p.wait()
-    return p.stdout.read()
+    out = p.stdout.read()
+    if verbose:
+        print out
+        print p.stderr.read()
+    return out
 
 def gitTopLevel():
     return gitCommand(['rev-parse', '--show-toplevel']).split()[0]
@@ -23,11 +27,11 @@ def gitMediaAttributes(mediaext):
     f.write("*" + mediaext + " filter=media -crlf")
     f.close()
 
-def gitClone(path):
-    gitCommand(['clone', path])
+def gitClone(path, verbose=False):
+    return gitCommand(['clone', path], verbose=verbose)
 
-def gitCheckout(branch):
-    gitCommand(['checkout', branch])
+def gitCheckout(branch, verbose=False):
+    gitCommand(['checkout', branch], verbose=verbose)
 
 def gitBranch(branch):
     gitCommand(['co', '-b', branch])
@@ -44,10 +48,29 @@ def gitMediaSync():
 def gitPushOrigin():
     gitCommand(['push', '-f', 'origin', 'HEAD'])
 
+def gitFetch(remote='origin'):
+    gitCommand(['fetch', remote])
+    
+def gitCloneToTemp(branch=None, repositoryPath=None, verbose=False):
+    if repositoryPath is None:
+        repositoryPath = gitTopLevel(verbose=verbose)
+    tempdir = tempfile.mkdtemp()
+    os.chdir(tempdir)
+    gitClone(repositoryPath, verbose=verbose)
+    os.chdir(os.path.split(repositoryPath)[1])
+    if branch is not None:
+        gitCheckout(branch, verbose=verbose)
+    return tempdir
+
+def cleanTempRepo(tempdir):
+    os.chdir(tempdir)
+    os.chdir('..')
+    shutil.rmtree(tempdir)
+    
 def gitLaunch(callBack,
-              oldbranch=gitHEAD(),
-              newbranch=gitHEAD() + '-git-launch-branch',
-              subdirectory=os.path.relpath(os.getcwd(),  gitTopLevel()),
+              oldbranch=None,
+              newbranch=None,
+              subdirectory=None,
               **kwargs):
     """
     Creates a temporary directory and checks out a copy of the current
@@ -70,13 +93,16 @@ def gitLaunch(callBack,
 
     """
 
-    repositoryPath=gitTopLevel()
-    tempdir = tempfile.mkdtemp()
-    print tempdir
-    os.chdir(tempdir)
-    gitClone(repositoryPath)
-    os.chdir(os.path.split(repositoryPath)[1])
-    gitCheckout(oldbranch)
+    if oldbranch is None:
+        oldbranch = gitHEAD()
+
+    if newbranch is None:
+        newbranch = gitHEAD() + '-git-launch-branch',
+
+    if subdirectory is None:
+        subdirectory = os.path.relpath(os.getcwd(),  gitTopLevel())
+    
+    tempdir = gitCloneToTemp(branch=oldbranch)
     gitBranch(newbranch)
     os.chdir(subdirectory)
     
@@ -99,9 +125,7 @@ def gitLaunch(callBack,
         gitMediaSync()
         gitPushOrigin()
 
-    os.chdir(tempdir)
-    os.chdir('..')
-    shutil.rmtree(tempdir)
+    cleanTempRepo(tempdir)
     
 def getVirtualenv():
     return os.path.split(os.environ.get('VIRTUAL_ENV'))[1]
