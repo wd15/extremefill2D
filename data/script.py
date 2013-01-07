@@ -23,5 +23,3 @@ if __name__ == '__main__':
     for CFL in (0.0125, 1.6):
         qsubmit(callBack=run, newbranch='CFL' + str(CFL), CFL=CFL)
 
-    for Nx in (150, 300, 600, 1200):
-        qsubmit(callBack=run, newbranch='Nx' + str(Nx), Nx=Nx)
