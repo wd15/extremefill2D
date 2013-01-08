@@ -64,7 +64,7 @@ class CFLViewer(BaseViewer):
             phi = self.getInterpolatedDistanceFunction(time, data)
             diff = abs(phi - phiBase) / dx
             diff[abs(phiBase) > 10 * dx] = 0.
-            norm2 = np.sqrt(np.sum(diff**2))
+            norm2 = np.sqrt(np.sum(diff**2) / len(diff))
             norms.append(norm2)
 
         return np.array(self.times), np.array(norms)
