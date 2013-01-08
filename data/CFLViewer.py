@@ -51,6 +51,7 @@ class CFLViewer(BaseViewer):
         pylab.xlabel(r'$t$ (s)')
         pylab.legend()
         pylab.savefig('CFLNorm2.png')
+        pylab.show()
 
     def getNormData(self, data):
         norms = []

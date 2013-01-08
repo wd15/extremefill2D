@@ -50,7 +50,10 @@ def gitPushOrigin():
 
 def gitFetch(remote='origin'):
     gitCommand(['fetch', remote])
-    
+
+def gitCurrentCommit():
+    return gitCommand(['log', '--oneline', '-1', '--abbrev=12', '--format="%h"'])
+
 def gitCloneToTemp(branch=None, repositoryPath=None, verbose=False):
     if repositoryPath is None:
         repositoryPath = gitTopLevel(verbose=verbose)
