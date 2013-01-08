@@ -16,8 +16,8 @@ def gitCommand(cmd, verbose=False):
         print p.stderr.read()
     return out
 
-def gitTopLevel():
-    return gitCommand(['rev-parse', '--show-toplevel']).split()[0]
+def gitTopLevel(verbose=False):
+    return gitCommand(['rev-parse', '--show-toplevel'], verbose=verbose).split()[0]
 
 def gitHEAD():
     return gitCommand(['rev-parse', '--abbrev-ref', 'HEAD']).split()[0]
