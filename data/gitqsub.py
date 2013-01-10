@@ -42,8 +42,8 @@ def gitAdd(f):
 def gitCommit(message):
     gitCommand(['commit', '-m', message])
 
-def gitMediaSync():
-    gitCommand(['media', 'sync'])
+def gitMediaSync(verbose=False):
+    gitCommand(['media', 'sync'], verbose=verbose)
 
 def gitPushOrigin():
     gitCommand(['push', '-f', 'origin', 'HEAD'])
@@ -68,6 +68,7 @@ def cleanTempRepo(tempdir):
     shutil.rmtree(tempdir)
     
 def gitLaunch(callBack,
+              verbose=False,
               oldbranch=None,
               newbranch=None,
               subdirectory=None,
@@ -100,10 +101,10 @@ def gitLaunch(callBack,
         newbranch = gitHEAD() + '-git-launch-branch',
 
     if subdirectory is None:
-        subdirectory = os.path.relpath(os.getcwd(),  gitTopLevel())
+        subdirectory = os.path.relpath(os.getcwd(),  gitTopLevel(verbose=verbose))
     
-    tempdir = gitCloneToTemp(branch=oldbranch)
-    gitBranch(newbranch)
+    tempdir = gitCloneToTemp(branch=oldbranch, verbose=verbose)
+    gitBranch(newbranch, verbose=verbose)
     os.chdir(subdirectory)
     
     callbackfile = 'callback.py'
@@ -122,7 +123,7 @@ def gitLaunch(callBack,
         gitAdd(datafile)
         gitAdd(callbackfile)
         gitCommit("Adding " + datafile + " data file for " + newbranch + ".")
-        gitMediaSync()
+        gitMediaSync(verbose=verbose)
         gitPushOrigin()
 
     cleanTempRepo(tempdir)
@@ -141,6 +142,7 @@ def write_qsubfile(pystring, qsubfile):
     f.close()
 
 def qsubmit(callBack,
+            verbose=False,
             oldbranch=gitHEAD(),
             newbranch=gitHEAD() + '-git-launch-branch',
             subdirectory=os.path.relpath(os.getcwd(),  gitTopLevel()),
@@ -152,9 +154,10 @@ def qsubmit(callBack,
     pystring = """
 from gitqsub import gitLaunch
 from {module} import {callBack} as callBack
-gitLaunch(callBack, oldbranch='{oldbranch}', newbranch='{newbranch}', subdirectory='{subdirectory}', {kwargstring})
+gitLaunch(callBack, verbose='{verbose}', oldbranch='{oldbranch}', newbranch='{newbranch}', subdirectory='{subdirectory}', {kwargstring})
 """.format(callBack=callBack.__name__,
            module=callBack.func_globals['__file__'][:-3],
+           verbose=verbose,
            oldbranch=oldbranch,
            newbranch=newbranch,
            subdirectory=subdirectory,

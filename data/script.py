@@ -1,9 +1,9 @@
 from extremefill.simulation2D import Simulation2D
 
-def run(CFL=0.2, Nx=300):
+def run(CFL=0.2, Nx=300, totalTime=5000., totalSteps=10000000000000):
     simulation = Simulation2D()
     simulation.run(view=False,
-                   totalSteps=1000000000000,
+                   totalSteps=totalSteps,
                    sweeps=30,
                    dt=0.01,
                    tol=1e-1,
@@ -13,13 +13,13 @@ def run(CFL=0.2, Nx=300):
                    areaRatio=2 * 0.093,
                    dtMax=100.,
                    dataFile='data.h5',
-                   totalTime=5000.,
+                   totalTime=totalTime,
                    data_frequency=10)
 
     return 'data.h5'
 
 if __name__ == '__main__':
     from gitqsub import qsubmit
-    for CFL in (0.0125, 1.6):
-        qsubmit(callBack=run, newbranch='CFL' + str(CFL), CFL=CFL)
+    for CFL in (1.6,):
+        qsubmit(callBack=run, verbose=True, newbranch='CFL' + str(CFL), CFL=CFL, totalSteps=1)
 
