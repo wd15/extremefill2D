@@ -33,8 +33,8 @@ def gitClone(path, verbose=False):
 def gitCheckout(branch, verbose=False):
     gitCommand(['checkout', branch], verbose=verbose)
 
-def gitBranch(branch):
-    gitCommand(['co', '-b', branch])
+def gitBranch(branch, verbose=False):
+    gitCommand(['co', '-b', branch], verbose=verbose)
 
 def gitAdd(f):
     gitCommand(['add', f])
@@ -143,6 +143,7 @@ def write_qsubfile(pystring, qsubfile):
 
 def qsubmit(callBack,
             verbose=False,
+            useqsub=True,
             oldbranch=gitHEAD(),
             newbranch=gitHEAD() + '-git-launch-branch',
             subdirectory=os.path.relpath(os.getcwd(),  gitTopLevel()),
