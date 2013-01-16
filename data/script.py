@@ -20,6 +20,8 @@ def run(CFL=0.2, Nx=300, totalTime=5000., totalSteps=10000000000000):
 
 if __name__ == '__main__':
     from gitqsub import qsubmit
-    for CFL in (0.0125, 1.6):
-        qsubmit(callBack=run, verbose=True, newbranch='CFL' + str(CFL), CFL=CFL)
+    # for CFL in (0.0125, 1.6):
+    #     qsubmit(callBack=run, verbose=True, newbranch='CFL' + str(CFL), CFL=CFL)
+    for Nx in (150, 300, 600, 1200):
+        qsubmit(callBack=run, verbose=True, newbranch='Nx' + str(Nx), CFL=0.2, Nx=Nx)
 
