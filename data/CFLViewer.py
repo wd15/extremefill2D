@@ -100,6 +100,7 @@ class ContourViewer(BaseViewer):
 
         
 def plotCFL():
+    # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
     branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
     # branches = ('CFL0.025', 'CFL0.2', 'CFL0.4')
     datafile = os.path.join('data', 'data.h5')
@@ -125,6 +126,7 @@ def plotCFL():
     viewer.plot()
 
 def plotContour():
+    # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
     branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
     #    branches = ('CFL0.025', 'CFL0.05')
     datafile = os.path.join('data', 'data.h5')
