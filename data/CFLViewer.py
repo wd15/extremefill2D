@@ -7,6 +7,30 @@ import os
 
 
 class BaseViewer(object):
+    def __init__(self, branches, datafile):
+        cwd = os.getcwd()
+        for count, branch in enumerate(branches):
+            print 'branch',branch
+            tempdir = gitCloneToTemp(branch=branch, repositoryPath='ssh://wd15@genie.nist.gov/users/wd15/git/extremefill')
+            repopath = os.path.join(tempdir, 'extremefill')
+            datapath = os.path.join(repopath, datafile)
+            gitMediaSync()
+            if count == 0:
+                self.addBaseData(datapath)
+                basetempdir = tempdir
+            else:
+                self.addData(datapath, branch)
+                cleanTempRepo(tempdir)   
+
+        cleanTempRepo(basetempdir)
+        os.chdir(cwd)
+
+    def addBaseData(self, datapath):
+        raise NotImplementedError
+
+    def addData(self, datapath, branch):
+        raise NotImplementedError
+    
     def getInterpolatedDistanceFunction(self, time, data):
         indexJump = 10
 
@@ -32,9 +56,10 @@ class BaseViewer(object):
 
     
 class CFLViewer(BaseViewer):
-    def __init__(self, times=None):
+    def __init__(self, times=None, branches=None, datafile=None):
         self.times = times
         self.data = []
+        super(CFLViewer, self).__init__(branches, datafile)
 
     def addBaseData(self, datafile):
         self.basedata = DictTable(datafile, 'r')
@@ -72,17 +97,31 @@ class CFLViewer(BaseViewer):
 
     
 class ContourViewer(BaseViewer):
-    def __init__(self, time, contours=(0,)):
-        self.time = time
+    def __init__(self, times, contours=(0,), branches=None, datafile=None):
+        self.times = times
         self.contours = contours
         self.data = []
+        super(ContourViewer, self).__init__(branches, datafile)
         
     def plot(self):
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_aspect(1.)
         for x, y, phi in self.data:
-            pylab.contour(x, y, phi, self.contours, colors='black')
+            pylab.contour(x, y, phi, self.contours, colors='black', extent=(0, 1e-4, 0, 1e-5))
+        pylab.xlim(1e-5, 7.5e-5)
+        pylab.ylim(0, 8e-6)
         pylab.savefig('contour.png')
         
-    def addData(self, datafile):
+    def addData(self, datafile, label):
+        for time in self.times:
+            self.addDataAtTime(datafile, time)
+
+    def addBaseData(self, datafile):
+        self.addData(datafile, None)
+            
+    def addDataAtTime(self, datafile, time):
         data = DictTable(datafile, 'r')
         data0 = data[0]
         dx = data0['dx']
@@ -94,52 +133,28 @@ class ContourViewer(BaseViewer):
         shape = (ny, nx)
         x = np.reshape(mesh.x.value, shape)
         y = np.reshape(mesh.y.value, shape)
-        phi = self.getInterpolatedDistanceFunction(self.time, data)
+        phi = self.getInterpolatedDistanceFunction(time, data)
         phi = np.reshape(phi, shape)
         self.data.append((x, y, phi))
 
         
 def plotCFL():
     # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    # branches = ('CFL0.025', 'CFL0.2', 'CFL0.4')
+    # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
+    branches = ('CFL0.2', 'CFL0.4')
     datafile = os.path.join('data', 'data.h5')
     Npoints = 10
     end_time = 4000.
-    cwd = os.getcwd()
     times = np.arange(Npoints + 1)[1:] * end_time / Npoints
-    viewer = CFLViewer(times=times)
-    for count, branch in enumerate(branches):
-        print 'branch',branch
-        tempdir = gitCloneToTemp(branch=branch, repositoryPath='ssh://wd15@genie.nist.gov/users/wd15/git/extremefill')
-        repopath = os.path.join(tempdir, 'extremefill')
-        datapath = os.path.join(repopath, datafile)
-        gitMediaSync()
-        if count == 0:
-            viewer.addBaseData(datapath)
-            basetempdir = tempdir
-        else:
-            viewer.addData(datapath, branch)
-            cleanTempRepo(tempdir)            
-    cleanTempRepo(basetempdir)
-    os.chdir(cwd)
+    viewer = CFLViewer(times=times, branches=branches, datafile=datafile)
     viewer.plot()
 
 def plotContour():
     # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
+    branches = ('CFL0.0125', 'CFL0.4')
     #    branches = ('CFL0.025', 'CFL0.05')
     datafile = os.path.join('data', 'data.h5')
-    cwd = os.getcwd()
-    viewer = ContourViewer(3000., (-1e-5, -0.5e-5, 0, 0.5e-5, 1e-5))
-    for count, branch in enumerate(branches):
-        tempdir = gitCloneToTemp(branch=branch, repositoryPath='ssh://wd15@genie.nist.gov/users/wd15/git/extremefill', verbose=True)
-        gitMediaSync()
-        viewer.addData(datafile)
-        
-        cleanTempRepo(tempdir)
-        
-    os.chdir(cwd)
+    viewer = ContourViewer((0., 1000., 2000., 3000., 4000.), branches=branches, datafile=datafile)
     viewer.plot()
         
 if __name__ == '__main__':
