@@ -1,6 +1,6 @@
 from extremefill.simulation2D import Simulation2D
 
-def run(CFL=0.2, Nx=300, totalTime=5000., totalSteps=10000000000000):
+def run(CFL=0.2, Nx=300, NxBase=2400, totalTime=5000., totalSteps=10000000000000):
     simulation = Simulation2D()
     simulation.run(view=False,
                    totalSteps=totalSteps,
@@ -14,7 +14,8 @@ def run(CFL=0.2, Nx=300, totalTime=5000., totalSteps=10000000000000):
                    dtMax=100.,
                    dataFile='data.h5',
                    totalTime=totalTime,
-                   data_frequency=10)
+                   data_frequency=10,
+                   NxBase=NxBase)
 
     return 'data.h5'
 

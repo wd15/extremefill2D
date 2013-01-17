@@ -49,7 +49,8 @@ class Simulation(object):
             dataFile=None,
             totalTime=1e+100,
             narrow_distance=None,
-            data_frequency=1):
+            data_frequency=1,
+            NxBase=1000):
         
         r"""
         Run an individual simulation.
@@ -89,6 +90,7 @@ class Simulation(object):
           - `Nx`: number of grid points in the x-direction
           - `CFL`: CFL number
           - `narrow_distance` : distance front covers before reinitializing
+          - `NxBase`: number of grid points used for level set initialization
         """
 
         Fbar = faradaysConstant / gasConstant / temperature
@@ -97,10 +99,7 @@ class Simulation(object):
         self.parameters['trenchWidth'] = 2 * 0.093 / perimeterRatio
         self.parameters['fieldWidth'] = 2 / perimeterRatio
 
-        distanceBelowTrench = self.getDistanceBelowTrench(delta)
-        L = delta + featureDepth + distanceBelowTrench
-        dx = L / Nx
-        mesh = self.getMesh(Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio)
+        mesh = self.getMesh(Nx, featureDepth, perimeterRatio, delta)
 
         dt = fp.Variable(dt)
 
@@ -116,10 +115,7 @@ class Simulation(object):
         suppressor.constrain(bulkSuppressor, mesh.facesRight)
 
         distance = fp.DistanceVariable(mesh=mesh)
-        distance[:] = 1.        
-        distance.setValue(-1., where=mesh.x < -featureDepth)
-        if hasattr(mesh, 'y'):
-            distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio))
+        self.initializeDistance(distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase)
 
         extension = fp.CellVariable(mesh=mesh)
             
@@ -173,7 +169,7 @@ class Simulation(object):
                 extensionViewer = fp.Viewer(extension)
 
         monitorPoint = nx.zeros((mesh.dim, 1), 'd')
-        monitorPoint[0, 0] = dx / 2.
+        monitorPoint[0, 0] = mesh.dx / 2.
         
         potentials = []
 
@@ -195,7 +191,7 @@ class Simulation(object):
             if CFL is not None:
                 if narrow_distance is None:
                     narrow_distance = featureDepth / 5.
-                LSFrequency = int(narrow_distance / dx / CFL)
+                LSFrequency = int(narrow_distance / mesh.dx / CFL)
 
                 if step % LSFrequency == 0:
                     self.calcDistanceFunction(distance)
@@ -304,7 +300,7 @@ class Simulation(object):
     def calcDistanceFunction(self, distance):
         raise NotImplementedError
 
-    def getMesh(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
+    def getMesh(self, Nx, featureDepth, perimeterRatio, delta):
         raise NotImplementedError
 
     def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, *args):
@@ -313,7 +309,10 @@ class Simulation(object):
     def getViewer(self, *args):
         return fp.Viewer(self.get1DVars(*args), datamax=1.0, datamin=0.0)
 
-    def getMesh1D(self, Nx, dx, distanceBelowTrench, featureDepth, perimeterRatio):
+    def getMesh1D(self, Nx, featureDepth, perimeterRatio, delta):
+        distanceBelowTrench = self.getDistanceBelowTrench(delta)
+        L = delta + featureDepth + distanceBelowTrench
+        dx = L / Nx
         return fp.Grid1D(nx=Nx, dx=dx) - [[distanceBelowTrench + featureDepth]] 
 
     def writeData(self, dataFile, elapsedTime, distance, timeStep):
@@ -327,7 +326,15 @@ class Simulation(object):
                     'distance' : np.array(distance)}
 
         h5data[timeStep] = dataDict
-    
+
+    def initializeDistance(self, distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase):
+        distance[:] = 1.        
+        mesh = distance.mesh
+        distance.setValue(-1., where=mesh.x < -featureDepth)
+        if hasattr(mesh, 'y'):
+            distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio))
+
+        
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
