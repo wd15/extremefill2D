@@ -54,12 +54,15 @@ class BaseViewer(object):
         phi1 = data[index]['distance']
         return phi0 * (1 - alpha) + phi1 * alpha
 
+    def getGrid(self, data):
+        import fipy as fp
+        return fp.Grid2D(nx=data[0]['nx'], ny=data[0]['ny'], dx=data[0]['dx'], dy=data[0]['dy'])
     
-class CFLViewer(BaseViewer):
+class NormViewer(BaseViewer):
     def __init__(self, times=None, branches=None, datafile=None):
         self.times = times
         self.data = []
-        super(CFLViewer, self).__init__(branches, datafile)
+        super(NormViewer, self).__init__(branches, datafile)
 
     def addBaseData(self, datafile):
         self.basedata = DictTable(datafile, 'r')
@@ -75,7 +78,7 @@ class CFLViewer(BaseViewer):
         pylab.ylabel(r'$\|\frac{\phi - \phi_0}{\Delta x}\|$', rotation='horizontal')
         pylab.xlabel(r'$t$ (s)')
         pylab.legend()
-        pylab.savefig('CFLNorm2.png')
+        pylab.savefig('Norm2.png')
         pylab.show()
 
     def getNormData(self, data):
@@ -88,13 +91,20 @@ class CFLViewer(BaseViewer):
         for time in self.times:
             phiBase = self.getInterpolatedDistanceFunction(time, self.basedata)
             phi = self.getInterpolatedDistanceFunction(time, data)
-            diff = abs(phi - phiBase) / dx
+            phiInt = self.interpolateToBase(self.basedata, data, phi)
+            diff = abs(phiInt - phiBase) / dx
             diff[abs(phiBase) > 10 * dx] = 0.
             norm2 = np.sqrt(np.sum(diff**2) / len(diff))
             norms.append(norm2)
 
         return np.array(self.times), np.array(norms)
 
+    def interpolateToBase(self, basedata, data, phi):
+        baseGrid = self.getGrid(basedata)
+        grid = self.getGrid(data)
+        import fipy as fp
+        return np.array(fp.CellVariable(mesh=grid, value=phi)(baseGrid.cellCenters, order=1))
+    
     
 class ContourViewer(BaseViewer):
     def __init__(self, times, contours=(0,), branches=None, datafile=None):
@@ -123,20 +133,22 @@ class ContourViewer(BaseViewer):
             
     def addDataAtTime(self, datafile, time):
         data = DictTable(datafile, 'r')
-        data0 = data[0]
-        dx = data0['dx']
-        dy = data0['dy']
-        nx = data0['nx']
-        ny = data0['ny']
-        import fipy as fp
-        mesh = fp.Grid2D(nx=nx, ny=ny, dx=dx, dy=dy)
-        shape = (ny, nx)
+        mesh = self.getGrid(data)
+        shape = (mesh.ny, mesh.nx)
         x = np.reshape(mesh.x.value, shape)
         y = np.reshape(mesh.y.value, shape)
         phi = self.getInterpolatedDistanceFunction(time, data)
         phi = np.reshape(phi, shape)
         self.data.append((x, y, phi))
 
+def plotNx():
+    branches = ('Nx600', 'Nx300', 'Nx150')
+    datafile = os.path.join('data', 'data.h5')
+    Npoints = 10
+    end_time = 4000.
+    times = np.arange(Npoints + 1)[1:] * end_time / Npoints
+    viewer = NormViewer(times=times, branches=branches, datafile=datafile)
+    viewer.plot()
         
 def plotCFL():
     # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
@@ -146,12 +158,12 @@ def plotCFL():
     Npoints = 10
     end_time = 4000.
     times = np.arange(Npoints + 1)[1:] * end_time / Npoints
-    viewer = CFLViewer(times=times, branches=branches, datafile=datafile)
+    viewer = NormViewer(times=times, branches=branches, datafile=datafile)
     viewer.plot()
 
 def plotContour():
     # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    branches = ('CFL0.0125', 'CFL0.4')
+    branches = ('Nx600', 'Nx300')
     #    branches = ('CFL0.025', 'CFL0.05')
     datafile = os.path.join('data', 'data.h5')
     viewer = ContourViewer((0., 1000., 2000., 3000., 4000.), branches=branches, datafile=datafile)
