@@ -1,3 +1,4 @@
+import tables
 from extremefill.simulation2D import Simulation2D
 
 def run(CFL=0.2, Nx=300, NxBase=2400, totalTime=5000., totalSteps=10000000000000):
