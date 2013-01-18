@@ -211,14 +211,15 @@ class Simulation2D(SimulationXD):
         listOfVars = [_Interpolate1DVarMax(mesh1D, vars2D[0], distance)]
         return listOfVars + [_Interpolate1DVar(mesh1D, v, distance) for v in vars2D[1:]]
 
-    def initalizeDistance(self, distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase):
+    def initializeDistance(self, distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase):
         baseMesh = self.getMesh(NxBase, featureDepth, perimeterRatio, delta)
         baseDistance = fp.DistanceVariable(mesh=baseMesh)
-        super(Simulation2D, self).initalizeDistance(baseDistance, featureDepth, perimeterRatio, delta, areaRatio, NxBase)
+        super(Simulation2D, self).initializeDistance(baseDistance, featureDepth, perimeterRatio, delta, areaRatio, NxBase)
         baseDistance.calcDistanceFunction()
         value = np.array(baseDistance(distance.mesh.cellCenters, order=1))
         distance.setValue(value)
-        
+
+
 class _Interpolate1DVarBase(fp.CellVariable):
     def __init__(self, mesh, var2D, distance):
         super(_Interpolate1DVarBase, self).__init__(mesh=mesh, name=var2D.name)

@@ -7,7 +7,18 @@ import os
 
 
 class BaseViewer(object):
-    def __init__(self, branches, datafile):
+    def __init__(self, branches=None, datafile=None, datafiles=None):
+        if datafiles is None:
+            self.datafilesFromBranches(branches, datafile)
+        else:
+            for count, datafile in enumerate(datafiles):
+                print 'datafile',datafile
+                if count == 0:
+                    self.addBaseData(datafile)
+                else:
+                    self.addData(datafile, datafile)
+
+    def datafilesFromBranches(self, branches, datafile):
         cwd = os.getcwd()
         for count, branch in enumerate(branches):
             print 'branch',branch
@@ -24,7 +35,7 @@ class BaseViewer(object):
 
         cleanTempRepo(basetempdir)
         os.chdir(cwd)
-
+        
     def addBaseData(self, datapath):
         raise NotImplementedError
 
@@ -107,11 +118,11 @@ class NormViewer(BaseViewer):
     
     
 class ContourViewer(BaseViewer):
-    def __init__(self, times, contours=(0,), branches=None, datafile=None):
+    def __init__(self, times, contours=(0,), branches=None, datafile=None, datafiles=None):
         self.times = times
         self.contours = contours
         self.data = []
-        super(ContourViewer, self).__init__(branches, datafile)
+        super(ContourViewer, self).__init__(branches=branches, datafile=datafiles, datafiles=datafiles)
         
     def plot(self):
         import matplotlib.pyplot as plt
@@ -163,10 +174,13 @@ def plotCFL():
 
 def plotContour():
     # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    branches = ('Nx600', 'Nx300')
+    branches = ('Nx600', 'Nx150')
     #    branches = ('CFL0.025', 'CFL0.05')
     datafile = os.path.join('data', 'data.h5')
-    viewer = ContourViewer((0., 1000., 2000., 3000., 4000.), branches=branches, datafile=datafile)
+    times = (0,)
+    # times = (0., 1000., 2000., 3000., 4000.)
+    #    viewer = ContourViewer(times=times, branches=branches, datafile=datafile)
+    viewer = ContourViewer(times=times, branches=branches, datafile=datafile, datafiles=('data150.h5', 'data600.h5'))
     viewer.plot()
         
 if __name__ == '__main__':
