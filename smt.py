@@ -64,7 +64,7 @@ class Simulation(object):
         if not hasattr(self, '_finished'):
             self._finished = False
         if not self._finished:
-            self._finished = bool(self.process.poll())
+            self._finished = not (self.process.poll() is None)
             if self._finished:
                 self.record.duration = time.time() - self.record.start_time    
                 self.record.output_data = self.record.datastore.find_new_data(self.record.timestamp)
@@ -86,8 +86,6 @@ class BatchSimulation(object):
             simulations += [simulation]
 
         while not np.all([s.finished for s in simulations]):
-            print simulations[0].process.poll()
-            print not np.all([s.finished for s in simulations])
             time.sleep(poll_time)
 
         for simulation in simulations:
