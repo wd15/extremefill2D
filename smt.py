@@ -47,6 +47,8 @@ class Simulation(object):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
         self.record.start_time = time.time()
         self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+        print self.process.stdout.read()
+        print self.process.stdin.read()
 
     @property
     def finished(self):
@@ -86,7 +88,7 @@ class BatchSimulation(object):
 if __name__ == '__main__':
     import numpy as np
     CFLs = ()
-    for CFL in np.linspace(0.01, 0.2, 10):
+    for CFL in np.linspace(0.01, 0.01, 1):
         CFLs += ({'CFL' : CFL},)
         
     BatchSimulation('script.py', 'default.param', 'testing BatchSimulation again', CFLs)
