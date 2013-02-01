@@ -32,7 +32,8 @@ class TempFile(object):
         ff.close()
 
     def __del__(self):
-        os.remove(self.name)
+        pass
+        #os.remove(self.name)
 
 
 class Simulation(object):
