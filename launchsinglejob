@@ -1,0 +1,42 @@
+#!/bin/bash
+
+####################
+# Sumatra setup
+#
+# $ smt init extremefill
+# $ smt configure --executable=python --main=script.py
+# $ smt configure --addlabel=parameters
+# $ smt configure -g uuid
+#
+# View data on laptop
+# On concorde:
+#
+# $ smtweb --allips --no-browser
+# 
+# On laptop use http://129.6.153.60:8000
+#
+####################
+
+# ./launchsinglejob 'param0=1, param1=2' 'reason for running script' tag
+
+source ~/.bashrc
+workon fipy
+
+if [ $# -eq 0 ]
+then
+  smt run default.param
+elif [ $# -eq 1 ]
+then
+  smt run default.param $1
+elif [ $# -eq 2 ]
+then
+  smt run --reason "$2" default.param $1
+elif [ $# -eq 3 ]
+then
+  # Don't use tags anymore for batch jobs see https://github.com/wd15/extremefill/issues/19
+  smt run --reason "$2" default.param $1
+  smt tag $3
+else
+  echo "Wrong number of arguments."
+fi
+
