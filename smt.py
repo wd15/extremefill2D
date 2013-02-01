@@ -86,6 +86,7 @@ class BatchSimulation(object):
             simulations += [simulation]
 
         while not np.all([s.finished for s in simulations]):
+            print not np.all([s.finished for s in simulations])
             time.sleep(poll_time)
 
         for simulation in simulations:
