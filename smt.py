@@ -32,8 +32,7 @@ class TempFile(object):
         ff.close()
 
     def __del__(self):
-        pass
-        #os.remove(self.name)
+        os.remove(self.name)
 
 
 class Simulation(object):
@@ -41,17 +40,17 @@ class Simulation(object):
         self.record = record
         self.record.parameters.update({"sumatra_label": self.record.label})
         self.record.parameters.update(parameter_changeset)
-        self.paramfile = TempFile(lines=self.paramlines, suffix='.param')
+        lines = ["%s = %s\n" % (k, __repr__(v)) for k, v in self.record.parameters.values.iteritems()]
+        self.paramfile = TempFile(lines=lines, suffix='.param')
+        self.record.datastore.root = os.path.join(self.datastore.root, self.record.label)
+    # @property
+    # def paramlines(self):
+    #     _lines = []
+    #     for k, v in self.record.parameters.values.iteritems():
+    #         s = "%s = %s\n"
+    #         _lines += [s % (k, repr(v))]
 
-    @property
-    def paramlines(self):
-        _lines = []
-        for k, v in self.record.parameters.values.iteritems():
-            s = "%s = %s\n"
-            _lines += [s % (k, repr(v))]
-
-        return _lines
-
+    #     return _line
 
     def launch(self):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
