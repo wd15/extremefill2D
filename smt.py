@@ -100,4 +100,4 @@ if __name__ == '__main__':
     for CFL in np.linspace(0.01, 0.01, 1):
         CFLs += ({'CFL' : CFL, 'steps' : 1},)
         
-    BatchSimulation('script.py', 'default.param', 'testing BatchSimulation again', CFLs)
+    BatchSimulation('script.py', 'default.param', 'testing BatchSimulation again', CFLs, poll_time=2)
