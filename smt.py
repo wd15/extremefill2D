@@ -48,7 +48,7 @@ class Simulation(object):
         self.record.start_time = time.time()
         self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
         print self.process.stdout.read()
-        print self.process.stdin.read()
+        print self.process.stderr.read()
 
     @property
     def finished(self):
