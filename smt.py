@@ -47,8 +47,8 @@ class Simulation(object):
     def paramlines(self):
         _lines = []
         for k, v in self.record.parameters.values.iteritems():
-            s = "%s = %s"
-            _lines += [s % (repr(k), repr(v))]
+            s = "%s = %s\n"
+            _lines += [s % (k, repr(v))]
 
         return _lines
 
