@@ -41,8 +41,17 @@ class Simulation(object):
         self.record = record
         self.record.parameters.update({"sumatra_label": self.record.label})
         self.record.parameters.update(parameter_changeset)
-        lines = [('%s = %s\n' % (k,v)) for k, v in self.record.parameters.values.iteritems()]
-        self.paramfile = TempFile(lines=lines, suffix='.param')
+        self.paramfile = TempFile(lines=self.paramlines, suffix='.param')
+
+    @property
+    def paramlines(self):
+        _lines = []
+        for k, v in self.record.parameters.values.iteritems():
+            s = "%s = %s"
+            _lines += [s % (repr(k), repr(v))]
+
+        return _lines
+
 
     def launch(self):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
