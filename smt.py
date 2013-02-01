@@ -40,7 +40,7 @@ class Simulation(object):
         self.record = record
         self.record.parameters.update({"sumatra_label": self.record.label})
         self.record.parameters.update(parameter_changeset)
-        lines = ["%s = %s\n" % (k, __repr__(v)) for k, v in self.record.parameters.values.iteritems()]
+        lines = ["%s = %s\n" % (k, repr(v)) for k, v in self.record.parameters.values.iteritems()]
         self.paramfile = TempFile(lines=lines, suffix='.param')
         self.record.datastore.root = os.path.join(self.datastore.root, self.record.label)
     # @property
