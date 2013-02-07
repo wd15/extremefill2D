@@ -36,13 +36,15 @@ class TempFile(object):
 
 
 class Simulation(object):
-    def __init__(self, record, parameter_changeset):
+    def __init__(self, record, parameter_changeset, tags):
         self.record = record
         self.record.parameters.update({"sumatra_label": self.record.label})
         self.record.parameters.update(parameter_changeset)
         lines = ["%s = %s\n" % (k, repr(v)) for k, v in self.record.parameters.values.iteritems()]
         self.paramfile = TempFile(lines=lines, suffix='.param')
         self.record.datastore.root = os.path.join(self.record.datastore.root, self.record.label)
+        for tag in tags:
+            self.record.tags.add(tag)
 
     def launch(self):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
@@ -70,7 +72,9 @@ class BatchSimulation(object):
                  reason='',
                  reasons=(),
                  parameter_changesets=({},),
-                 poll_time=20):
+                 poll_time=20,
+                 tags=(),
+                 tag=None):
 
         simulations = []
         project = load_project()
@@ -79,11 +83,14 @@ class BatchSimulation(object):
             reasons = [reason] * len(parameter_changesets)
         assert(len(reasons) == len(parameter_changesets))
 
+        if tag is not None:
+            tags += (tag,)
+
         for parameter_changeset, reason in zip(parameter_changesets, reasons):
             record = project.new_record(parameters=build_parameters(parameter_file),
                                         main_file=os.path.join(os.path.split(__file__)[0], script_file),
                                         reason=reason)
-            simulation = Simulation(record, parameter_changeset)
+            simulation = Simulation(record, parameter_changeset, tags)
             simulation.launch()
             simulations += [simulation]
 
@@ -104,4 +111,4 @@ if __name__ == '__main__':
         reasons += ('testing running CFL=%s' % str(CFL),)
         CFLs += ({'CFL' : CFL, 'steps' : 1},)
         
-    BatchSimulation('script.py', 'default.param', parameter_changesets=CFLs, poll_time=2, reasons=reasons)
+    BatchSimulation('script.py', 'default.param', parameter_changesets=CFLs, poll_time=2, reasons=reasons, tags=('CFL',))
