@@ -60,7 +60,7 @@ class Simulation(object):
             if self._finished:
                 self.record.duration = time.time() - self.record.start_time    
                 self.record.output_data = self.record.datastore.find_new_data(self.record.timestamp)
-                self.record.stdout_stderr = self.process.stdout + self.process.stderr
+                self.record.stdout_stderr = self.process.stdout.read() + self.process.stderr.read()
 
         return self._finished
 
