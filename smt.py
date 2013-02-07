@@ -36,10 +36,10 @@ class TempFile(object):
 
 
 class Simulation(object):
-    def __init__(self, record, parameter_changeset, tags):
+    def __init__(self, record, parameters, tags):
         self.record = record
         self.record.parameters.update({"sumatra_label": self.record.label})
-        self.record.parameters.update(parameter_changeset)
+        self.record.parameters.update(parameters)
         lines = ["%s = %s\n" % (k, repr(v)) for k, v in self.record.parameters.values.iteritems()]
         self.paramfile = TempFile(lines=lines, suffix='.param')
         self.record.datastore.root = os.path.join(self.record.datastore.root, self.record.label)
@@ -66,49 +66,39 @@ class Simulation(object):
 
 
 class BatchSimulation(object):
-    def __init__(self,
-                 script_file,
-                 parameter_file,
-                 reason='',
-                 reasons=(),
-                 parameter_changesets=({},),
-                 poll_time=20,
-                 tags=(),
-                 tag=None):
+    def __init__(self, script_file, parameter_file, poll_time=20.):
+        self.script_file = script_file
+        self.parameter_file = parameter_file
+        self.poll_time = poll_time
+        self.project = load_project()
+        self.simulations = []
 
-        simulations = []
-        project = load_project()
-
-        if len(reasons) == 0:
-            reasons = [reason] * len(parameter_changesets)
-        assert(len(reasons) == len(parameter_changesets))
-
-        if tag is not None:
-            tags += (tag,)
-
-        for parameter_changeset, reason in zip(parameter_changesets, reasons):
-            record = project.new_record(parameters=build_parameters(parameter_file),
-                                        main_file=os.path.join(os.path.split(__file__)[0], script_file),
-                                        reason=reason)
-            simulation = Simulation(record, parameter_changeset, tags)
-            simulation.launch()
-            simulations += [simulation]
-
-        while not np.all([s.finished for s in simulations]):
-            time.sleep(poll_time)
-
+    def addSimulation(self, parameters={}, reason='', tags=()):
+        record = self.project.new_record(parameters=build_parameters(self.parameter_file),
+                                    main_file=os.path.join(os.path.split(__file__)[0], self.script_file),
+                                    reason=reason)
+        self.simulations += [Simulation(record, parameters, tags)]
+        
+    def run(self):
         for simulation in simulations:
-            project.add_record(simulation.record)
+            simulation.launch()
 
-        project.save()
+        while not np.all([s.finished for s in self.simulations]):
+            time.sleep(self.poll_time)
+
+        for simulation in self.simulations:
+            self.project.add_record(simulation.record)
+
+        self.project.save()
 
 
 if __name__ == '__main__':
     import numpy as np
-    CFLs = ()
-    reasons = ()
+
+    batchSimulation = BatchSimulation('script.py', 'default.param', poll_time=2)
     for CFL in np.linspace(0.01, 0.1, 3):
-        reasons += ('testing running CFL=%s' % str(CFL),)
-        CFLs += ({'CFL' : CFL, 'steps' : 1},)
-        
-    BatchSimulation('script.py', 'default.param', parameter_changesets=CFLs, poll_time=2, reasons=reasons, tags=('CFL',))
+        batchSimulation.addSimulation(reason="Testing the BatchSimulation script for tags",
+                                      tags=('CFL', 'test'),
+                                      parameters={'CFL' : CFL, 'steps' : 1})
+
+    batchSimulation.run()
