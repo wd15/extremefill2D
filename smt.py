@@ -60,6 +60,7 @@ class Simulation(object):
             if self._finished:
                 self.record.duration = time.time() - self.record.start_time    
                 self.record.output_data = self.record.datastore.find_new_data(self.record.timestamp)
+                self.record.stdout_stderr = self.process.stdout + self.process.stderr
 
         return self._finished
 
@@ -89,7 +90,7 @@ class BatchSimulation(object):
 if __name__ == '__main__':
     import numpy as np
     CFLs = ()
-    for CFL in np.linspace(0.01, 0.1, 12):
+    for CFL in np.linspace(0.01, 0.1, 1):
         CFLs += ({'CFL' : CFL, 'steps' : 1},)
         
-    BatchSimulation('script.py', 'default.param', 'testing a dozen simulations at once', CFLs, poll_time=2)
+    BatchSimulation('script.py', 'default.param', 'testing stdout and stderr', CFLs, poll_time=2)
