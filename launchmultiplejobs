@@ -1,7 +1,0 @@
-#!/bin/bash
-
-for CFL in 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17
-do
-  ./launchsinglejob "Nx=300 steps=1 CFL=${CFL}" "Testing the bash scripts CFL=${CFL}" >> smt${CFL}.out &
-  sleep 1
-done

@@ -43,14 +43,6 @@ class Simulation(object):
         lines = ["%s = %s\n" % (k, repr(v)) for k, v in self.record.parameters.values.iteritems()]
         self.paramfile = TempFile(lines=lines, suffix='.param')
         self.record.datastore.root = os.path.join(self.record.datastore.root, self.record.label)
-    # @property
-    # def paramlines(self):
-    #     _lines = []
-    #     for k, v in self.record.parameters.values.iteritems():
-    #         s = "%s = %s\n"
-    #         _lines += [s % (k, repr(v))]
-
-    #     return _line
 
     def launch(self):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
