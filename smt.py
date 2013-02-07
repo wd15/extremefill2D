@@ -97,7 +97,7 @@ class BatchSimulation(object):
 if __name__ == '__main__':
     import numpy as np
     CFLs = ()
-    for CFL in np.linspace(0.01, 0.01, 1):
+    for CFL in np.linspace(0.01, 0.1, 12):
         CFLs += ({'CFL' : CFL, 'steps' : 1},)
         
-    BatchSimulation('script.py', 'default.param', 'testing BatchSimulation again', CFLs, poll_time=2)
+    BatchSimulation('script.py', 'default.param', 'testing a dozen simulations at once', CFLs, poll_time=2)
