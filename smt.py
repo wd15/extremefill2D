@@ -48,8 +48,6 @@ class Simulation(object):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
         self.record.start_time = time.time()
         self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-        ##print self.process.stdout.read()
-        ##print self.process.stderr.read()
 
     @property
     def finished(self):
@@ -66,11 +64,22 @@ class Simulation(object):
 
 
 class BatchSimulation(object):
-    def __init__(self, script_file, parameter_file, reason='', parameter_changesets=({},), poll_time=20):
+    def __init__(self,
+                 script_file,
+                 parameter_file,
+                 reason='',
+                 reasons=(),
+                 parameter_changesets=({},),
+                 poll_time=20):
+
         simulations = []
         project = load_project()
 
-        for parameter_changeset in parameter_changesets:
+        if len(reasons) == 0:
+            reasons = [reason] * len(parameter_changesets)
+        assert(len(reasons) == len(parameter_changesets))
+
+        for parameter_changeset, reason in zip(parameter_changesets, reasons):
             record = project.new_record(parameters=build_parameters(parameter_file),
                                         main_file=os.path.join(os.path.split(__file__)[0], script_file),
                                         reason=reason)
@@ -90,7 +99,9 @@ class BatchSimulation(object):
 if __name__ == '__main__':
     import numpy as np
     CFLs = ()
-    for CFL in np.linspace(0.01, 0.1, 1):
+    reasons = ()
+    for CFL in np.linspace(0.01, 0.1, 3):
+        reasons += ('testing running CFL=%s' % str(CFL),)
         CFLs += ({'CFL' : CFL, 'steps' : 1},)
         
-    BatchSimulation('script.py', 'default.param', 'testing stdout and stderr', CFLs, poll_time=2)
+    BatchSimulation('script.py', 'default.param', parameter_changesets=CFLs, poll_time=2, reasons=reasons)
