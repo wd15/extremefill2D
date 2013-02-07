@@ -80,7 +80,7 @@ class BatchSimulation(object):
         self.simulations += [Simulation(record, parameters, tags)]
         
     def run(self):
-        for simulation in simulations:
+        for simulation in self.simulations:
             simulation.launch()
 
         while not np.all([s.finished for s in self.simulations]):
