@@ -56,7 +56,7 @@ class Launcher(object):
 
 class QsubLauncher(object):
     def __init__(self, cmd, datapath='.'):
-        self.fname= self.record.label + '.qsub'
+        self.fname = 'qsublauncher'
         f = open(self.fname, 'w')
         f.writeline('#!/bin/bash')
         f.writeline('')
@@ -75,7 +75,7 @@ class QsubLauncher(object):
         if stdout.splitlines()[0] == "Following jobs do not exist:":
             return True
         else:
-            return Falsen
+            return False
 
     @property
     def output(self):
