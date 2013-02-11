@@ -62,7 +62,7 @@ class QsubLauncher(object):
                       '',
                       'source ~/.bashrc',
                       'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
-                      cmd.join(' ')])
+                      ' '.join(cmd)])
         f.close()
         self.datapath = datapath
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
