@@ -58,11 +58,11 @@ class QsubLauncher(object):
     def __init__(self, cmd, datapath='.'):
         self.fname = 'qsublauncher'
         f = open(self.fname, 'w')
-        f.writeline('#!/bin/bash')
-        f.writeline('')
-        f.writeline('source ~/.bashrc')
-        f.writeline('workon {virtualenv}\n'.format(virtualenv=get_virtualenv()))
-        f.writeline(cmd.join(' '))
+        f.writelines(['#!/bin/bash',
+                      '',
+                      'source ~/.bashrc',
+                      'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
+                      cmd.join(' ')])
         f.close()
         self.datapath = datapath
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
