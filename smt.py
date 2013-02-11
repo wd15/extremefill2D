@@ -80,7 +80,7 @@ class QsubLauncher(object):
     def output(self):
         stdout_stderr = ''
         for l in  ('o', 'e'):
-            print self.qsubfile
+            print self.qsubfile.name
             raw_input('stopped')
             filename = self.qsubfile.name + '.' + l + self.qsubID
             f = open(os.path.join(self.datapath, filename), 'r')
