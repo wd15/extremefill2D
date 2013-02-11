@@ -26,7 +26,7 @@ import os
 def popen(cmd):
     return Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
 
-def get_virtualenv(self):
+def get_virtualenv():
     return os.path.split(os.environ.get('VIRTUAL_ENV'))[1]
 
 
