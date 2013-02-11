@@ -34,7 +34,7 @@ def get_virtualenv():
 
 class TempFile(object):
     def __init__(self, lines=[], suffix='', dir=None):
-        (f, self.name) = tempfile.mkstemp(suffix='.param', dir=dir)
+        (f, self.name) = tempfile.mkstemp(suffix=suffix, dir=dir)
         ff = os.fdopen(f, 'w')
         ff.writelines(lines)
         ff.close()
