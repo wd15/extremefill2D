@@ -74,8 +74,8 @@ class QsubLauncher(object):
     @property
     def finished(self):
         stdout, stderr = popen(['qstat', '-j', self.qsubID]).communicate()
-        print stdout
-        print stderr
+        print 'stdout',stdout
+        print 'stderr',stderr
         print self.qsubID
         raw_input('stopped')
         return False
