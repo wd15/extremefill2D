@@ -68,6 +68,8 @@ class QsubLauncher(object):
         f.close()
         self.datapath = datapath
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
+        print 'cmd',cmd
+        raw_input('stoppe')
         self.qsubID = stdout.split(' ')[2]
         shutil.move(self.fname, self.datapath)
 
@@ -151,7 +153,7 @@ if __name__ == '__main__':
     import numpy as np
 
     batchSimulation = BatchSimulation('script.py', 'default.param', poll_time=2)
-    for CFL in np.linspace(0.01, 0.1, 3):
+    for CFL in np.linspace(0.01, 0.1, 1):
         batchSimulation.addSimulation(reason="Testing the BatchSimulation script for tags without qsub",
                                       tags=('CFL', 'test'),
                                       parameters={'CFL' : CFL, 'steps' : 1})
