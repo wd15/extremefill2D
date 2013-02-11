@@ -33,8 +33,8 @@ def get_virtualenv():
 
 
 class TempFile(object):
-    def __init__(self, lines=[], suffix=''):
-        (f, self.name) = tempfile.mkstemp(suffix='.param')
+    def __init__(self, lines=[], suffix='', dir=None):
+        (f, self.name) = tempfile.mkstemp(suffix='.param', dir=dir)
         ff = os.fdopen(f, 'w')
         ff.writelines(lines)
         ff.close()
@@ -58,20 +58,14 @@ class Launcher(object):
 
 class QsubLauncher(object):
     def __init__(self, cmd, datapath='.'):
-        self.fname = 'qsublauncher'
-        f = open(self.fname, 'w')
-        f.writelines(['#!/bin/bash\n',
-                      '\n',
-                      'source ~/.bashrc\n',
-                      'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
-                      ' '.join(cmd)])
-        f.close()
+        self.fname = TempFile(['#!/bin/bash\n',
+                               '\n',
+                               'source ~/.bashrc\n',
+                               'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
+                               ' '.join(cmd)], suffix='.qsub', dir='.')
         self.datapath = datapath
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
-        print 'cmd',cmd
-        raw_input('stoppe')
         self.qsubID = stdout.split(' ')[2]
-        shutil.move(self.fname, self.datapath)
 
     @property
     def finished(self):
@@ -98,7 +92,7 @@ class Simulation(object):
         self.record.parameters.update({"sumatra_label": self.record.label})
         self.record.parameters.update(parameters)
         lines = ["%s = %s\n" % (k, repr(v)) for k, v in self.record.parameters.values.iteritems()]
-        self.paramfile = TempFile(lines=lines, suffix='.param')
+        self.paramfile = TempFile(lines=lines, suffix='.param', dir='.')
         self.record.datastore.root = os.path.join(self.record.datastore.root, self.record.label)
         for tag in tags:
             self.record.tags.add(tag)
