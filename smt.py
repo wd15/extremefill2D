@@ -23,6 +23,12 @@ from subprocess import Popen, PIPE, call
 import tempfile
 import os
 
+def popen(cmd):
+    return Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+
+def get_virtualenv(self):
+    return os.path.split(os.environ.get('VIRTUAL_ENV'))[1]
+
 
 class TempFile(object):
     def __init__(self, lines=[], suffix=''):
@@ -33,6 +39,51 @@ class TempFile(object):
 
     def __del__(self):
         os.remove(self.name)
+
+
+class Launcher(object):
+    def __init__(self, cmd, datapath='.'):
+        self.process = popen(cmd)
+    
+    @property
+    def finished(self):
+        return not (self.process.poll() is None)
+
+    @property
+    def output(self):
+        return self.process.stdout.read() + self.process.stderr.read()
+
+
+class QsubLauncher(object):
+    def __init__(self, cmd, datapath='.'):
+        self.fname= self.record.label + '.qsub'
+        f = open(self.fname, 'w')
+        f.writeline('#!/bin/bash')
+        f.writeline('')
+        f.writeline('source ~/.bashrc')
+        f.writeline('workon {virtualenv}\n'.format(virtualenv=get_virtualenv()))
+        f.writeline(cmd.join(' '))
+        f.close()
+        self.datapath = datapath
+        (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
+        self.qsubID = stdout.read().split(' ')[2]
+
+    @property
+    def finished(self):
+        stdout, stderr = popen(['qstat', '-j', self.qsubID]).communicate()
+        if stdout.splitlines()[0] == "Following jobs do not exist:":
+            return True
+        else:
+            return False
+
+    @property
+    def output(self):
+        stdout_stderr = ''
+        for l in  ('o', 'e'):
+            filename = self.fname + l + self.qsubID
+            f = open(os.path.join(self.datapath, filename), 'r')
+            stdout_stderr += f.read()
+        return stdout_stderr
 
 
 class Simulation(object):
@@ -49,18 +100,18 @@ class Simulation(object):
     def launch(self):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
         self.record.start_time = time.time()
-        self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+        self.launcher = Launcher(cmd, self.record.datastore.root)
 
     @property
     def finished(self):
         if not hasattr(self, '_finished'):
             self._finished = False
         if not self._finished:
-            self._finished = not (self.process.poll() is None)
+            self._finished = self.launcher.finished
             if self._finished:
                 self.record.duration = time.time() - self.record.start_time    
                 self.record.output_data = self.record.datastore.find_new_data(self.record.timestamp)
-                self.record.stdout_stderr = self.process.stdout.read() + self.process.stderr.read()
+                self.record.stdout_stderr = self.launcher.output
 
         return self._finished
 
