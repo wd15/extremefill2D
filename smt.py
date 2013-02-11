@@ -75,7 +75,7 @@ class QsubLauncher(object):
         if stdout.splitlines()[0] == "Following jobs do not exist:":
             return True
         else:
-            return False
+            return Falsen
 
     @property
     def output(self):
@@ -101,7 +101,7 @@ class Simulation(object):
     def launch(self):
         cmd = ['python', self.record.main_file, self.paramfile.name] 
         self.record.start_time = time.time()
-        self.launcher = Launcher(cmd, self.record.datastore.root)
+        self.launcher = QsubLauncher(cmd, self.record.datastore.root)
 
     @property
     def finished(self):
