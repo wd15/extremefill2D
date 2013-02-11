@@ -84,7 +84,7 @@ class QsubLauncher(object):
     def output(self):
         stdout_stderr = ''
         for l in  ('o', 'e'):
-            filename = self.fname + l + self.qsubID
+            filename = self.fname + '.' + l + self.qsubID
             f = open(os.path.join(self.datapath, filename), 'r')
             stdout_stderr += f.read()
         return stdout_stderr
