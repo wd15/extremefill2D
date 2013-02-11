@@ -69,12 +69,12 @@ class QsubLauncher(object):
         self.datapath = datapath
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
         self.qsubID = stdout.split(' ')[2]
-        print self.qsubID
         shutil.move(self.fname, self.datapath)
 
     @property
     def finished(self):
         stdout, stderr = popen(['qstat', '-j', self.qsubID]).communicate()
+        print stdout
         if stdout.splitlines()[0] == "Following jobs do not exist:":
             return True
         else:
