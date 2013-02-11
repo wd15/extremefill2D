@@ -58,15 +58,13 @@ class Launcher(object):
 
 class QsubLauncher(object):
     def __init__(self, cmd, datapath='.'):
-        self.fname = TempFile(['#!/bin/bash\n',
-                               '\n',
-                               'source ~/.bashrc\n',
-                               'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
-                               ' '.join(cmd)], suffix='.qsub', dir='.')
+        self.qsubfile = TempFile(['#!/bin/bash\n',
+                                  '\n',
+                                  'source ~/.bashrc\n',
+                                  'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
+                                  ' '.join(cmd)], suffix='.qsub', dir='.')
         self.datapath = datapath
-        print self.fname
-        raw_input('stopped')
-        (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
+        (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.qsubfile.name]).communicate()
         self.qsubID = stdout.split(' ')[2]
 
     @property
@@ -82,7 +80,7 @@ class QsubLauncher(object):
     def output(self):
         stdout_stderr = ''
         for l in  ('o', 'e'):
-            filename = self.fname + '.' + l + self.qsubID
+            filename = self.qsubfile.name + '.' + l + self.qsubID
             f = open(os.path.join(self.datapath, filename), 'r')
             stdout_stderr += f.read()
         return stdout_stderr
