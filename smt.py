@@ -64,6 +64,8 @@ class QsubLauncher(object):
                                'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
                                ' '.join(cmd)], suffix='.qsub', dir='.')
         self.datapath = datapath
+        print self.fname
+        raw_input('stopped')
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
         self.qsubID = stdout.split(' ')[2]
 
