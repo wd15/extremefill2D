@@ -74,7 +74,10 @@ class QsubLauncher(object):
     @property
     def finished(self):
         stdout, stderr = popen(['qstat', '-j', self.qsubID]).communicate()
-        print stdout.splitlines()[0]
+        print stdout
+        print stderr
+        print self.qsubID
+        raw_input('stopped')
         if stdout.splitlines()[0] == "Following jobs do not exist:":
             return True
         else:
