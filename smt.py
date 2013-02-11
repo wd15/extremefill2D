@@ -78,10 +78,11 @@ class QsubLauncher(object):
         print stderr
         print self.qsubID
         raw_input('stopped')
-        if stdout.splitlines()[0] == "Following jobs do not exist:":
-            return True
-        else:
-            return False
+        return True
+        # if stdout.splitlines()[0] == "Following jobs do not exist:":
+        #     return True
+        # else:
+        #     return Fals
 
     @property
     def output(self):
