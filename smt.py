@@ -17,11 +17,13 @@ On laptop use http://129.6.153.60:8000
 """
 
 import time
-from sumatra.projects import load_project
-from sumatra.parameters import build_parameters
+import shutil
 from subprocess import Popen, PIPE, call
 import tempfile
 import os
+
+from sumatra.projects import load_project
+from sumatra.parameters import build_parameters
 
 def popen(cmd):
     return Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
@@ -68,7 +70,7 @@ class QsubLauncher(object):
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
         self.qsubID = stdout.split(' ')[2]
         print self.qsubID
-        os.move(self.fname, self.datapath)
+        shutil.move(self.fname, self.datapath)
 
     @property
     def finished(self):
