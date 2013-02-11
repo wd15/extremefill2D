@@ -66,7 +66,8 @@ class QsubLauncher(object):
         f.close()
         self.datapath = datapath
         (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.fname]).communicate()
-        self.qsubID = stdout.read().split(' ')[2]
+        self.qsubID = stdout.split(' ')[2]
+        print self.qsubID
         os.move(self.fname, self.datapath)
 
     @property
