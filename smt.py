@@ -78,8 +78,12 @@ class QsubLauncher(object):
         stdout_stderr = ''
         for l in  ('o', 'e'):
             filename = self.qsubfile.name + '.' + l + self.qsubID
-            f = open(os.path.join(self.datapath, filename), 'r')
-            stdout_stderr += f.read()
+            filepath = os.path.join(self.datapath, filename)
+            if os.path.exists(filepath):
+                f = open(os.path.join(self.datapath, filename), 'r')
+                stdout_stderr += f.read()
+            else:
+                stdout_stderr += "%s does not exist\n" % filepath
         return stdout_stderr
 
 
