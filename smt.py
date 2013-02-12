@@ -77,13 +77,8 @@ class QsubLauncher(object):
     def output(self):
         stdout_stderr = ''
         for l in  ('o', 'e'):
-            filename = self.qsubfile.name + '.' + l + self.qsubID
-            print self.datapath
-            print filename
+            filename = os.path.split(self.qsubfile.name)[1] + '.' + l + self.qsubID
             filepath = os.path.join(self.datapath, filename)
-            print filepath
-            print os.path.exists(filepath)
-            raw_input()
             if os.path.exists(filepath):
                 f = open(filepath, 'r')
                 stdout_stderr += f.read()
