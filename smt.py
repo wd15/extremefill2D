@@ -149,7 +149,7 @@ if __name__ == '__main__':
 
     batchSimulation = BatchSimulation('script.py', 'default.param', poll_time=2)
     for CFL in np.linspace(0.01, 0.1, 1):
-        batchSimulation.addSimulation(reason="Testing the BatchSimulation script for tags without qsub",
+        batchSimulation.addSimulation(reason="Testing QsubLaunch",
                                       tags=('CFL', 'test'),
                                       parameters={'CFL' : CFL, 'steps' : 1})
 
