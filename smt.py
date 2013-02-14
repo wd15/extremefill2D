@@ -1,3 +1,4 @@
+
 """
 Script to test setting up batch simaulations with Sumatra.
 
@@ -7,6 +8,7 @@ To set up environment.
     $ smt configure --executable=python --main=script.py
     $ smt configure --addlabel=parameters
     $ smt configure -g uuid
+    $ smt configure -c store-diff
 
 View data on laptop
 
@@ -103,8 +105,7 @@ class Simulation(object):
         self.record.start_time = time.time()
         self.launcher = QsubLauncher(cmd, self.record.datastore.root)
 
-    @property
-    def finished(self):
+    def finished(self, project):
         if not hasattr(self, '_finished'):
             self._finished = False
         if not self._finished:
@@ -113,7 +114,8 @@ class Simulation(object):
                 self.record.duration = time.time() - self.record.start_time    
                 self.record.output_data = self.record.datastore.find_new_data(self.record.timestamp)
                 self.record.stdout_stderr = self.launcher.output
-
+                project.add_record(self.record)
+                project.save()
         return self._finished
 
 
@@ -135,11 +137,8 @@ class BatchSimulation(object):
         for simulation in self.simulations:
             simulation.launch()
 
-        while not np.all([s.finished for s in self.simulations]):
+        while not np.all([s.finished(self.project) for s in self.simulations]):
             time.sleep(self.poll_time)
-
-        for simulation in self.simulations:
-            self.project.add_record(simulation.record)
 
         self.project.save()
 
@@ -148,9 +147,8 @@ if __name__ == '__main__':
     import numpy as np
 
     batchSimulation = BatchSimulation('script.py', 'default.param', poll_time=2)
-    for CFL in np.linspace(0.01, 0.1, 1):
-        batchSimulation.addSimulation(reason="Testing QsubLaunch",
-                                      tags=('CFL', 'test'),
+    for CFL in np.linspace(0.01, 0.2, 10):
+        batchSimulation.addSimulation(reason="Checking CFL convergence",
+                                      tags=('CFL', 'production'),
                                       parameters={'CFL' : CFL, 'steps' : 1})
-
     batchSimulation.run()
