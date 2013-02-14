@@ -19,136 +19,37 @@ On laptop use http://129.6.153.60:8000
 """
 
 import time
-import shutil
-from subprocess import Popen, PIPE, call
-import tempfile
 import os
 
 from sumatra.projects import load_project
 from sumatra.parameters import build_parameters
+from sumatra.parameters import SimpleParameterSet
+import lockfile
 
-def popen(cmd):
-    return Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+def SMTSimulation(function, args=(), kwargs={}, tags=(), reason=''):
+    project = load_project()
+    record = project.new_record(parameters=SimpleParameterSet(kwargs),
+                                main_file=__file__,
+                                reason=reason)
 
-def get_virtualenv():
-    return os.path.split(os.environ.get('VIRTUAL_ENV'))[1]
+##    record.parameters.update(kwargs)
 
+    record.datastore.root = os.path.join(record.datastore.root, record.label)
+    datafile = os.path.join(record.datastore.root, 'data.h5')
+    record.parameters.update({'dataFile': datafile})
 
-class TempFile(object):
-    def __init__(self, lines=[], suffix='', dir=None):
-        (f, self.name) = tempfile.mkstemp(suffix=suffix, dir=dir)
-        ff = os.fdopen(f, 'w')
-        ff.writelines(lines)
-        ff.close()
+    for tag in tags:
+        record.tags.add(tag)
 
-    def __del__(self):
-        os.remove(self.name)
+    record.start_time = time.time()
+    function(*args, **record.parameters.as_dict())
+    record.duration = time.time() - record.start_time
+    record.output_data = record.datastore.find_new_data(record.timestamp)
+    ##record.stdout_stderr = process.stdout.read() + process.stderr.read()
 
+    lock = lockfile.FileLock(os.path.join(__file__.split()[0], 'smt'))
+    lock.acquire()
+    project.add_record(record)
+    project.save()
+    lock.release()
 
-class Launcher(object):
-    def __init__(self, cmd, datapath='.'):
-        self.process = popen(cmd)
-    
-    @property
-    def finished(self):
-        return not (self.process.poll() is None)
-
-    @property
-    def output(self):
-        return self.process.stdout.read() + self.process.stderr.read()
-
-
-class QsubLauncher(object):
-    def __init__(self, cmd, datapath='.'):
-        self.qsubfile = TempFile(['#!/bin/bash\n',
-                                  '\n',
-                                  'source ~/.bashrc\n',
-                                  'workon {virtualenv}\n'.format(virtualenv=get_virtualenv()),
-                                  ' '.join(cmd)], suffix='.qsub', dir='.')
-        self.datapath = datapath
-        (stdout, stderr) = popen(['qsub', '-cwd', '-o', self.datapath, '-e', self.datapath, self.qsubfile.name]).communicate()
-        self.qsubID = stdout.split(' ')[2]
-
-    @property
-    def finished(self):
-        stdout, stderr = popen(['qstat', '-j', self.qsubID]).communicate()
-        lines = stderr.splitlines()
-        return len(lines) > 0 and "Following jobs do not exist" in lines[0]
-
-    @property
-    def output(self):
-        stdout_stderr = ''
-        for l in  ('o', 'e'):
-            filename = os.path.split(self.qsubfile.name)[1] + '.' + l + self.qsubID
-            filepath = os.path.join(self.datapath, filename)
-            if os.path.exists(filepath):
-                f = open(filepath, 'r')
-                stdout_stderr += f.read()
-            else:
-                stdout_stderr += "%s does not exist\n" % filepath
-        return stdout_stderr
-
-
-class Simulation(object):
-    def __init__(self, record, parameters, tags):
-        self.record = record
-        self.record.parameters.update({"sumatra_label": self.record.label})
-        self.record.parameters.update(parameters)
-        lines = ["%s = %s\n" % (k, repr(v)) for k, v in self.record.parameters.values.iteritems()]
-        self.paramfile = TempFile(lines=lines, suffix='.param', dir='.')
-        self.record.datastore.root = os.path.join(self.record.datastore.root, self.record.label)
-        for tag in tags:
-            self.record.tags.add(tag)
-
-    def launch(self):
-        cmd = ['python', self.record.main_file, self.paramfile.name] 
-        self.record.start_time = time.time()
-        self.launcher = QsubLauncher(cmd, self.record.datastore.root)
-
-    def finished(self, project):
-        if not hasattr(self, '_finished'):
-            self._finished = False
-        if not self._finished:
-            self._finished = self.launcher.finished
-            if self._finished:
-                self.record.duration = time.time() - self.record.start_time    
-                self.record.output_data = self.record.datastore.find_new_data(self.record.timestamp)
-                self.record.stdout_stderr = self.launcher.output
-                project.add_record(self.record)
-                project.save()
-        return self._finished
-
-
-class BatchSimulation(object):
-    def __init__(self, script_file, parameter_file, poll_time=20.):
-        self.script_file = script_file
-        self.parameter_file = parameter_file
-        self.poll_time = poll_time
-        self.project = load_project()
-        self.simulations = []
-
-    def addSimulation(self, parameters={}, reason='', tags=()):
-        record = self.project.new_record(parameters=build_parameters(self.parameter_file),
-                                    main_file=os.path.join(os.path.split(__file__)[0], self.script_file),
-                                    reason=reason)
-        self.simulations += [Simulation(record, parameters, tags)]
-        
-    def run(self):
-        for simulation in self.simulations:
-            simulation.launch()
-
-        while not np.all([s.finished(self.project) for s in self.simulations]):
-            time.sleep(self.poll_time)
-
-        self.project.save()
-
-
-if __name__ == '__main__':
-    import numpy as np
-
-    batchSimulation = BatchSimulation('script.py', 'default.param', poll_time=2)
-    for CFL in np.linspace(0.01, 0.2, 10):
-        batchSimulation.addSimulation(reason="Checking CFL convergence",
-                                      tags=('CFL', 'production'),
-                                      parameters={'CFL' : CFL, 'steps' : 1})
-    batchSimulation.run()
