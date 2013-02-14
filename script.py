@@ -28,5 +28,5 @@ def run(totalSteps=10,
 
 from smt import SMTSimulation
 
-SMTSimulation(run, kwargs={'totalSteps' : 1}, tags=('test',), reason="testing decorator")
+SMTSimulation(run, kwargs={'totalSteps' : 1}, tags=('test',), reason="testing decorator", main_file=__file__)
 
