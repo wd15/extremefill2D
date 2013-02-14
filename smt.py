@@ -22,14 +22,13 @@ import time
 import os
 
 from sumatra.projects import load_project
-from sumatra.parameters import build_parameters
 from sumatra.parameters import SimpleParameterSet
 import lockfile
 
-def SMTSimulation(function, args=(), kwargs={}, tags=(), reason=''):
+def SMTSimulation(function, args=(), kwargs={}, tags=(), reason='', main_file=__file__):
     project = load_project()
     record = project.new_record(parameters=SimpleParameterSet(kwargs),
-                                main_file=__file__,
+                                main_file=main_file,
                                 reason=reason)
 
 ##    record.parameters.update(kwargs)
@@ -47,7 +46,7 @@ def SMTSimulation(function, args=(), kwargs={}, tags=(), reason=''):
     record.output_data = record.datastore.find_new_data(record.timestamp)
     ##record.stdout_stderr = process.stdout.read() + process.stderr.read()
 
-    lock = lockfile.FileLock(os.path.join(__file__.split()[0], 'smt'))
+    lock = lockfile.FileLock('/users/wd15/tmp/smt')
     lock.acquire()
     project.add_record(record)
     project.save()
