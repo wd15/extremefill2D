@@ -1,3 +1,6 @@
+import os
+
+
 import tables
 from extremefill.simulation2D import Simulation2D
 
@@ -7,8 +10,9 @@ simulation = Simulation2D()
 def run(totalSteps=10,
         Nx=300,
         CFL=0.1,
-        dataFile='data.h5'):
-
+        datadir=os.path.split(__file__)[0]):
+    
+    datapath = os.path.join(datadir, 'data.h5')
     simulation = Simulation2D()
     simulation.run(view=False,
                    totalSteps=totalSteps,
@@ -20,7 +24,7 @@ def run(totalSteps=10,
                    PRINT=True,
                    areaRatio=2 * 0.093,
                    dtMax=100.,
-                   dataFile='data.h5',
+                   dataFile=datapath,
                    totalTime=5000.,
                    data_frequency=10,
                    NxBase=1200)

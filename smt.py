@@ -31,11 +31,8 @@ def SMTSimulation(function, args=(), kwargs={}, tags=(), reason='', main_file=__
                                 main_file=main_file,
                                 reason=reason)
 
-##    record.parameters.update(kwargs)
-
     record.datastore.root = os.path.join(record.datastore.root, record.label)
-    datafile = os.path.join(record.datastore.root, 'data.h5')
-    record.parameters.update({'dataFile': datafile})
+    record.parameters.update({'datadir': record.datastore.root})
 
     for tag in tags:
         record.tags.add(tag)
