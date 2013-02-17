@@ -32,5 +32,5 @@ def run(totalSteps=10,
 
 from smt import SMTSimulation
 
-SMTSimulation(run, kwargs={'totalSteps' : 1}, tags=('test',), reason="testing decorator", main_file=__file__)
-
+smtsim = SMTSimulation(run, kwargs={'totalSteps' : 1}, tags=('test',), reason="testing SMT class", main_file=__file__)
+smtsim.launch()
