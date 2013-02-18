@@ -3,9 +3,10 @@ import os
 
 import tables
 from extremefill.simulation2D import Simulation2D
-from smtcapture import SMTCapture
+from smtdecorator import SMTDecorator
+from smtdecorator import SMTContextManager
 
-@SMTCapture
+#@SMTDecorator
 def run(totalSteps=10,
         Nx=300,
         CFL=0.1,
@@ -29,4 +30,6 @@ def run(totalSteps=10,
                    NxBase=1200)
 
 if __name__ == '__main__':
-    run(totalSteps=1, tags=('test',), reason="testing SMT class")
+    # run(totalSteps=1, tags=('test',), reason="testing SMT class")
+    with SMTContextManager(tags=('test',), reason="testing SMT class") as smtcontext:
+        run(totalsteps=1)
