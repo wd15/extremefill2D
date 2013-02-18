@@ -58,7 +58,7 @@ class Redirect:
 class SMTDecorator(object):
     def __init__(self, function):
         self.function = function
-                
+
     def __call__(self, tags=(), reason='', *args, **kwargs):
         project = load_project()
         record = project.new_record(parameters=SimpleParameterSet(kwargs),
@@ -85,34 +85,4 @@ class SMTDecorator(object):
         return returnvalue
 
 
-class SMTContextManager(object):
-    def __init__(self, tags=(), reason=''):
-        self.tags = tags
-        self.reason = reason
-        
-    def __enter__(self):
-        self.project = load_project()
-        self.record = self.project.new_record(parameters=SimpleParameterSet({}),
-                                              main_file=__file__,
-                                              reason=self.reason)
-
-        self.record.datastore.root = os.path.join(self.record.datastore.root, self.record.label)
-        for tag in self.tags:
-            self.record.tags.add(tag)
-
-        self.record.start_time = time.time()
-        
-        self.redirect = Redirect()
-        self.redirect.__enter__()
-        
-    def __exit__(self, type, value, tb):
-        self.redirect.__exit__()
-            
-        self.record.duration = time.time() - self.record.start_time
-        self.record.stdout_stderr = self.redirect.target.getvalue()
-        self.record.output_data = self.record.datastore.find_new_data(self.record.timestamp)
-
-        with SMTLock(self.project):
-            self.project.add_record(self.record)
-            self.project.save()
 
