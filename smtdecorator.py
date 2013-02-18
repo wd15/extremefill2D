@@ -72,7 +72,7 @@ class SMTDecorator(object):
         record.start_time = time.time()
 
         with Redirect() as out:
-            returnvalue = self.function(datadir=record.datastoreroot, *args, **record.parameters.as_dict())
+            returnvalue = self.function(datadir=record.datastore.root, *args, **record.parameters.as_dict())
 
         record.duration = time.time() - record.start_time
         record.stdout_stderr = out.getvalue()
