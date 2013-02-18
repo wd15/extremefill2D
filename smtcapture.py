@@ -46,44 +46,39 @@ class SMTLock:
 class Redirect:
     def __enter__(self):
         self.tmp_stdout = sys.stdout
-        sys.stdout = StringIO()
-        return sys.stdout
+        self.target = StringIO()
+        sys.stdout = self.target
+        return self.target
     
     def __exit__(self, type, value, tb):
         sys.stdout = self.tmp_stdout
-
+        print self.target.getvalue()
         
-class SMTSimulation(object):
-    def __init__(self, function, args=(), kwargs={}, tags=(), reason='', main_file=__file__):
+class SMTCapture(object):
+    def __init__(self, function):
+        self.function = function
+                
+    def __call__(self, tags=(), reason='', *args, **kwargs):
         project = load_project()
         record = project.new_record(parameters=SimpleParameterSet(kwargs),
-                                    main_file=main_file,
+                                    main_file=self.function.func_globals['__file__'],
                                     reason=reason)
 
         record.datastore.root = os.path.join(record.datastore.root, record.label)
-        record.parameters.update({'datadir': record.datastore.root})
-
         for tag in tags:
             record.tags.add(tag)
 
-        self.record = record
-        self.project = project
-        self.function = function
-        self.args = args
-        
-    def launch(self):
-        record = self.record
         record.start_time = time.time()
 
         with Redirect() as out:
-            self.function(*self.args, **record.parameters.as_dict())
+            returnvalue = self.function(datadir=record.datastoreroot, *args, **record.parameters.as_dict())
 
-        print out.getvalue()
-        record.stdout_stderr = out.getvalue()
         record.duration = time.time() - record.start_time
-
+        record.stdout_stderr = out.getvalue()
         record.output_data = record.datastore.find_new_data(record.timestamp)
 
-        with SMTLock(self.project):
-            self.project.add_record(record)
-            self.project.save()
+        with SMTLock(project):
+            project.add_record(record)
+            project.save()
+
+        return returnvalue
