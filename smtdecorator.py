@@ -55,6 +55,29 @@ class Redirect:
 
         
 class SMTDecorator(object):
+    """
+    Transforms a function so that its execution is recorded by
+    Sumatra, e.g
+
+    >>> from smtdecorator import SMTDecorator
+
+    >>> @SMTdecorator
+    ... def myfunc(arg1=1, arg2=2):
+    ...     return arg1 + arg2
+
+    >>> print myfunc(arg1=3, tag=['test'], reason='testing')
+    8
+
+    You can also use the above script at the command line with
+
+    $ python script.py --tag=test --reason='testing command line args'
+    \ --tag=commandline --arg1=4
+
+    The functions keyword arguments can be overridden using command
+    line arguments.
+    
+    """
+
     def __init__(self, function):
         self.function = function
 
