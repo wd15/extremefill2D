@@ -38,7 +38,7 @@ if __name__ == '__main__':
     
     args = Bare()
     parser = argparse.ArgumentParser(description="Run Extremefill 2D example.")
-    parser.add_argument('totalSteps', default=1, type=int)
+    parser.add_argument('--totalSteps', default=1, type=int)
     parser.parse_args(namespace=args)
 
     run(totalSteps=args.totalSteps, tags=('test',), reason="testing SMT class")
