@@ -1,4 +1,3 @@
-
 """
 Script to test setting up batch simaulations with Sumatra.
 
@@ -22,8 +21,8 @@ On laptop use http://129.6.153.60:8000
 import time
 import os
 import sys
-from contextlib import contextmanager
 from StringIO import StringIO
+import argparse
 
 
 from sumatra.projects import load_project
@@ -59,18 +58,21 @@ class SMTDecorator(object):
     def __init__(self, function):
         self.function = function
 
-    def __call__(self, tags=(), reason='', *args, **kwargs):
+    def __call__(self, tag=[], reason='', *args, **kwargs):
+
+        parameters, tag, reason = self.parseargs(kwargs, list(tag), reason)
+
         project = load_project()
-        record = project.new_record(parameters=SimpleParameterSet(kwargs),
+        record = project.new_record(parameters=SimpleParameterSet(parameters),
                                     main_file=self.function.func_globals['__file__'],
                                     reason=reason)
 
         record.datastore.root = os.path.join(record.datastore.root, record.label)
-        for tag in tags:
-            record.tags.add(tag)
+
+        for t in tag:
+            record.tags.add(t)
 
         record.start_time = time.time()
-
         with Redirect() as out:
             returnvalue = self.function(datadir=record.datastore.root, *args, **record.parameters.as_dict())
 
@@ -84,5 +86,25 @@ class SMTDecorator(object):
 
         return returnvalue
 
+    def parseargs(self, func_kwargs, tag, reason):
+        class Bare:
+            pass
+        ext_kwargs = Bare()
+        parser = argparse.ArgumentParser(description="SMT arguments")
 
+        for k, v in func_kwargs.iteritems():
+            parser.add_argument('--' + k, default=v, type=type(v), dest=k)
+                                          
+        parser.add_argument('--tag', action='append', default=tag, dest='tag')
+        parser.add_argument('--reason', default=reason, dest='reason')
+        parser.parse_args(namespace=ext_kwargs)
 
+        tag = ext_kwargs.tag
+        reason = ext_kwargs.reason
+
+        for k, v in func_kwargs.iteritems():
+            func_kwargs[k] = getattr(ext_kwargs, k)
+        
+        return func_kwargs, tag, reason
+            
+            
