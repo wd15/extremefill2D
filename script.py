@@ -1,10 +1,11 @@
 import os
-import argparse
+import shutil
 
 
 import tables
 from extremefill.simulation2D import Simulation2D
-from smtdecorator import SMTDecorator
+from sumatra.smtdecorator import SMTDecorator
+import tempfile
 
 @SMTDecorator
 def run(totalSteps=10,
@@ -12,7 +13,10 @@ def run(totalSteps=10,
         CFL=0.1,
         datadir=os.path.split(__file__)[0]):
     
+    final_datadir = datadir
+    datadir = tempfile.gettempdir()
     datapath = os.path.join(datadir, 'data.h5')
+
     simulation = Simulation2D()
     simulation.run(view=False,
                    totalSteps=totalSteps,
@@ -28,6 +32,8 @@ def run(totalSteps=10,
                    totalTime=5000.,
                    data_frequency=10,
                    NxBase=1200)
+
+    shutil.move(datapath, final_datadir)
 
 if __name__ == '__main__':
     run(totalSteps=2, CFL=0.1)

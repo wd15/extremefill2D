@@ -1,5 +1,10 @@
 #!/bin/bash
 source ~/.bashrc
 workon default
-python script.py "$@"
+ARG=""
+if [ "$JOB_ID" ]
+then
+    ARG="--tag=$JOB_ID"
+fi
+python script.py "$@" $ARG
     
