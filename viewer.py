@@ -50,7 +50,7 @@ class BaseViewer(object):
         import fipy as fp
         return fp.Grid2D(nx=data[0]['nx'], ny=data[0]['ny'], dx=data[0]['dx'], dy=data[0]['dy'])
     
-    def plot(self):
+    def plot(self, filename=None, filedir=None):
         raise NotImplementedError
 
 class NormViewer(BaseViewer):
@@ -61,15 +61,14 @@ class NormViewer(BaseViewer):
         data = DictTable(datafile, 'r')
         self.data.append(self.__getNormData(data) + (label,))
     
-    def plot(self):        
+    def plot(self, filename='Norm2.png', filedir='.png'):        
         for t, d, l in self.data:
             pylab.semilogy(t, d, label=l)
 
         pylab.ylabel(r'$\|\frac{\phi - \phi_0}{\Delta x}\|$', rotation='horizontal')
         pylab.xlabel(r'$t$ (s)')
         pylab.legend()
-        pylab.savefig('Norm2.png')
-        pylab.show()
+        pylab.savefig(os.path.join(filedir, filename))
 
     def __getNormData(self, data):
         norms = []
@@ -101,7 +100,7 @@ class ContourViewer(BaseViewer):
         self.contours = contours
         super(ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times)
         
-    def plot(self, filename='contour.png'):
+    def plot(self, filename='contour.png', filedir='.png'):
         import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -110,7 +109,7 @@ class ContourViewer(BaseViewer):
             pylab.contour(x, y, phi, self.contours, colors='k', extent=(0, 1e-4, 0, 1e-5))
         pylab.xlim(1e-5, 7.5e-5)
         pylab.ylim(0, 8e-6)
-        pylab.savefig(filename)
+        pylab.savefig(os.path.join(filedir, filename))
         
     def addData(self, datafile, label):
         for time in self.times:

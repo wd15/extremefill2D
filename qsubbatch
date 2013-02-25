@@ -1,7 +1,9 @@
 #!/bin/bash
 
+QSUBDIR=.qsub
+
 for CFL in 0.01 0.02 0.04
 do
-    qsub -cwd -o qsubout -e qsubout launcher --tag=CFL --tag=production --reason="Production run with changing CFL and CFL=$CFL" --totalSteps=100000000000 --CFL=$CFL --tag=qsub
-#    qsub -cwd -o qsubout -e qsubout launcher --tag=test --reason="Testing having the qsub jobs use a temp file for the datafile during the simulation." --totalSteps=1
+    qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher --tag=CFL --tag=production --reason="Production run with changing CFL and CFL=$CFL" --totalSteps=100000000000 --CFL=$CFL --tag=qsub
+#    qsub -cwd -o $QSUBDIR -e qsubout launcher --tag=test --reason="Testing having the qsub jobs use a temp file for the datafile during the simulation." --totalSteps=1
 done
