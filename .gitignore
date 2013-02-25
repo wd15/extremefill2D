@@ -38,4 +38,8 @@ nosetests.xml
 .qsub
 
 # Sumatra
-.smt
+.smt*
+Data
+
+# images
+png

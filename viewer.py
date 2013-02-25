@@ -61,7 +61,7 @@ class NormViewer(BaseViewer):
         data = DictTable(datafile, 'r')
         self.data.append(self.__getNormData(data) + (label,))
     
-    def plot(self, filename='Norm2.png', filedir='.png'):        
+    def plot(self, filename='Norm2.png', filedir='png'):        
         for t, d, l in self.data:
             pylab.semilogy(t, d, label=l)
 
@@ -100,7 +100,7 @@ class ContourViewer(BaseViewer):
         self.contours = contours
         super(ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times)
         
-    def plot(self, filename='contour.png', filedir='.png'):
+    def plot(self, filename='contour.png', filedir='png'):
         import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
