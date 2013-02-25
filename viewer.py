@@ -1,41 +1,22 @@
+import os
+
+
 import tables
 from extremefill.dicttable import DictTable
 import pylab
 import numpy as np
-from gitqsub import gitCloneToTemp, cleanTempRepo, gitMediaSync
-import os
+from sumatra.projects import load_project
 
 
 class BaseViewer(object):
-    def __init__(self, branches=None, datafile=None, datafiles=None):
-        if datafiles is None:
-            self.datafilesFromBranches(branches, datafile)
-        else:
-            for count, datafile in enumerate(datafiles):
-                print 'datafile',datafile
-                if count == 0:
-                    self.addBaseData(datafile)
-                else:
-                    self.addData(datafile, datafile)
+    def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None):
+        self.times = times
+        self.data = []
+        self.addBaseData(basedatafile)
+        for datafile, label in zip(datafiles, labels):
+            print 'datafile',datafile
+            self.addData(datafile, label)
 
-    def datafilesFromBranches(self, branches, datafile):
-        cwd = os.getcwd()
-        for count, branch in enumerate(branches):
-            print 'branch',branch
-            tempdir = gitCloneToTemp(branch=branch, repositoryPath='ssh://wd15@genie.nist.gov/users/wd15/git/extremefill')
-            repopath = os.path.join(tempdir, 'extremefill')
-            datapath = os.path.join(repopath, datafile)
-            gitMediaSync()
-            if count == 0:
-                self.addBaseData(datapath)
-                basetempdir = tempdir
-            else:
-                self.addData(datapath, branch)
-                cleanTempRepo(tempdir)   
-
-        cleanTempRepo(basetempdir)
-        os.chdir(cwd)
-        
     def addBaseData(self, datapath):
         raise NotImplementedError
 
@@ -69,18 +50,16 @@ class BaseViewer(object):
         import fipy as fp
         return fp.Grid2D(nx=data[0]['nx'], ny=data[0]['ny'], dx=data[0]['dx'], dy=data[0]['dy'])
     
-class NormViewer(BaseViewer):
-    def __init__(self, times=None, branches=None, datafile=None):
-        self.times = times
-        self.data = []
-        super(NormViewer, self).__init__(branches, datafile)
+    def plot(self):
+        raise NotImplementedError
 
+class NormViewer(BaseViewer):
     def addBaseData(self, datafile):
         self.basedata = DictTable(datafile, 'r')
         
     def addData(self, datafile, label):
         data = DictTable(datafile, 'r')
-        self.data.append(self.getNormData(data) + (label,))
+        self.data.append(self.__getNormData(data) + (label,))
     
     def plot(self):        
         for t, d, l in self.data:
@@ -92,7 +71,7 @@ class NormViewer(BaseViewer):
         pylab.savefig('Norm2.png')
         pylab.show()
 
-    def getNormData(self, data):
+    def __getNormData(self, data):
         norms = []
         dx = self.basedata[0]['dx']
 
@@ -102,7 +81,7 @@ class NormViewer(BaseViewer):
         for time in self.times:
             phiBase = self.getInterpolatedDistanceFunction(time, self.basedata)
             phi = self.getInterpolatedDistanceFunction(time, data)
-            phiInt = self.interpolateToBase(self.basedata, data, phi)
+            phiInt = self.__interpolateToBase(self.basedata, data, phi)
             diff = abs(phiInt - phiBase) / dx
             diff[abs(phiBase) > 10 * dx] = 0.
             norm2 = np.sqrt(np.sum(diff**2) / len(diff))
@@ -110,7 +89,7 @@ class NormViewer(BaseViewer):
 
         return np.array(self.times), np.array(norms)
 
-    def interpolateToBase(self, basedata, data, phi):
+    def __interpolateToBase(self, basedata, data, phi):
         baseGrid = self.getGrid(basedata)
         grid = self.getGrid(data)
         import fipy as fp
@@ -118,31 +97,29 @@ class NormViewer(BaseViewer):
     
     
 class ContourViewer(BaseViewer):
-    def __init__(self, times, contours=(0,), branches=None, datafile=None, datafiles=None):
-        self.times = times
+    def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None, contours=(0,)):
         self.contours = contours
-        self.data = []
-        super(ContourViewer, self).__init__(branches=branches, datafile=datafiles, datafiles=datafiles)
+        super(ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times)
         
-    def plot(self):
+    def plot(self, filename='contour.png'):
         import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_aspect(1.)
         for x, y, phi in self.data:
-            pylab.contour(x, y, phi, self.contours, colors='black', extent=(0, 1e-4, 0, 1e-5))
+            pylab.contour(x, y, phi, self.contours, colors='k', extent=(0, 1e-4, 0, 1e-5))
         pylab.xlim(1e-5, 7.5e-5)
         pylab.ylim(0, 8e-6)
-        pylab.savefig('contour.png')
+        pylab.savefig(filename)
         
     def addData(self, datafile, label):
         for time in self.times:
-            self.addDataAtTime(datafile, time)
+            self.__addDataAtTime(datafile, time)
 
     def addBaseData(self, datafile):
         self.addData(datafile, None)
             
-    def addDataAtTime(self, datafile, time):
+    def __addDataAtTime(self, datafile, time):
         data = DictTable(datafile, 'r')
         mesh = self.getGrid(data)
         shape = (mesh.ny, mesh.nx)
@@ -160,34 +137,89 @@ def plotNx():
     times = np.arange(Npoints + 1)[1:] * end_time / Npoints
     viewer = NormViewer(times=times, branches=branches, datafile=datafile)
     viewer.plot()
-        
-def plotCFL():
-    # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    branches = ('CFL0.2', 'CFL0.4')
-    datafile = os.path.join('data', 'data.h5')
-    Npoints = 10
-    end_time = 4000.
-    times = np.arange(Npoints + 1)[1:] * end_time / Npoints
-    viewer = NormViewer(times=times, branches=branches, datafile=datafile)
-    viewer.plot()
 
-def plotContour():
-    # branches = ('CFL0.0125', 'CFL0.025', 'CFL0.05', 'CFL0.1', 'CFL0.2', 'CFL0.4', 'CFL0.8', 'CFL1.6')
-    branches = ('Nx600', 'Nx150')
-    #    branches = ('CFL0.025', 'CFL0.05')
-    datafile = os.path.join('data', 'data.h5')
-    times = (0,)
-    # times = (0., 1000., 2000., 3000., 4000.)
-    #    viewer = ContourViewer(times=times, branches=branches, datafile=datafile)
-    viewer = ContourViewer(times=times, branches=branches, datafile=datafile, datafiles=('data150.h5', 'data600.h5'))
-    viewer.plot()
+
+class CFLNormViewer(NormViewer):
+    def __init__(self):    
+        records = Records().by_tag('CFL').by_tag('production')
+        basedatafile = records.by_parameter('CFL', 0.01).datafiles[0]
+        records = records.by_parameter('CFL', (0.02, 0.04, 0.08, 0.16, 0.32, 0.64))
+
+        labels = ["CFL=%1.1e" % record.parameters['CFL'] for record in records]        
+        
+        Npoints = 10
+        end_time = 4000.
+        times = np.arange(Npoints + 1)[1:] * end_time / Npoints
+
+        super(CFLNormViewer, self).__init__(basedatafile=basedatafile,
+                                            datafiles=records.datafiles,
+                                            labels=labels,
+                                            times=times)
+
+class CFLContourViewer(ContourViewer):
+    def __init__(self, value):
+        #times = (0,)
+        times = (0., 1000., 2000., 3000., 4000.)
+        records = Records().by_tag('CFL').by_tag('production')
+        basedatafile = records.by_parameter('CFL', 0.01).datafiles[0]
+        records = records.by_parameter('CFL', value)
+
+        labels = ["CFL=%1.1e" % record.parameters['CFL'] for record in records]
+        super(CFLContourViewer, self).__init__(basedatafile=basedatafile,
+                                               datafiles=records.datafiles,
+                                               labels=labels,
+                                               times=times)
+
+
+class Records:
+    def __init__(self, records=None):
+        if records is None:
+            project = load_project()
+            self.records = project.record_store.list(project.name)
+        else:
+            self.records = records
+        
+    def by_tag(self, tag):
+        return self.getRecords(lambda r: tag in r.tags)
+
+    def by_parameter(self, parameter, values):
+        try:
+            values = list(values)
+        except TypeError:
+            values = [values]
+        return self.getRecords(lambda r: r.parameters[parameter] in values)
+
+    def getRecords(self, func):
+        records = []
+        for r in self:
+            if func(r):
+                records += [r]
+        return Records(records)
+
+    @property
+    def datafiles(self):
+        datafiles = []
+        for r in self:
+            datafiles += [os.path.join(r.datastore.root, r.output_data[0].path)]
+        return datafiles
+
+    def __len__(self):
+        return len(self.records)
+
+    def __iter__(self):
+        return iter(self.records)
+
+    def __getitem__(self, index):
+        return self.records[index]
         
 if __name__ == '__main__':
     # from profiler import Profiler
     # from profiler import calibrate_profiler
     # fudge = calibrate_profiler(10000)
     # profile = Profiler('profile', fudge=fudge)
-    plotCFL()
-    # profile.stop()
+    #   CFLNormViewer().plot()
+    for v in (0.02, 0.04, 0.08, 0.16):
+        CFLContourViewer(v).plot('contour%1.2f.png' % v)
 
+    # profile.stop()
+    # print len(Records().by_tag('CFL').by_tag('production').by_parameter('CFL', 0.08))
