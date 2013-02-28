@@ -36,5 +36,5 @@ def run(totalSteps=10,
     shutil.move(datapath, final_datadir)
 
 if __name__ == '__main__':
-    run(totalSteps=2, CFL=0.1)
+    run(totalSteps=2, CFL=0.1, Nx=300)
 

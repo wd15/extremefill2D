@@ -1,9 +1,11 @@
 #!/bin/bash
 
 QSUBDIR=.qsub
+CFL=0.1
+SERIALNUMBER=2
 
-for CFL in 0.01 0.02 0.04
+for NX in 150 300 600 1200
 do
-    qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher --tag=CFL --tag=production --reason="Production run with changing CFL and CFL=$CFL" --totalSteps=100000000000 --CFL=$CFL --tag=qsub
+    qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher --tag=Nx --tag=production --reason="Production run with changing Nx and Nx=$Nx" --totalSteps=100000000000 --CFL=$CFL --Nx=$NX --tag=qsub --tag=serialnumber$SERIALNUMBER
 #    qsub -cwd -o $QSUBDIR -e qsubout launcher --tag=test --reason="Testing having the qsub jobs use a temp file for the datafile during the simulation." --totalSteps=1
 done

@@ -13,6 +13,8 @@ class BaseViewer(object):
         self.times = times
         self.data = []
         self.addBaseData(basedatafile)
+        if labels is None:
+            labels = [''] * len(datafiles)
         for datafile, label in zip(datafiles, labels):
             print 'datafile',datafile
             self.addData(datafile, label)
@@ -95,12 +97,12 @@ class NormViewer(BaseViewer):
         return np.array(fp.CellVariable(mesh=grid, value=phi)(baseGrid.cellCenters, order=1))
     
     
-class ContourViewer(BaseViewer):
+class _ContourViewer(BaseViewer):
     def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None, contours=(0,)):
         self.contours = contours
-        super(ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times)
+        super(_ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times)
         
-    def plot(self, filename='contour.png', filedir='png'):
+    def plot(self, filename=None):
         import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -109,7 +111,11 @@ class ContourViewer(BaseViewer):
             pylab.contour(x, y, phi, self.contours, colors='k', extent=(0, 1e-4, 0, 1e-5))
         pylab.xlim(1e-5, 7.5e-5)
         pylab.ylim(0, 8e-6)
-        pylab.savefig(os.path.join(filedir, filename))
+        if filename:
+            pylab.savefig(filename)
+        pylab.show()
+            
+        
         
     def addData(self, datafile, label):
         for time in self.times:
@@ -155,18 +161,11 @@ class CFLNormViewer(NormViewer):
                                             labels=labels,
                                             times=times)
 
-class CFLContourViewer(ContourViewer):
-    def __init__(self, value):
-        #times = (0,)
-        times = (0., 1000., 2000., 3000., 4000.)
-        records = Records().by_tag('CFL').by_tag('production')
-        basedatafile = records.by_parameter('CFL', 0.01).datafiles[0]
-        records = records.by_parameter('CFL', value)
-
-        labels = ["CFL=%1.1e" % record.parameters['CFL'] for record in records]
-        super(CFLContourViewer, self).__init__(basedatafile=basedatafile,
+class ContourViewer(_ContourViewer):
+    def __init__(self, baseRecord, records, times=(0., 1000., 2000., 3000., 4000.)):
+        super(ContourViewer, self).__init__(basedatafile=baseRecord.datafiles[0],
                                                datafiles=records.datafiles,
-                                               labels=labels,
+                                               labels=None,
                                                times=times)
 
 
@@ -212,13 +211,14 @@ class Records:
         return self.records[index]
         
 if __name__ == '__main__':
-    # from profiler import Profiler
-    # from profiler import calibrate_profiler
-    # fudge = calibrate_profiler(10000)
-    # profile = Profiler('profile', fudge=fudge)
-    #   CFLNormViewer().plot()
-    for v in (0.02, 0.04, 0.08, 0.16):
-        CFLContourViewer(v).plot('contour%1.2f.png' % v)
-
+    # for v in (0.02, 0.04, 0.08, 0.16):
+    #     CFLContourViewer(v).plot('contour%1.2f.png' % v) 
+    records = Records().by_tag('CFL').by_tag('production')
+    baseRecord = records.by_parameter('CFL', 0.01)
+    otherRecord = records.by_parameter('CFL', 0.02)
+    print baseRecord
+    print otherRecord
+    v = ContourViewer(baseRecord, otherRecord)
+    v.plot()
     # profile.stop()
     # print len(Records().by_tag('CFL').by_tag('production').by_parameter('CFL', 0.08))
