@@ -50,7 +50,8 @@ class Simulation(object):
             totalTime=1e+100,
             narrow_distance=None,
             data_frequency=1,
-            NxBase=1000):
+            NxBase=1000,
+            solver_tol=1e-10):
         
         r"""
         Run an individual simulation.
@@ -173,7 +174,11 @@ class Simulation(object):
         
         potentials = []
 
-        
+        potentialSolver = LinearPCGSolver(tolerance=solver_tol)
+        cupricSolver = LinearPCGSolver(tolerance=solver_tol)
+        suppressorSolver = LinearPCGSolver(tolerance=solver_tol)
+        thetaSolver = LinearPCGSolver(tolerance=solver_tol)
+
         while (step < totalSteps) and (elapsedTime < totalTime):
             
             if view:
@@ -215,10 +220,10 @@ class Simulation(object):
 
             for sweep in range(sweeps):
 
-                potentialRes = potentialEq.sweep(potential, dt=dt)
-                cupricRes = cupricEq.sweep(cupric, dt=dt)
-                suppressorRes = suppressorEq.sweep(suppressor, dt=dt)
-                thetaRes = thetaEq.sweep(theta, dt=self.getThetaDt(dt))
+                potentialRes = potentialEq.sweep(potential, dt=dt, solver=potentialSolver)
+                cupricRes = cupricEq.sweep(cupric, dt=dt, solver=cupricSolver)
+                suppressorRes = suppressorEq.sweep(suppressor, dt=dt, solver=suppressorSolver)
+                thetaRes = thetaEq.sweep(theta, dt=self.getThetaDt(dt), solver=thetaSolver)
                 res = nx.array((potentialRes, cupricRes, suppressorRes, thetaRes))
 
                 if sweep == 0:
