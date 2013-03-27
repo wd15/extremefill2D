@@ -11,6 +11,8 @@ import tempfile
 def run(totalSteps=10,
         Nx=300,
         CFL=0.1,
+        sweeps=30,
+        tol=1e-1,
         datadir=os.path.split(__file__)[0]):
     
     final_datadir = datadir
@@ -20,9 +22,9 @@ def run(totalSteps=10,
     simulation = Simulation2D()
     simulation.run(view=False,
                    totalSteps=totalSteps,
-                   sweeps=30,
+                   sweeps=sweeps,
                    dt=0.01,
-                   tol=1e-1,
+                   tol=tol,
                    Nx=Nx,
                    CFL=CFL,
                    PRINT=True,
@@ -36,5 +38,5 @@ def run(totalSteps=10,
     shutil.move(datapath, final_datadir)
 
 if __name__ == '__main__':
-    run(totalSteps=2, CFL=0.1, Nx=300)
+    run(totalSteps=2, CFL=0.1, Nx=300, tol=1e-1, sweeps=30)
 

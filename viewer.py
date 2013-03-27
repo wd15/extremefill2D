@@ -9,20 +9,23 @@ from sumatra.projects import load_project
 
 
 class BaseViewer(object):
-    def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None):
+    def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None, colors=None):
         self.times = times
         self.data = []
         self.addBaseData(basedatafile)
         if labels is None:
             labels = [''] * len(datafiles)
-        for datafile, label in zip(datafiles, labels):
+        if colors is None:
+            labels = ['k'] * len(datafiles)
+
+        for datafile, label, color in zip(datafiles, labels, colors):
             print 'datafile',datafile
-            self.addData(datafile, label)
+            self.addData(datafile, label, color)
 
     def addBaseData(self, datapath):
         raise NotImplementedError
 
-    def addData(self, datapath, branch):
+    def addData(self, datapath, label, color):
         raise NotImplementedError
     
     def getInterpolatedDistanceFunction(self, time, data):
@@ -59,12 +62,12 @@ class NormViewer(BaseViewer):
     def addBaseData(self, datafile):
         self.basedata = DictTable(datafile, 'r')
         
-    def addData(self, datafile, label):
+    def addData(self, datafile, label, color):
         data = DictTable(datafile, 'r')
         self.data.append(self.__getNormData(data) + (label,))
     
     def plot(self, filename='Norm2.png', filedir='png'):        
-        for t, d, l in self.data:
+        for t, d, l, c in self.data:
             pylab.semilogy(t, d, label=l)
 
         pylab.ylabel(r'$\|\frac{\phi - \phi_0}{\Delta x}\|$', rotation='horizontal')
@@ -98,33 +101,32 @@ class NormViewer(BaseViewer):
     
     
 class _ContourViewer(BaseViewer):
-    def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None, contours=(0,)):
+    def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None, contours=(0,), colors=None):
         self.contours = contours
-        super(_ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times)
+        self.colors = colors
+        super(_ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times, colors=colors)
         
     def plot(self, filename=None):
         import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_aspect(1.)
-        for x, y, phi in self.data:
-            pylab.contour(x, y, phi, self.contours, colors='k', extent=(0, 1e-4, 0, 1e-5))
+        for x, y, phi, color in self.data:
+            pylab.contour(x, y, phi, self.contours, colors=color, extent=(0, 1e-4, 0, 1e-5))
         pylab.xlim(1e-5, 7.5e-5)
         pylab.ylim(0, 8e-6)
         if filename:
             pylab.savefig(filename)
         pylab.show()
             
-        
-        
-    def addData(self, datafile, label):
+    def addData(self, datafile, label, color):
         for time in self.times:
-            self.__addDataAtTime(datafile, time)
+            self.__addDataAtTime(datafile, time, color)
 
     def addBaseData(self, datafile):
-        self.addData(datafile, None)
+        self.addData(datafile, None, 'k')
             
-    def __addDataAtTime(self, datafile, time):
+    def __addDataAtTime(self, datafile, time, color):
         data = DictTable(datafile, 'r')
         mesh = self.getGrid(data)
         shape = (mesh.ny, mesh.nx)
@@ -132,41 +134,18 @@ class _ContourViewer(BaseViewer):
         y = np.reshape(mesh.y.value, shape)
         phi = self.getInterpolatedDistanceFunction(time, data)
         phi = np.reshape(phi, shape)
-        self.data.append((x, y, phi))
+        self.data.append((x, y, phi, color))
 
-def plotNx():
-    branches = ('Nx600', 'Nx300', 'Nx150')
-    datafile = os.path.join('data', 'data.h5')
-    Npoints = 10
-    end_time = 4000.
-    times = np.arange(Npoints + 1)[1:] * end_time / Npoints
-    viewer = NormViewer(times=times, branches=branches, datafile=datafile)
-    viewer.plot()
-
-
-class CFLNormViewer(NormViewer):
-    def __init__(self):    
-        records = Records().by_tag('CFL').by_tag('production')
-        basedatafile = records.by_parameter('CFL', 0.01).datafiles[0]
-        records = records.by_parameter('CFL', (0.02, 0.04, 0.08, 0.16, 0.32, 0.64))
-
-        labels = ["CFL=%1.1e" % record.parameters['CFL'] for record in records]        
-        
-        Npoints = 10
-        end_time = 4000.
-        times = np.arange(Npoints + 1)[1:] * end_time / Npoints
-
-        super(CFLNormViewer, self).__init__(basedatafile=basedatafile,
-                                            datafiles=records.datafiles,
-                                            labels=labels,
-                                            times=times)
 
 class ContourViewer(_ContourViewer):
-    def __init__(self, baseRecord, records, times=(0., 1000., 2000., 3000., 4000.)):
+    def __init__(self, baseRecord, records, times=(0., 1000., 2000., 3000., 4000.), colors=None):
+        if colors is None:
+            colors = ('k',) * len(records)
         super(ContourViewer, self).__init__(basedatafile=baseRecord.datafiles[0],
-                                               datafiles=records.datafiles,
-                                               labels=None,
-                                               times=times)
+                                            datafiles=records.datafiles,
+                                            labels=None,
+                                            times=times,
+                                            colors=colors)
 
 
 class Records:
@@ -213,12 +192,12 @@ class Records:
 if __name__ == '__main__':
     # for v in (0.02, 0.04, 0.08, 0.16):
     #     CFLContourViewer(v).plot('contour%1.2f.png' % v) 
-    records = Records().by_tag('CFL').by_tag('production')
-    baseRecord = records.by_parameter('CFL', 0.01)
-    otherRecord = records.by_parameter('CFL', 0.02)
+    records = Records().by_tag('serialnumber4')
+    baseRecord = records.by_parameter('sweeps', 32)
+    otherRecord = records.by_parameter('sweeps', 1)
     print baseRecord
     print otherRecord
-    v = ContourViewer(baseRecord, otherRecord)
+    v = ContourViewer(baseRecord, otherRecord, colors=('r',))
     v.plot()
     # profile.stop()
     # print len(Records().by_tag('CFL').by_tag('production').by_parameter('CFL', 0.08))
