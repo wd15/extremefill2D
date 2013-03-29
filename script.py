@@ -13,6 +13,7 @@ def run(totalSteps=10,
         CFL=0.1,
         sweeps=30,
         tol=1e-1,
+        solver_tol=1e-10,
         datadir=os.path.split(__file__)[0]):
     
     final_datadir = datadir
@@ -33,10 +34,11 @@ def run(totalSteps=10,
                    dataFile=datapath,
                    totalTime=5000.,
                    data_frequency=10,
-                   NxBase=1200)
+                   NxBase=1200,
+                   solver_tol=solver_tol)
 
     shutil.move(datapath, final_datadir)
 
 if __name__ == '__main__':
-    run(totalSteps=2, CFL=0.1, Nx=300, tol=1e-1, sweeps=30)
+    run(totalSteps=2, CFL=0.1, Nx=300, tol=1e-1, sweeps=30, solver_tol=1e-10)
 

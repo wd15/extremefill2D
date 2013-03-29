@@ -4,10 +4,12 @@ QSUBDIR=.qsub
 CFL=0.1
 NX=300
 TOL=1e-10
-SERIALNUMBER=4
+SERIALNUMBER=8
+SWEEPS=4
+SOLVER_TOL=1e-6
 
-for SWEEPS in 1 2 4 8 16 32
+for NX in 150 300 600 1200 2400
 do
-    qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher --tag=sweeps --tag=production --reason="Production run with changing sweeps and sweeps=$SWEEPS" --totalSteps=100000000000 --CFL=$CFL --Nx=$NX --sweeps=$SWEEPS --tol=$TOL --tag=qsub --tag=serialnumber$SERIALNUMBER
+    qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher --tag=Nx --tag=convergence --reason="Timing and convergence tests for an array of mesh sizes testing with new tolerance and sweeps for Nx=$NX" --totalSteps=100000000000 --CFL=$CFL --Nx=$NX --sweeps=$SWEEPS --tol=$TOL --solver_tol=$SOLVER_TOL --tag=qsub --tag=serialnumber$SERIALNUMBER
 #    qsub -cwd -o $QSUBDIR -e qsubout launcher --tag=test --reason="Testing having the qsub jobs use a temp file for the datafile during the simulation." --totalSteps=1
 done
