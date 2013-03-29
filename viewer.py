@@ -2,7 +2,7 @@ import os
 
 
 import tables
-from extremefill.dicttable import DictTable
+from extremefill2D.dicttable import DictTable
 import pylab
 import numpy as np
 from sumatra.projects import load_project

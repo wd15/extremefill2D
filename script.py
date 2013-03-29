@@ -3,7 +3,7 @@ import shutil
 
 
 import tables
-from extremefill.simulation2D import Simulation2D
+from extremefill2D.simulation2D import Simulation2D
 from sumatra.smtdecorator import SMTDecorator
 import tempfile
 
