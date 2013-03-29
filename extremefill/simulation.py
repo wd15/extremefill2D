@@ -174,10 +174,10 @@ class Simulation(object):
         
         potentials = []
 
-        potentialSolver = LinearPCGSolver(tolerance=solver_tol)
-        cupricSolver = LinearPCGSolver(tolerance=solver_tol)
-        suppressorSolver = LinearPCGSolver(tolerance=solver_tol)
-        thetaSolver = LinearPCGSolver(tolerance=solver_tol)
+        potentialSolver = fp.LinearPCGSolver(tolerance=solver_tol)
+        cupricSolver = fp.LinearPCGSolver(tolerance=solver_tol)
+        suppressorSolver = fp.LinearPCGSolver(tolerance=solver_tol)
+        thetaSolver = fp.LinearPCGSolver(tolerance=solver_tol)
 
         while (step < totalSteps) and (elapsedTime < totalTime):
             
