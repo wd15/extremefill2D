@@ -5,12 +5,11 @@ from fipy import Grid1D
 import numpy
 
 from extremefill.dicttable import DictTable
-from extremefill.simulation import Simulation
+from extremefill.pseudo2DSimulation import Pseudo2DSimulation
 
 class Viewer(object):
     def __init__(self, datafile='data.h5'):
         self.datafile = datafile
-
 
     def generateData(self, parameters):
         h5data = DictTable(self.datafile)
@@ -21,7 +20,7 @@ class Viewer(object):
             data = h5data[h5key]
         else:
             print 'generating data for ' + h5key
-            simulation = Simulation()
+            simulation = Pseudo2DSimulation()
             simulation.run(totalSteps=1, sweeps=100, dt=1e20, tol=1e-4, **parameters)
             data = simulation.parameters
             h5data[h5key] = data

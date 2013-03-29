@@ -14,7 +14,7 @@ Usage
 
 .. autofunction:: extremefill.run
 
-.. autoclass:: extremefill.simulation.Simulation
+.. autoclass:: extremefill.suedo2DSimulation.Suedo2DSimulation
    :members:
 
 Indices and tables

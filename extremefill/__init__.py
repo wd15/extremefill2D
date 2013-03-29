@@ -1,28 +1,31 @@
-from extremefill.kPlusViewer import KPlusViewer
-from extremefill.kMinusViewer import KMinusViewer
-from extremefill.appliedPotentialViewer import AppliedPotentialViewer
-from extremefill.deltaRefViewer import DeltaRefViewer
-from extremefill.featureDepthViewer import FeatureDepthViewer
-from extremefill.kPlusVkMinusViewer import KPlusVkMinusViewer
-from extremefill.appliedPotentialVbulkSuppressorViewer import AppliedPotentialVbulkSuppressorViewer
-from extremefill.bulkSuppressorViewer import BulkSuppressorViewer
-from extremefill.schematicViewer import SchematicViewer
-import extremefill.simulation
-from extremefill.simulation import Simulation
+import extremefill.pseudo2DSimulation
+import extremefill.simulation1D
+import extremefill.simulation2D
+from extremefill.pseudo2DSimulation import Pseudo2DSimulation
 
 ## figure ordering from the paper
-viewers = (None,
-           SchematicViewer,
-           KPlusViewer,
-           KMinusViewer,
-           KPlusVkMinusViewer,
-           FeatureDepthViewer,
-           DeltaRefViewer,
-           AppliedPotentialViewer,
-           BulkSuppressorViewer,
-           AppliedPotentialVbulkSuppressorViewer)
+def getViewers():
+    from extremefill.kPlusViewer import KPlusViewer
+    from extremefill.kMinusViewer import KMinusViewer
+    from extremefill.appliedPotentialViewer import AppliedPotentialViewer
+    from extremefill.deltaRefViewer import DeltaRefViewer
+    from extremefill.featureDepthViewer import FeatureDepthViewer
+    from extremefill.kPlusVkMinusViewer import KPlusVkMinusViewer
+    from extremefill.appliedPotentialVbulkSuppressorViewer import AppliedPotentialVbulkSuppressorViewer
+    from extremefill.bulkSuppressorViewer import BulkSuppressorViewer
+    from extremefill.schematicViewer import SchematicViewer
+    return (None,
+            SchematicViewer,
+            KPlusViewer,
+            KMinusViewer,
+            KPlusVkMinusViewer,
+            FeatureDepthViewer,
+            DeltaRefViewer,
+            AppliedPotentialViewer,
+            BulkSuppressorViewer,
+            AppliedPotentialVbulkSuppressorViewer)
 
-def generateFigures(filesuffix=('.png',), datafile='data.h5', fignumbers=(2, 3, 4, 5, 6, 7, 8, 9, 10)):
+def generateFigures(fignumbers=(2, 3, 4, 5, 6, 7, 8, 9, 10), filesuffix=('.png',), datafile='data.h5'):
     r"""
     Generate all the figures in the paper. By default PNG images are
     generated.
@@ -42,11 +45,12 @@ def generateFigures(filesuffix=('.png',), datafile='data.h5', fignumbers=(2, 3, 
       - `datafile`: path to the cached HDF5 data file to either read from or write to.
       - `fignumbers` : tuple of figure numbers to generate. 
     """
-    if fignumbers is int:
-        fignumbers = (fignumbers,)
+
+    if type(fignumbers) is int:
+        fignumbers = [fignumbers]
 
     for number in fignumbers:
-        Viewer = viewers[number - 1]
+        Viewer = getViewers()[number - 1]
         if Viewer is not None:
             Viewer(datafile=datafile).plot(filesuffix=filesuffix)
 
@@ -55,13 +59,15 @@ def test():
     Run all the doctests available.
     """
     import doctest
-    doctest.testmod(extremefill.simulation)
+    doctest.testmod(extremefill.pseudo2DSimulation)
+    doctest.testmod(extremefill.simulation1D)
+    doctest.testmod(extremefill.simulation2D)
        
 def run(view=True, **parameters):
     r"""
 
     Run a single simulation using
-    :py:meth:`Simulation.run <extremefill.simulation.Simulation.run>`.
+    :py:meth:`Pseudo2DSimulation.run <extremefill.pseudo2DSimulation.Pseudo2DSimulation.run>`.
 
     Run the default simulation for 10 time steps
 
@@ -82,11 +88,11 @@ def run(view=True, **parameters):
     :Parameters:
       - `view` : view the simulation as it is running
       - `parameters` : any of the parameters used in
-        :py:meth:`Simulation.run
-        <extremefill.simulation.Simulation.run>`
+        :py:meth:`Pseudo2DSimulation.run
+        <extremefill.pseudo2DSimulation.Pseudo2DSimulation.run>`
 
     """
-    Simulation().run(view=view, **parameters)
+    Pseudo2DSimulation().run(view=view, **parameters)
     raw_input('press key to continue')
 
 def _getVersion():

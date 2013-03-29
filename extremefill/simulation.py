@@ -2,186 +2,21 @@
 
 __docformat__ = 'restructuredtext'
 
-import fipy
-from fipy import numerix
-import numpy
+import fipy as fp
+from fipy import numerix as nx
+import numpy as np
+from extremefill.dicttable import DictTable
+
 class Simulation(object):
     r"""
-
-    This class solves the 1D extreme fill problem modeled with the
-    equations below. It can represent either a via or a trench
-    geometry depending on the choice of the geometric parameters. It
-    is assumed that there is no lateral variation in any of the fields
-    and the deposition rate is slow compared with the adjustment of
-    the fields. These are gross approximations, but the model
-    demonstrates how the critical phenomenon of extreme fill is
-    initiated.
-
-    The equations in order of potential, cupric concentration and
-    suppressor concentration and surfactant suppressor integrated over
-    space.
-
-    .. math::
-
-        \int_{-h}^{\delta}  dz \left[ c_{DL} \frac{\partial \psi}{\partial t} \Theta \left( z \right) =
-        \kappa \frac{\partial^2 \psi}{\partial z^2} A \left(z \right) -
-        i_F \left(z\right) \Theta \left(z \right)  \right]
-
-    ..
-    .. math::
-
-        \int_{-h}^{\delta}  dz  \left[\frac{\partial c_{\text{cu}}}{\partial t} A \left( z \right)  =
-        D_{cu} \frac{\partial^2 c_{\text{cu}}}{\partial z^2} A \left(z \right)  -
-        \frac{i_F\left(z\right)}{n F} \Theta \left(z \right) \right]
-
-    ..
-    .. math::
-
-        \int_{-h}^{\delta}  dz \left[\frac{\partial c_{\theta}}{\partial t} A \left( z \right) =
-        D_{\theta} \frac{\partial^2 c_{\theta}}{\partial z^2} A \left(z \right)  -
-        \Gamma k^+ c_{\theta} \left(1 - \theta \right)  \Theta \left(z \right)  \right]
-
-    ..
-    .. math::
-
-        \int_{-h}^{\delta}  dz \left[\frac{\partial \theta}{\partial t} \Theta \left( z \right) =
-        k^+ c_{\theta} \left(1 - \theta \right)  \Theta \left(z \right)  -
-        k^- \theta \frac{i_F \Omega}{n F} \Theta \left(z \right) \right]
-
-    where :math:`\Theta\left( z \right) = H\left(- z \right) \frac{l
-    \left( z \right)}{A_F} + \delta \left( z \right)\left(1 -
-    \frac{A_T}{A_F} \right) + \delta(z + h) \frac{A_T}{A_F}`. The
-    cross-sectional area ratio is given by,
-
-    .. math::
-
-       A \left( z \right) = \begin{cases}
-       1 & \text{when $z > 0$,} \\
-       \frac{A_T}{A_F} & \text{when $z \le 0$,}
-       \end{cases}
-
-    where :math:`A_F` is the cross-sectional area above of the modeling
-    domain and :math:`A_S` is the cross-sectional area in the
-    trench/via. The length of the perimeter is given by
-    :math:`l\left(z\right)` and is a step-function through 0. Also,
-    :math:`\delta\left(z\right)` is the Dirac delta function and
-    :math:`H\left(z\right)` is the Heaviside step function with
-    :math:`z=-h` at the bottom of the trench.  The current density is
-    given by,
-
-    .. math::
-
-        i_F = \frac{c_{\text{cu}}}{c_{\text{cu}}^{\infty}} \left(i_0 + i_{\theta} \theta\right) \left[\exp{\left(\frac{\alpha F \psi}{R T} \right)} -  \exp{\left(-\frac{\left(2 -\alpha\right) F \psi}{R T} \right)}  \right]
-
-    The boundary conditions on the working electrode are
-    included in the volume integrals. Additionally,
-
-    .. math::
-
-         \psi = -\eta_{\text{applied}} \;\; & \text{at $z = \delta_{\text{ref}}$} \\
-         \psi = -\eta_{\text{applied}} \;\; & \text{at $t = 0$} \\
-         c_{\text{cu}} = c_{\text{cu}}^{\infty} \;\; & \text{at $z = \delta$} \\
-         c_{\text{cu}} = c_{\text{cu}}^{\infty} \;\; & \text{at $t = 0$} \\
-         c_{\theta} = c_{\theta}^{\infty} \;\; & \text{at $z = \delta$} \\
-         c_{\theta} = c_{\theta}^{\infty} \;\; & \text{at $t = 0$}\\
-         \theta=0 \;\; & \text{at $t = 0$}
-
-    and
-
-    .. math::
-
-         \psi_{\text{ref}} = \psi\left(0\right) \left(1 - \frac{\delta_{\text{ref}}}{\delta}\right)
-
-    The following code compares the full 1D feature model (but with no
-    feature) with the simple 1D ODE for solving the electrical equation
-    with no suppressor and no cupric depeletion.
-
-    >>> import numpy
-
-    >>> i0 = 40.
-    >>> alpha = 0.4
-    >>> F = 9.6485e4 ## C / mol = J / V / mol
-    >>> R = 8.314 ## J / K / mol
-    >>> T = 298. ## K
-    >>> appliedPotential = -0.275
-    >>> simulation = Simulation()
-    >>> simulation.run(delta=100e-6,
-    ...                deltaRef=200e-6,
-    ...                featureDepth=0.0,
-    ...                i0=i0,
-    ...                i1=0.0,
-    ...                diffusionCupric=1e+10,
-    ...                appliedPotential=appliedPotential,
-    ...                faradaysConstant=F,
-    ...                gasConstant=R,
-    ...                alpha=alpha,
-    ...                temperature=T,
-    ...                totalSteps=200,
-    ...                dt=.5e-7,
-    ...                dtMax=.5e-7,
-    ...                sweeps=5)
-
-    >>> timesScipy, potentialsScipy = SimulationODE().run(deltaRef=200e-6)
-    >>> print numpy.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
-    True
-
-    >>> ##import pylab
-    >>> ##pylab.figure()
-    >>> ##pylab.plot(timesScipy, simulation.parameters['potentials'], timesScipy, potentialsScipy)
-    >>> ##pylab.ylabel(r'$\phi\left(0\right)$ (V)')
-    >>> ##pylab.xlabel(r'$t$ (s)')
-    >>> ##pylab.savefig('FiPyVScipy.png')
-    >>> ##raw_input('stopped')
-
-    Agreement is good for :math:`\psi`.
-
-    .. image:: FiPyVScipy.*
-       :width: 50%
-       :align: center
-       :alt: comparison of FiPy and SciPy for the potential equation
-
-    Another test is to check that the steady state cupric concentration is
-    correct in the absence of any suppressor.
-
-    >>> delta = 150e-6
-    >>> D = 5.6e-10
-    >>> charge = 2
-    >>> cinf = 1000.
-
-    >>> simulation = Simulation()
-    >>> simulation.run(featureDepth=0.0,
-    ...                i0=i0,
-    ...                alpha=alpha,
-    ...                i1=0.0,
-    ...                view=False,
-    ...                dt=1e-6,
-    ...                dtMax=10.,
-    ...                totalSteps=200,
-    ...                PRINT=False,
-    ...                appliedPotential=appliedPotential,
-    ...                faradaysConstant=F,
-    ...                gasConstant=R,
-    ...                delta=delta,
-    ...                diffusionCupric=D,
-    ...                charge=charge,
-    ...                bulkCupric=cinf)
-
-    >>> def iF0():
-    ...     Fbar = F / R / T
-    ...     V = simulation.parameters['potentials'][-1] 
-    ...     return i0 * (numpy.exp(-alpha * Fbar * V) - numpy.exp((2 - alpha) * Fbar * V))
-
-    >>> cupric = simulation.parameters['cupric']
-    >>> print numpy.allclose(1 / (1 + iF0() * delta / D / charge / F / cinf), cupric[0] / cinf, rtol=1e-3)
-    True
-
+    This is an abstract base class. Please use one of it's children.    
     """
 
     def run(self,
             dt=.5e-7,
             dtMax=1e+20,
             dtMin=.5e-7,
-            totalSteps=400,
+            totalSteps=1e+10,
             view=False,
             PRINT=False,
             sweeps=5,
@@ -208,8 +43,16 @@ class Simulation(object):
             gamma=2.5e-7,
             perimeterRatio=1. / 2.8e-6 * 0.093,
             areaRatio=0.093,
-            capacitance=0.3):
-
+            capacitance=0.3,
+            Nx=1000,
+            CFL=None,
+            dataFile=None,
+            totalTime=1e+100,
+            narrow_distance=None,
+            data_frequency=1,
+            NxBase=1000,
+            solver_tol=1e-10):
+        
         r"""
         Run an individual simulation.
 
@@ -245,6 +88,10 @@ class Simulation(object):
           - `perimeterRatio`: feature perimeter ratio
           - `areaRatio`: feature area ratio
           - `capacitance`: capacitance
+          - `Nx`: number of grid points in the x-direction
+          - `CFL`: CFL number
+          - `narrow_distance` : distance front covers before reinitializing
+          - `NxBase`: number of grid points used for level set initialization
         """
 
         Fbar = faradaysConstant / gasConstant / temperature
@@ -252,77 +99,90 @@ class Simulation(object):
         del self.parameters['self']
         self.parameters['trenchWidth'] = 2 * 0.093 / perimeterRatio
         self.parameters['fieldWidth'] = 2 / perimeterRatio
-        
-        epsilon = 1e-30 
 
-        L = delta + featureDepth
-        N = 1000
-        dx = L / N 
-        mesh = fipy.Grid1D(nx=N, dx=dx) - [[featureDepth]]
+        mesh = self.getMesh(Nx, featureDepth, perimeterRatio, delta)
 
-        potential = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$\psi$')
+        dt = fp.Variable(dt)
+
+        potential = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$\psi$')
         potential[:] = -appliedPotential
 
-        cupric = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{cu}$')
+        cupric = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{cu}$')
         cupric[:] = bulkCupric
         cupric.constrain(bulkCupric, mesh.facesRight)
-
-        suppressor = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
+        
+        suppressor = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
         suppressor[:] = bulkSuppressor
         suppressor.constrain(bulkSuppressor, mesh.facesRight)
 
-        theta = fipy.CellVariable(mesh=mesh, hasOld=True, name=r'$\theta$')
+        distance = fp.DistanceVariable(mesh=mesh)
+        self.initializeDistance(distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase)
 
-        I0 = (i0 + i1 * theta)
-        baseCurrent = I0 * (numerix.exp(alpha * Fbar * potential) \
-                                - numerix.exp(-(2 - alpha) * Fbar * potential))
+        extension = fp.CellVariable(mesh=mesh)
+            
+        theta, interfaceTheta = self.getTheta(mesh, r'$\theta$', distance)
+
+        I0 = (i0 + i1 * interfaceTheta)
+        baseCurrent = I0 * (nx.exp(alpha * Fbar * potential) \
+                                - nx.exp(-(2 - alpha) * Fbar * potential))
         cbar =  cupric / bulkCupric
         current = cbar * baseCurrent
-        currentDerivative = cbar * I0 * (alpha * Fbar *  numerix.exp(alpha * Fbar * potential) \
-                                             + (2 - alpha) * Fbar * numerix.exp(-(2 - alpha) * Fbar * potential))
+        currentDerivative = cbar * I0 * (alpha * Fbar *  nx.exp(alpha * Fbar * potential) \
+                                             + (2 - alpha) * Fbar * nx.exp(-(2 - alpha) * Fbar * potential))
 
-        def dirac(x):
-            value = numerix.zeros(mesh.numberOfCells, 'd')
-            ID = numerix.argmin(abs(mesh.x - x))
-            if mesh.x[ID] < x:
-                ID = ID + 1
-            value[ID] = 1. / dx
-            return value
+        upper = fp.CellVariable(mesh=mesh)
+        ID = mesh._getNearestCellID(mesh.faceCenters[:,mesh.facesRight.value])
+        upper[ID] = kappa / mesh.dx / (deltaRef - delta)
 
-        THETA = (mesh.x < 0) * perimeterRatio + dirac(0) * (1 - areaRatio) + dirac(-featureDepth) * areaRatio
-        AREA = (mesh.x < 0) * (areaRatio - 1) + 1 
-        THETA_UPPER = fipy.CellVariable(mesh=mesh)
-        THETA_UPPER[-1] = kappa / dx / (deltaRef - delta)
+        surface, area, harmonic = self.getCoeffs(distance, perimeterRatio, areaRatio, featureDepth)
+        
+        potentialEq = fp.TransientTerm(capacitance * surface + (distance < 0)) == \
+          fp.DiffusionTerm(kappa * area * harmonic) \
+          - surface * (current - potential * currentDerivative) \
+          - fp.ImplicitSourceTerm(surface * currentDerivative) \
+          - upper * appliedPotential - fp.ImplicitSourceTerm(upper) 
+            
+        cupricEq = fp.TransientTerm(area) == fp.DiffusionTerm(diffusionCupric * area * harmonic) \
+          - fp.ImplicitSourceTerm(baseCurrent * surface / (bulkCupric * charge * faradaysConstant))
 
-        potentialEq = fipy.TransientTerm(capacitance * THETA) == fipy.DiffusionTerm(kappa * AREA) \
-            - THETA * (current - potential * currentDerivative) \
-            - fipy.ImplicitSourceTerm(THETA * currentDerivative) \
-            - THETA_UPPER * appliedPotential - fipy.ImplicitSourceTerm(THETA_UPPER) 
+        suppressorEq = fp.TransientTerm(area) == fp.DiffusionTerm(diffusionSuppressor * area * harmonic) \
+          - fp.ImplicitSourceTerm(gamma * kPlus * (1 - interfaceTheta) * surface)
 
-        cupricEq = fipy.TransientTerm(AREA) == fipy.DiffusionTerm(diffusionCupric * AREA) \
-            - fipy.ImplicitSourceTerm(baseCurrent * THETA / (bulkCupric * charge * faradaysConstant))
+        depositionRate = current * omega / charge / faradaysConstant
+        thetaEq = self.getThetaEq(depositionRate, dt, kPlus, suppressor, distance, surface, kMinus, theta)
 
-        suppressorEq = fipy.TransientTerm(AREA) == fipy.DiffusionTerm(diffusionSuppressor * AREA) \
-            - fipy.ImplicitSourceTerm(gamma * kPlus * (1 - theta) * THETA)
-
-        thetaEq =  fipy.TransientTerm(THETA + epsilon) == kPlus * suppressor * THETA \
-            - fipy.ImplicitSourceTerm(THETA * (kPlus * suppressor + kMinus * current * (omega / charge / faradaysConstant)))
-
-        t = 0.
+        if CFL is not None:
+            advectionEq = fp.TransientTerm() + fp.AdvectionTerm(extension)
+        
+        elapsedTime = 0.
+        step = 0
+        
+        potentialBar = -potential / appliedPotential
+        potentialBar.name = r'$\bar{\eta}$'
+        cbar.name = r'$\bar{c_{cu}}$'
+        suppressorBar = suppressor / bulkSuppressor
+        suppressorBar.name = r'$\bar{c_{\theta}}$'
 
         if view:
-            potentialBar = -potential / appliedPotential
-            potentialBar.name = r'$\bar{\eta}$'
-            cbar.name = r'$\bar{c_{cu}}$'
-            suppressorBar = suppressor / bulkSuppressor
-            suppressorBar.name = r'$\bar{c_{\theta}}$'
+            viewer = self.getViewer(interfaceTheta, suppressorBar, cbar, potentialBar, distance)
+            if CFL is not None:
+                distanceViewer = fp.Viewer(distance, datamax=1e-10, datamin=-1e-10)
+                extensionViewer = fp.Viewer(extension)
 
-            viewer = fipy.Viewer((theta, suppressorBar, cbar, potentialBar), datamax=1, datamin=0.0)
-
+        monitorPoint = nx.zeros((mesh.dim, 1), 'd')
+        monitorPoint[0, 0] = mesh.dx / 2.
+        
         potentials = []
-        for step in range(totalSteps):
+
+        potentialSolver = fp.LinearPCGSolver(tolerance=solver_tol)
+        cupricSolver = fp.LinearPCGSolver(tolerance=solver_tol)
+        suppressorSolver = fp.LinearPCGSolver(tolerance=solver_tol)
+        thetaSolver = fp.LinearPCGSolver(tolerance=solver_tol)
+
+        while (step < totalSteps) and (elapsedTime < totalTime):
+            
             if view:
-                viewer.axes.set_title(r'$t=%1.2e$' % t)
+                viewer.axes.set_title(r'$t=%1.2e$' % elapsedTime)
                 viewer.plot()
 
             potential.updateOld()
@@ -330,12 +190,42 @@ class Simulation(object):
             suppressor.updateOld()
             theta.updateOld()
 
+            if dataFile is not None and step % data_frequency == 0:
+                self.writeData(dataFile, elapsedTime, distance, step)
+            
+            if CFL is not None:
+                if narrow_distance is None:
+                    narrow_distance = featureDepth / 5.
+                LSFrequency = int(narrow_distance / mesh.dx / CFL)
+
+                if step % LSFrequency == 0:
+                    self.calcDistanceFunction(distance)
+                
+                extension[:] = depositionRate
+
+                distance.extendVariable(extension)
+
+                if view:
+                    distanceViewer.plot()
+                    extensionViewer.plot()
+
+                dt.setValue(min(float(CFL * mesh.dx / max(extension.globalValue)), float(dt) * 1.1))
+                dt.setValue(min((float(dt), dtMax)))
+                dt.setValue(max((float(dt), dtMin)))
+
+                advectionEq.solve(distance, dt=dt)
+            else:
+                if step == 0:
+                    self.calcDistanceFunction(distance)
+
             for sweep in range(sweeps):
-                potentialRes = potentialEq.sweep(potential, dt=dt)
-                cupricRes = cupricEq.sweep(cupric, dt=dt)
-                suppressorRes = suppressorEq.sweep(suppressor, dt=dt)
-                thetaRes = thetaEq.sweep(theta, dt=dt)
-                res = numpy.array((potentialRes, cupricRes, suppressorRes, thetaRes))
+
+                potentialRes = potentialEq.sweep(potential, dt=dt, solver=potentialSolver)
+                cupricRes = cupricEq.sweep(cupric, dt=dt, solver=cupricSolver)
+                suppressorRes = suppressorEq.sweep(suppressor, dt=dt, solver=suppressorSolver)
+                thetaRes = thetaEq.sweep(theta, dt=self.getThetaDt(dt), solver=thetaSolver)
+                res = nx.array((potentialRes, cupricRes, suppressorRes, thetaRes))
+
                 if sweep == 0:
                     res0 = res
                 else:
@@ -352,80 +242,104 @@ class Simulation(object):
                 print 'res',res
 
             if PRINT:
+                print
                 print 'theta',theta[0]
                 print 'cBar_supp',suppressor[0] / bulkSuppressor
                 print 'cBar_cu',cupric[0] / bulkCupric
                 print 'potentialBar',-potential[0] / appliedPotential
+                print 'min(extension)',min(extension)
+                print 'min(depositionRate)',min(depositionRate)
+                print 'min(current)',min(current)
+                print 'min(cupric)',min(cupric)
+                print 'min(baseCurrent)',min(baseCurrent)
+                print 'max(interfaceTheta) - 1:',max(interfaceTheta) - 1
+                print 'min(interfaceTheta)',min(interfaceTheta)
+                print 'min(I0)',min(I0)
                 print 'dt',dt
+                print 'elapsed time',elapsedTime
                 print 'step',step
+                print
 
-            t += dt
+            elapsedTime += float(dt)
 
-            dt = dt * 1e+10
-            dt = min((dt, dtMax))
-            dt = max((dt, dtMin))
-            potentials.append(-float(potential[0]))
+            if CFL is None:
+                dt.setValue(float(dt) * 1e+10)
+                dt.setValue(min((float(dt), dtMax)))
+                dt.setValue(max((float(dt), dtMin)))
+
+            step += 1
+                
+            potentials.append(-float(potential(monitorPoint)))
+
         if view:
             viewer.plot()
 
-        self.parameters['potential'] = numpy.array(potential)
-        self.parameters['cupric'] = numpy.array(cupric)
-        self.parameters['suppressor'] = numpy.array(suppressor)
-        self.parameters['theta'] = numpy.array(theta)
-        self.parameters['potentials'] = numpy.array(potentials)
+        self.parameters['potential'] = nx.array(potential)
+        self.parameters['cupric'] = nx.array(cupric)
+        self.parameters['suppressor'] = nx.array(suppressor)
+        self.parameters['theta'] = nx.array(interfaceTheta)
+        self.parameters['potentials'] = nx.array(potentials)
 
-class SimulationODE(object):
-    def run(self,
-            delta = 100e-6, ## m
-            deltaRef = 50e-6, ## m
-            faradaysConstant = 9.6485e4, ## C / mol = J / V / mol
-            gasConstant = 8.314, ## J / K / mol
-            temperature = 298., ## K
-            alpha = 0.4,
-            appliedVoltage = -0.275,  ## V
-            i0 = 40., ## A / m**2 
-            capacitance = 0.3, ## F / m**2 = A s / V / m**2  
-            kappa = 15.26): ## S / m = A / V / m):
+        self.parameters['potential0'] = nx.array(potential(monitorPoint))
+        self.parameters['cupric0'] = nx.array(cupric(monitorPoint))
+        self.parameters['suppressor0'] = nx.array(suppressor(monitorPoint))
+        self.parameters['theta0'] = nx.array(interfaceTheta(monitorPoint))
 
-        Fbar = faradaysConstant / gasConstant / temperature ## 1 / V
+        self.vars1D = self.get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar, distance)
+
+    def getDistanceBelowTrench(self, delta):
+        raise NotImplementedError
+
+    def getTheta(self, mesh, name):
+        raise NotImplementedError
+
+    def getCoeffs(self, distance, perimeterRatio, areaRatio, featureDepth):
+        raise NotImplementedError
+
+    def getThetaEq(self, depositionRate, dt, kPlus, suppressor, distance, surface, kMinus, theta):
+        raise NotImplementedError
+
+    def getThetaDt(self, dt):
+        raise NotImplementedError
+
+    def calcDistanceFunction(self, distance):
+        raise NotImplementedError
+
+    def getMesh(self, Nx, featureDepth, perimeterRatio, delta):
+        raise NotImplementedError
+
+    def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, *args):
+        return [interfaceTheta, suppressorBar, cbar, potentialBar]
     
-        def iF(potential):
-            return i0 * (numpy.exp(alpha * Fbar * potential) - numpy.exp(-(2 - alpha) * Fbar * potential))
+    def getViewer(self, *args):
+        return fp.Viewer(self.get1DVars(*args), datamax=1.0, datamin=0.0)
 
-        def iFderivative(potential):
-            return i0 * (alpha * Fbar * numpy.exp(alpha * Fbar * potential) \
-                   + (2 - alpha) * Fbar * numpy.exp(-(2 - alpha) * Fbar * potential))
+    def getMesh1D(self, Nx, featureDepth, perimeterRatio, delta):
+        distanceBelowTrench = self.getDistanceBelowTrench(delta)
+        L = delta + featureDepth + distanceBelowTrench
+        dx = L / Nx
+        return fp.Grid1D(nx=Nx, dx=dx) - [[distanceBelowTrench + featureDepth]] 
 
-        def RHS(t, y):
-            potential = y[0]
-            return numpy.array((-iF(potential) / capacitance  - kappa * (potential + appliedVoltage) / deltaRef / capacitance,))
+    def writeData(self, dataFile, elapsedTime, distance, timeStep):
+        h5data = DictTable(dataFile, 'a')
+        mesh = distance.mesh
+        dataDict = {'elapsedTime' : elapsedTime,
+                    'nx' : mesh.nx,
+                    'ny' : mesh.ny,
+                    'dx' : mesh.dx,
+                    'dy' : mesh.dy,
+                    'distance' : np.array(distance)}
 
-        def jacobian(t, y):
-            potential = y[0]
-            return numpy.array((-iFderivative(potential) / capacitance  - kappa / deltaRef / capacitance,))
+        h5data[timeStep] = dataDict
 
-        from scipy.integrate import ode
-        integrator = ode(RHS, jacobian).set_integrator('vode', method='bdf', with_jacobian=True)
-        initialValue = -appliedVoltage # + (delta - deltaRef) / deltaRef * appliedVoltage
-        s = integrator.set_initial_value((initialValue,), 0.)
+    def initializeDistance(self, distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase):
+        distance[:] = 1.        
+        mesh = distance.mesh
+        distance.setValue(-1., where=mesh.x < -featureDepth)
+        if hasattr(mesh, 'y'):
+            distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio))
 
-        totalSteps = 200
-        dt = .5e-7
-        times = numpy.zeros(totalSteps)
-        potentialSciPy = numpy.zeros(totalSteps)
-        step = 0
-
-        while integrator.successful() and step < totalSteps:
-            null = integrator.integrate(integrator.t + dt)
-            times[step] = integrator.t
-            potential =  integrator.y[0]
-            potentialSciPy[step] = -potential
-            step += 1
-
-        return numpy.array(times), numpy.array(potentialSciPy) 
- 
+        
 if __name__ == '__main__':
-    import fipy.tests.doctestPlus
-    exec(fipy.tests.doctestPlus._getScript())
-
-
+    import doctest
+    doctest.testmod()

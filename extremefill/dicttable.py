@@ -1,6 +1,6 @@
 import tables
 import os
-import hashlib
+##import hashlib
 
 class DictTable:
     """

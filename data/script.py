@@ -46,4 +46,3 @@ simulation.run(view=False,
                data_frequency=10,
                NxBase=1200)
 
-
