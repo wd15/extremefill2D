@@ -3,7 +3,7 @@
 __docformat__ = 'restructuredtext'
 
 import fipy as fp
-from extremefill.simulationXD import SimulationXD
+from extremefill2D.simulationXD import SimulationXD
 
 class Simulation1D(SimulationXD):
     r"""
@@ -124,7 +124,7 @@ class Simulation1D(SimulationXD):
     ...                dtMax=.5e-7,
     ...                sweeps=5)
 
-    >>> from extremefill.simulation1DODE import Simulation1DODE
+    >>> from extremefill2D.simulation1DODE import Simulation1DODE
     >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6, totalSteps=20)
     >>> print np.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
     True
@@ -185,7 +185,7 @@ class Simulation1D(SimulationXD):
     >>> simulation = Simulation1D()
     >>> simulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
 
-    >>> from extremefill.pseudo2DSimulation import Pseudo2DSimulation
+    >>> from extremefill2D.pseudo2DSimulation import Pseudo2DSimulation
     >>> pseudo2DSimulation = Pseudo2DSimulation()
     >>> pseudo2DSimulation.run(view=False, totalSteps=1, sweeps=100, dt=1e+20, tol=1e-4, kPlus=25., featureDepth=0.)
 

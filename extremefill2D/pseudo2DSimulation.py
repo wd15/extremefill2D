@@ -5,7 +5,7 @@ __docformat__ = 'restructuredtext'
 import fipy as fp
 from fipy import numerix as nx
 import numpy as np
-from extremefill.simulation import Simulation
+from extremefill2D.simulation import Simulation
 
 class Pseudo2DSimulation(Simulation):
     r"""
@@ -121,7 +121,7 @@ class Pseudo2DSimulation(Simulation):
     ...                dtMax=.5e-7,
     ...                sweeps=5)
 
-    >>> from extremefill.simulation1DODE import Simulation1DODE
+    >>> from extremefill2D.simulation1DODE import Simulation1DODE
     >>> timesScipy, potentialsScipy = Simulation1DODE().run(deltaRef=200e-6, totalSteps=20)
     >>> print np.allclose(simulation.parameters['potentials'], potentialsScipy, atol=1e-4)
     True

@@ -5,7 +5,7 @@ __docformat__ = 'restructuredtext'
 import fipy as fp
 from fipy import numerix as nx
 import numpy as np
-from extremefill.dicttable import DictTable
+from extremefill2D.dicttable import DictTable
 
 class Simulation(object):
     r"""

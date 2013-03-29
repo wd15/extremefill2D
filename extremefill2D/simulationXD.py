@@ -1,4 +1,4 @@
-from extremefill.simulation import Simulation
+from extremefill2D.simulation import Simulation
 import fipy as fp
 import numpy as np
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
