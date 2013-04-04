@@ -138,11 +138,17 @@ class _ContourViewer(BaseViewer):
 
 
 class ContourViewer(_ContourViewer):
-    def __init__(self, baseRecord, records, times=(0., 1000., 2000., 3000., 4000.), colors=None):
+    def __init__(self, baseRecord, records=(), times=(0., 1000., 2000., 3000., 4000.), colors=None):
         if colors is None:
             colors = ('k',) * len(records)
+
+        if records is ():
+            datafiles = ()
+        else:
+            datafiles = records.datafiles
+
         super(ContourViewer, self).__init__(basedatafile=baseRecord.datafiles[0],
-                                            datafiles=records.datafiles,
+                                            datafiles=datafiles,
                                             labels=None,
                                             times=times,
                                             colors=colors)

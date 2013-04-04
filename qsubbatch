@@ -4,12 +4,33 @@ QSUBDIR=.qsub
 CFL=0.1
 NX=300
 TOL=1e-10
-SERIALNUMBER=8
+SERIALNUMBER=13
 SWEEPS=4
 SOLVER_TOL=1e-6
+AREA_RATIO=0.093
+KPLUS=150.
+KMINUS=2.45e7
+FEATUREDEPTH=56e-6
+DELTAREF=0.03
 
-for NX in 150 300 600 1200 2400
+for DELTAREF in 0.001 0.005 0.01 0.02 0.03 0.04
 do
-    qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher --tag=Nx --tag=convergence --reason="Timing and convergence tests for an array of mesh sizes testing with new tolerance and sweeps for Nx=$NX" --totalSteps=100000000000 --CFL=$CFL --Nx=$NX --sweeps=$SWEEPS --tol=$TOL --solver_tol=$SOLVER_TOL --tag=qsub --tag=serialnumber$SERIALNUMBER
-#    qsub -cwd -o $QSUBDIR -e qsubout launcher --tag=test --reason="Testing having the qsub jobs use a temp file for the datafile during the simulation." --totalSteps=1
+    for NX in 300 600
+    do
+	qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher \
+	    --tag=qsub \
+	    --tag=serialnumber$SERIALNUMBER \
+	    --reason="Compare with 1D results, vary deltaRef=$DELTAREF and Nx=$NX" \
+	    --totalSteps=100000000000 \
+	    --CFL=$CFL \
+	    --Nx=$NX \
+	    --sweeps=$SWEEPS \
+	    --tol=$TOL \
+	    --solver_tol=$SOLVER_TOL \
+	    --areaRatio=$AREA_RATIO \
+	    --kPlus=$KPLUS \
+	    --kMinus=$KMINUS \
+	    --featureDepth=$FEATUREDEPTH \
+	    --deltaRef=$DELTAREF
+    done
 done
