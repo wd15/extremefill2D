@@ -4,7 +4,7 @@ QSUBDIR=.qsub
 CFL=0.1
 NX=300
 TOL=1e-10
-SERIALNUMBER=13
+SERIALNUMBER=14
 SWEEPS=4
 SOLVER_TOL=1e-6
 AREA_RATIO=0.093
@@ -13,14 +13,14 @@ KMINUS=2.45e7
 FEATUREDEPTH=56e-6
 DELTAREF=0.03
 
-for DELTAREF in 0.001 0.005 0.01 0.02 0.03 0.04
+for FEATUREDEPTH in 85e-6 75e-6 65e-6 55e-6 45e-6 35e-6 25e-6 15e-6
 do
     for NX in 300 600
     do
 	qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher \
 	    --tag=qsub \
 	    --tag=serialnumber$SERIALNUMBER \
-	    --reason="Compare with 1D results, vary deltaRef=$DELTAREF and Nx=$NX" \
+	    --reason="Compare with 1D results, vary featureDepth=$FEATUREDEPTH and Nx=$NX" \
 	    --totalSteps=100000000000 \
 	    --CFL=$CFL \
 	    --Nx=$NX \
