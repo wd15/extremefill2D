@@ -51,17 +51,30 @@ class CustomHTMLFormatter(HTMLFormatter):
                 s = str(attr)
             c = cgi.escape(s)
             if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version'):
-                c = """<code style="font-size:10px;">""" + c + "</code>"
+                c = "<code>" + c + "</code>"
             
             t += (c,)
         
         return "  <tr>\n    <td>" + "</td>\n    <td>".join(t) + "    </td>\n  </tr>"
 
+    def style(self, table_out):
+        replacements = {'<table>' : '<table style="border:1px solid black;border-collapse:collapse;">',
+                        '<th>'    : '<th style="border:1px solid black;">',
+                        '<td>'    : '<td style="border:1px solid black;">',
+                        '<code>'  : '<code style="font-size:10px;">'}
+        
+        for k, v in replacements.iteritems():
+            table_out = table_out.replace(k, v)
+
+        return table_out
+
     def table(self):
-        return "<table>\n" + \
-               "  <tr>\n    <th>" + "</th>\n    <th>".join(field.title() for field in self.fields) + "    </th>\n  </tr>\n" + \
-               "\n".join(self.format_record(record) for record in self.records) + \
-               "\n</table>"
+        table_out = "<table>\n" + \
+            "  <tr>\n    <th>" + "</th>\n    <th>".join(field.title() for field in self.fields) + "    </th>\n  </tr>\n" + \
+            "\n".join(self.format_record(record) for record in self.records) + \
+            "\n</table>"
+
+        return self.style(table_out)
 
 
 def markdown_table(records):
