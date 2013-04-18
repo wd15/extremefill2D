@@ -51,7 +51,7 @@ class CustomHTMLFormatter(HTMLFormatter):
                 s = str(attr)
             c = cgi.escape(s)
             if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version'):
-                c = "<code>" + c + "</code>"
+                c = """<code style="font-size:10px;">""" + c + "</code>"
             
             t += (c,)
         
