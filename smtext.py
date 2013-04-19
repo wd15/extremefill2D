@@ -7,10 +7,10 @@ from sumatra.projects import load_project
 from texttable import Texttable
 from sumatra.formatting import HTMLFormatter
 from sumatra.formatting import fields
+from IPython.core.display import HTML
 
 
 class CustomHTMLFormatter(HTMLFormatter):
-
     def __init__(self, records, fields=fields, parameters=None):
         self.fields = fields
         self.parameters = parameters
@@ -76,6 +76,10 @@ class CustomHTMLFormatter(HTMLFormatter):
 
         return self.style(table_out)
 
+    def ipython_table(self):
+        return HTML(self.table())
+        
+
 
 def markdown_table(records):
     fields = ['label', 'timestamp', 'reason', 'duration']
@@ -89,6 +93,9 @@ def markdown_table(records):
     out = out.replace('\n+-', '\n|-')
     out = '|' + out[1:-1] + '|'
     return out
+
+
+
 
 def getSMTrecords(tags=[], parameters={}):
     project = load_project()
