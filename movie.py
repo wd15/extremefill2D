@@ -8,8 +8,8 @@ import fipy as fp
 
 
 class ContourViewer(object):
-    def __init__(self, datafile):
-        self.data = DictTable(datafile, 'r')
+    def __init__(self, data):
+        self.data = data
         data0 = self.data[0]
         mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
         self.shape = (mesh.ny, mesh.nx)
@@ -60,7 +60,18 @@ class ContourViewer(object):
  
 if __name__ == '__main__':
     from smtext import getSMTRecords
-    records = getSMTRecords(tags=['serialnumber10'], parameters={'kPlus' : 100.0, 'Nx' : 1200})
+    records = getSMTRecords(tags=['serialnumber10'], parameters={'kPlus' : 100.0, 'Nx' : 600})
     record = records[0]
     datafile = os.path.join(record.datastore.root, record.output_data[0].path)
-    ContourViewer(datafile).plot()
+    data = DictTable(datafile, 'r')
+    viewer = ContourViewer(data)
+    latestIndex = data.getLatestIndex()
+    print 'latestIndex',latestIndex
+    index = 0
+    while index <= latestIndex:
+        filename = os.path.join('movie600', 'step%s.png' % str(index).rjust(6, '0'))
+        viewer.plot(index=index, filename=filename)
+        index += 10
+    
+                     
+
