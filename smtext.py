@@ -97,7 +97,7 @@ def markdown_table(records):
 
 
 
-def getSMTrecords(tags=[], parameters={}):
+def getSMTRecords(tags=[], parameters={}):
     project = load_project()
     records_list = []
     for r in project.record_store.list(project.name):
