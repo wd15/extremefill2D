@@ -16,15 +16,14 @@ DTMAX=1.
 TOTALTIME=7000
 
 # non-default
-REASON="Rerun base simulations saving the data fields to produce a movie"
-SERIALNUMBER=16
+SERIALNUMBER=17
 
 for NX in 150 300 600 1200 2400
 do
     qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher \
 	--tag=qsub \
 	--tag=serialnumber$SERIALNUMBER \
-	--reason=$REASON \
+	--reason="Rerun base simulations saving the data fields to produce a movie" \
 	--totalSteps=100000000000 \
 	--CFL=$CFL \
 	--Nx=$NX \
