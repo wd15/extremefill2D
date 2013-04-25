@@ -1,10 +1,10 @@
 #!/bin/bash
 
+# default
 QSUBDIR=.qsub
 CFL=0.1
 NX=300
 TOL=1e-10
-SERIALNUMBER=15
 SWEEPS=4
 SOLVER_TOL=1e-6
 AREA_RATIO=0.093
@@ -15,12 +15,16 @@ DELTAREF=0.03
 DTMAX=1.
 TOTALTIME=7000
 
+# non-default
+REASON="Rerun base simulations saving the data fields to produce a movie"
+SERIALNUMBER=16
+
 for NX in 150 300 600 1200 2400
 do
     qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher \
 	--tag=qsub \
 	--tag=serialnumber$SERIALNUMBER \
-	--reason="Compare with 1D results, vary featureDepth=$FEATUREDEPTH and Nx=$NX" \
+	--reason=$REASON \
 	--totalSteps=100000000000 \
 	--CFL=$CFL \
 	--Nx=$NX \
