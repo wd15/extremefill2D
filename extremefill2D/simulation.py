@@ -191,7 +191,7 @@ class Simulation(object):
             theta.updateOld()
 
             if dataFile is not None and step % data_frequency == 0:
-                self.writeData(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, theta)
+                self.writeData(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
             
             if CFL is not None:
                 if narrow_distance is None:
@@ -320,7 +320,7 @@ class Simulation(object):
         dx = L / Nx
         return fp.Grid1D(nx=Nx, dx=dx) - [[distanceBelowTrench + featureDepth]] 
 
-    def writeData(self, dataFile, elapsedTime, distance, timeStep, potential, cupric, suppressor, theta):
+    def writeData(self, dataFile, elapsedTime, distance, timeStep, potential, cupric, suppressor, interfaceTheta):
         h5data = DictTable(dataFile, 'a')
         mesh = distance.mesh
         dataDict = {'elapsedTime' : elapsedTime,
@@ -332,7 +332,7 @@ class Simulation(object):
                     'potential' : np.array(potential),
                     'cupric' : np.array(cupric),
                     'suppressor' : np.array(suppressor),
-                    'theta' : np.array(theta)}
+                    'interfaceTheta' : np.array(interfaceTheta)}
 
 
         h5data[timeStep] = dataDict
