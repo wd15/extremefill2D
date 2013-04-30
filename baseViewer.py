@@ -10,13 +10,33 @@ from extremefill2D.dicttable import DictTable
 
 
 class _BaseViewer(object):
-    def __init__(self, tags=[], parameters={}):
+    def plot(self, indices=[0], filename=None):
+        self.plotSetup(indices=indices)
+        self.plotSave(filename)
+
+    def plotSetup(self, indices=[0]):
+        raise NotImplementedError
+
+    def plotSave(self, filename):
+        if filename:
+            plt.savefig(filename)
+        else:
+            plt.show()
+
+
+class _BaseSingleViewer(_BaseViewer):
+    def __init__(self, tags=[], parameters={}, ax=None):
         self.data = self.getData(tags, parameters)
         data0 = self.data[0]
         mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
         self.shape = (mesh.ny, mesh.nx)
         self.x = mesh.x.value
         self.y = mesh.y.value
+        if ax is None:
+            fig = plt.figure()
+            self.ax = fig.add_subplot(111)
+        else:
+            self.ax = ax
 
     def getData(self, tags, parameters):
         records = getSMTRecords(tags, parameters)
@@ -30,14 +50,10 @@ class _BaseViewer(object):
         a = a.swapaxes(0,1)
         return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
 
-    def plot(self, indices=[0], filename=None):
+    def plotSetup(self, indices=[0]):
         if type(indices) is int:
             indices = [indices]
         
-        fig = plt.figure()
-
-        ax = fig.add_subplot(111)
-
         delta = 150e-6
         featureDepth = 56e-6
         y0 = delta * 0.1 + featureDepth
@@ -49,11 +65,12 @@ class _BaseViewer(object):
 
         y = self.flip(self.x, scale) - y0
 
-        self._plot(y, scale, indices, ax)
+        self._plot(y, scale, indices)
 
-        ax.set_ylim(ymin, ymax)
-        ax.set_ylabel(r'$y$ ($\micro\metre$)')
-        if filename:
-            plt.savefig(filename)
-        else:
-            plt.show()
+        self.ax.set_ylim(ymin, ymax)
+        self.ax.set_ylabel(r'$y$ ($\micro\metre$)')
+
+    def _plot(self, y, scale, indices):
+        raise NotImplementedError
+
+
