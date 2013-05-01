@@ -1,6 +1,7 @@
 import tables
 import numpy as np
 from baseViewer import _BaseSingleViewer
+from smtext import getData
 
 
 class FieldViewer(_BaseSingleViewer):
@@ -27,7 +28,8 @@ class FieldViewer(_BaseSingleViewer):
 
 
 if __name__ == '__main__':
-    viewer = FieldViewer(tags=['serialnumber18'], parameters={'Nx' : 600})
+    datafile = getData(tags=['serialnumber18'], parameters={'Nx' : 600})
+    viewer = FieldViewer(datafile=datafile)
     viewer.plot(indices=200)
     
                      

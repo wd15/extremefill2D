@@ -1,6 +1,4 @@
-#import pylab
-#import numpy as npf
-
+import os.path
 import cgi
 
 from sumatra.projects import load_project
@@ -94,9 +92,6 @@ def markdown_table(records):
     out = '|' + out[1:-1] + '|'
     return out
 
-
-
-
 def getSMTRecords(tags=[], parameters={}):
     project = load_project()
     records_list = []
@@ -107,7 +102,13 @@ def getSMTRecords(tags=[], parameters={}):
 
     return records_list
 
+def getData(tags, parameters):
+    records = getSMTRecords(tags, parameters)
+    record = records[0]
+    return os.path.join(record.datastore.root, record.output_data[0].path)
+
 if __name__ == '__main__':
-    records = getSMTrecords(tags=['serialnumber10'], parameters={'kPlus' : 100.0})
+    records = getSMTRecords(tags=['serialnumber10'], parameters={'kPlus' : 100.0})
     #print markdown_table(records)
     print CustomHTMLFormatter(records, fields=['label', 'timestamp', 'parameters', 'tags'], parameters=['kPlus']).table()
+

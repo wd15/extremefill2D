@@ -1,11 +1,7 @@
-import os.path
-
-
 import tables
 import fipy as fp
 import matplotlib.pyplot as plt
 import numpy as np
-from smtext import getSMTRecords
 from extremefill2D.dicttable import DictTable
 
 
@@ -25,8 +21,8 @@ class _BaseViewer(object):
 
 
 class _BaseSingleViewer(_BaseViewer):
-    def __init__(self, tags=[], parameters={}, ax=None):
-        self.data = self.getData(tags, parameters)
+    def __init__(self, datafile, ax=None, color='k'):
+        self.data = DictTable(datafile, 'r')
         data0 = self.data[0]
         mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
         self.shape = (mesh.ny, mesh.nx)
@@ -37,13 +33,7 @@ class _BaseSingleViewer(_BaseViewer):
             self.ax = fig.add_subplot(111)
         else:
             self.ax = ax
-
-    def getData(self, tags, parameters):
-        records = getSMTRecords(tags, parameters)
-        record = records[0]
-        self.record = record
-        datafile = os.path.join(record.datastore.root, record.output_data[0].path)
-        return DictTable(datafile, 'r')
+        self.color = color
 
     def flip(self, a, scale, negate=False):
         a = np.reshape(a, self.shape)
@@ -72,5 +62,4 @@ class _BaseSingleViewer(_BaseViewer):
 
     def _plot(self, y, scale, indices):
         raise NotImplementedError
-
 

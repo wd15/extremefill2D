@@ -1,6 +1,6 @@
 import tables
 from baseViewer import _BaseSingleViewer
-
+from smtext import getData
 
 class ContourViewer(_BaseSingleViewer):
     def _plot(self, y, scale, indices):
@@ -15,7 +15,7 @@ class ContourViewer(_BaseSingleViewer):
         for index in indices:
             phi = self.data[index]['distance']
             phi = self.flip(phi, scale)
-            cc = self.ax.contour(x, y, phi, (0,), colors=('k',))
+            cc = self.ax.contour(x, y, phi, (0,), colors=self.color)
 
         self.height = min(cc.collections[0].get_paths()[0].vertices[:,1])
 
@@ -27,7 +27,8 @@ class ContourViewer(_BaseSingleViewer):
 
 
 if __name__ == '__main__':
-    viewer = ContourViewer(tags=['serialnumber18'], parameters={'Nx' : 600})
+    datafile = getData(tags=['serialnumber18'], parameters={'Nx' : 600})
+    viewer = ContourViewer(datafile=datafile)
     viewer.plot(indices=200)
     
     

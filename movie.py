@@ -8,6 +8,7 @@ from fieldViewer import FieldViewer
 from baseViewer import _BaseViewer
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from smtext import getSMTRecords
 
 def update_progress(progress):
     progress = int(progress * 100)
@@ -17,13 +18,13 @@ def update_progress(progress):
 
 
 class DoubleViewer(_BaseViewer):
-    def __init__(self, tags=[], parameters={}):
+    def __init__(self, filename):
         self.fig = plt.figure()
         gs = gridspec.GridSpec(1, 2, width_ratios=[1.0, 0.5])
         ax = self.fig.add_subplot(gs[0])
-        self.contourViewer = ContourViewer(tags=tags, parameters=parameters, ax=ax)
+        self.contourViewer = ContourViewer(filename, ax=ax)
         ax = self.fig.add_subplot(gs[1])
-        self.fieldViewer = FieldViewer(tags=tags, parameters=parameters, ax=ax)
+        self.fieldViewer = FieldViewer(filename, ax=ax)
 
     def plotSetup(self, indices=[0]):
         self.fig.tight_layout()  
@@ -46,10 +47,12 @@ class DoubleViewer(_BaseViewer):
         
 
 if __name__ == '__main__':
-    viewer = DoubleViewer(tags=['serialnumber18'], parameters={'Nx' : 600})
+    record = getSMTRecords(tags=['serialnumber18'], parameters={'Nx' : 600})[0]
+    datafile = os.path.join(record.datastore.root, record.output_data[0].path)
+    viewer = DoubleViewer(datafile)
     latestIndex = viewer.contourViewer.data.getLatestIndex()
     index = 0
-    dataPath = os.path.join('Data', viewer.contourViewer.record.label)
+    dataPath = os.path.join('Data', record.label)
     print 'dataPath',dataPath
     count = 0
     while index <= latestIndex:
