@@ -7,14 +7,18 @@ from smtext import getSMTRecords
 
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecord):
+    def __init__(self, records, baseRecords, title=''):
         self.fig = plt.figure()
         gs = gridspec.GridSpec(1, len(records))
         self.viewers = []
-        for i, record in enumerate(records):
+        if title is str:
+            title = [title] * len(records)
+        if type(baseRecords) not in (list, tuple):
+            baseRecords = [baseRecords] * len(records)
+        for i, (record, title, baseRecord) in enumerate(zip(records, title, baseRecords)):
             ax = self.fig.add_subplot(gs[i])
             self.viewers.append(ContourViewer(record, ax=ax, color='k'))
-            self.viewers[-1].ax.set_title(r'CFL={0:1.2f}'.format(record.parameters['CFL']))
+            self.viewers[-1].ax.set_title(title)
             self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
     def plotSetup(self, indices=[0], times=None):
@@ -35,6 +39,7 @@ if __name__ == '__main__':
     viewers = []
     records = getSMTRecords(tags=['CFL', 'production'])
     records = [getSMTRecords(records=records, parameters={'CFL' : CFL})[0] for CFL in CFLs]
-    viewer = MultiViewer(records[1:], baseRecord=records[0])
+    title = [r'CFL={0:1.2f}'.format(r.parameters['CFL']) for r in records]
+    viewer = MultiViewer(records[1:], baseRecords=records[0], title=title)
     viewer.plot(indices=(0, 50, 100), times=(0., 1000., 2000., 3000., 4000.))
 

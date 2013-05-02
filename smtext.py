@@ -1,5 +1,7 @@
 import os.path
 import cgi
+from math import modf
+
 
 from sumatra.projects import load_project
 from texttable import Texttable
@@ -7,6 +9,47 @@ from sumatra.formatting import HTMLFormatter
 from sumatra.formatting import fields
 from IPython.core.display import HTML
 
+
+def _quotient_remainder(dividend, divisor):
+    q = dividend // divisor
+    r = dividend - q * divisor
+    return (q, r)
+
+
+def human_readable_duration(seconds):
+    """
+    Coverts seconds to human readable unit
+
+    >>> human_readable_duration(((6 * 60 + 32) * 60 + 12))
+    '6h 32m 12.00s'
+    >>> human_readable_duration((((8 * 24 + 7) * 60 + 6) * 60 + 5))
+    '8d 7h 6m 5.00s'
+    >>> human_readable_duration((((8 * 24 + 7) * 60 + 6) * 60))
+    '8d 7h 6m'
+    >>> human_readable_duration((((8 * 24 + 7) * 60) * 60))
+    '8d 7h'
+    >>> human_readable_duration((((8 * 24) * 60) * 60))
+    '8d'
+    >>> human_readable_duration((((8 * 24) * 60) * 60) + 0.12)
+    '8d 0.12s'
+
+    """
+    (fractional_part, integer_part) = modf(seconds)
+    (d, rem) = _quotient_remainder(int(integer_part), 60 * 60 * 24)
+    (h, rem) = _quotient_remainder(rem, 60 * 60)
+    (m, rem) = _quotient_remainder(rem, 60)
+    s = rem + fractional_part
+    
+    return ' '.join(
+        templ.format(val)
+        for (val, templ) in [
+            (d, '{0}d'),
+            (h, '{0}h'),
+            (m, '{0}m'),
+            (s, '{0:.2f}s'),
+            ]
+        if val != 0
+        )
 
 class CustomHTMLFormatter(HTMLFormatter):
     def __init__(self, records, fields=fields, parameters=None):
@@ -22,7 +65,6 @@ class CustomHTMLFormatter(HTMLFormatter):
             output += "    </dl>\n  </dd>"
             return output
         return "<dl>\n" + "\n".join(format_record(record) for record in self.records) + "\n</dl>"
-
 
     def format_record(self, record):
         t = ()
@@ -45,10 +87,15 @@ class CustomHTMLFormatter(HTMLFormatter):
                 s = s[1:-1]
             elif field == 'version':
                 s = attr[:12]
+            elif field == 'duration':
+                s = human_readable_duration(attr)
             else:
                 s = str(attr)
             c = cgi.escape(s)
-            if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version'):
+            # if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version', 'duration'):
+            #     c = "<code>" + c + "</code>"
+
+            if field in ('label', 'repository', 'version'):
                 c = "<code>" + c + "</code>"
             
             t += (c,)
