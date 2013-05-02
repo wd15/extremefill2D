@@ -1,3 +1,6 @@
+import os.path
+
+
 import tables
 import fipy as fp
 import matplotlib.pyplot as plt
@@ -6,8 +9,8 @@ from extremefill2D.dicttable import DictTable
 
 
 class _BaseViewer(object):
-    def plot(self, indices=[0], filename=None):
-        self.plotSetup(indices=indices)
+    def plot(self, indices=[0], filename=None, times=None):
+        self.plotSetup(indices=indices, times=times)
         self.plotSave(filename)
 
     def plotSetup(self, indices=[0]):
@@ -20,8 +23,10 @@ class _BaseViewer(object):
             plt.show()
 
 
+
 class _BaseSingleViewer(_BaseViewer):
-    def __init__(self, datafile, ax=None, color='k'):
+    def __init__(self, record, ax=None, color='k'):
+        datafile = os.path.join(record.datastore.root, record.output_data[0].path)
         self.data = DictTable(datafile, 'r')
         data0 = self.data[0]
         mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
@@ -40,7 +45,14 @@ class _BaseSingleViewer(_BaseViewer):
         a = a.swapaxes(0,1)
         return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
 
-    def plotSetup(self, indices=[0]):
+    def plotSetup(self, indices=[0], times=None):
+        if times is not None:
+            indices = []
+            index = 0
+            for time in times:
+                index = self.getIndex(time, index)
+                indices.append(index)
+
         if type(indices) is int:
             indices = [indices]
         
@@ -63,3 +75,15 @@ class _BaseSingleViewer(_BaseViewer):
     def _plot(self, y, scale, indices):
         raise NotImplementedError
 
+    def getIndex(self, time, index):
+        indexJump = 10
+
+        latestIndex = self.data.getLatestIndex()
+
+        while index <= latestIndex and self.data[index]['elapsedTime'] < time:
+            index += indexJump
+
+        if index > latestIndex:
+            index = latestIndex
+
+        return index

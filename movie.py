@@ -18,20 +18,20 @@ def update_progress(progress):
 
 
 class DoubleViewer(_BaseViewer):
-    def __init__(self, filename):
+    def __init__(self, record):
         self.fig = plt.figure()
         gs = gridspec.GridSpec(1, 2, width_ratios=[1.0, 0.5])
         ax = self.fig.add_subplot(gs[0])
-        self.contourViewer = ContourViewer(filename, ax=ax)
+        self.contourViewer = ContourViewer(record, ax=ax)
         ax = self.fig.add_subplot(gs[1])
-        self.fieldViewer = FieldViewer(filename, ax=ax)
+        self.fieldViewer = FieldViewer(record, ax=ax)
 
-    def plotSetup(self, indices=[0]):
+    def plotSetup(self, indices=[0], times=None):
         self.fig.tight_layout()  
         self.contourViewer.ax.cla()
         self.fieldViewer.ax.cla()
-        self.contourViewer.plotSetup(indices=indices)
-        self.fieldViewer.plotSetup(indices=indices)
+        self.contourViewer.plotSetup(indices=indices, times=times)
+        self.fieldViewer.plotSetup(indices=indices, times=times)
         self.fieldViewer.ax.set_ylabel('')
         labels = [''] * len(self.fieldViewer.ax.get_yticklabels())
         self.fieldViewer.ax.set_yticklabels(labels)
@@ -48,8 +48,7 @@ class DoubleViewer(_BaseViewer):
 
 if __name__ == '__main__':
     record = getSMTRecords(tags=['serialnumber18'], parameters={'Nx' : 600})[0]
-    datafile = os.path.join(record.datastore.root, record.output_data[0].path)
-    viewer = DoubleViewer(datafile)
+    viewer = DoubleViewer(record)
     latestIndex = viewer.contourViewer.data.getLatestIndex()
     index = 0
     dataPath = os.path.join('Data', record.label)

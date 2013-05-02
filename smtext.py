@@ -92,15 +92,17 @@ def markdown_table(records):
     out = '|' + out[1:-1] + '|'
     return out
 
-def getSMTRecords(tags=[], parameters={}):
-    project = load_project()
-    records_list = []
-    for r in project.record_store.list(project.name):
+def getSMTRecords(records=None, tags=[], parameters={}):
+    if records is None:
+        project = load_project()
+        records = project.record_store.list(project.name)
+    records_out = []
+    for r in records:
         if set(tags).issubset(set(r.tags)):
             if set(parameters.items()).issubset(set(r.parameters.as_dict().items())):
-                records_list.append(r)
+                records_out.append(r)
 
-    return records_list
+    return records_out
 
 def getData(tags, parameters):
     records = getSMTRecords(tags, parameters)

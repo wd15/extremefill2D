@@ -1,6 +1,7 @@
 import tables
 from baseViewer import _BaseSingleViewer
-from smtext import getData
+from smtext import getSMTRecords
+
 
 class ContourViewer(_BaseSingleViewer):
     def _plot(self, y, scale, indices):
@@ -24,11 +25,11 @@ class ContourViewer(_BaseSingleViewer):
         self.ax.set_xlim(-xlim, xlim)
         self.ax.set_xticks((-xlim, 0, xlim))
         self.ax.set_xlabel(r'$x$ ($\micro\metre$)')
-
+        self.ax.set_xticklabels((r'${0:d}$'.format(-int(xlim)), '', r'${0:d}$'.format(int(xlim))))
 
 if __name__ == '__main__':
-    datafile = getData(tags=['serialnumber18'], parameters={'Nx' : 600})
-    viewer = ContourViewer(datafile=datafile)
+    records = getSMTRecords(tags=['serialnumber18'], parameters={'Nx' : 600})
+    viewer = ContourViewer(record=records[0])
     viewer.plot(indices=200)
     
     
