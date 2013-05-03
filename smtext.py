@@ -117,8 +117,9 @@ class CustomHTMLFormatter(HTMLFormatter):
         table_out = "<table>\n" + \
             "  <tr>\n    <th>" + "</th>\n    <th>".join(field.title() for field in self.fields) + "    </th>\n  </tr>\n" + \
             "\n".join(self.format_record(record) for record in self.records) + \
-            "\n</table>"
-
+            "\n</table>" + \
+            "\n<br>"
+        
         return self.style(table_out)
 
     def ipython_table(self):
