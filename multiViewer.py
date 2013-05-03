@@ -7,8 +7,9 @@ from smtext import getSMTRecords
 
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecords, title=''):
-        self.fig = plt.figure()
+    def __init__(self, records, baseRecords, title='', figsize=(8, 6)):
+        self.fig = plt.figure(figsize=figsize)
+        
         gs = gridspec.GridSpec(1, len(records))
         self.viewers = []
         if title is str:
@@ -35,11 +36,9 @@ class MultiViewer(_BaseViewer):
                 ax.set_xticklabels(labels)
 
 if __name__ == '__main__':
-    CFLs = (0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64)
-    viewers = []
     records = getSMTRecords(tags=['CFL', 'production'])
-    records = [getSMTRecords(records=records, parameters={'CFL' : CFL})[0] for CFL in CFLs]
-    title = [r'CFL={0:1.2f}'.format(r.parameters['CFL']) for r in records]
+    records = [getSMTRecords(records=records, parameters={'CFL' : CFL})[0] for CFL in (0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64)]
+    title = [r'CFL={0:1.2f}'.format(r.parameters['CFL']) for r in records[1:]]
     viewer = MultiViewer(records[1:], baseRecords=records[0], title=title)
-    viewer.plot(indices=(0, 50, 100), times=(0., 1000., 2000., 3000., 4000.))
+    viewer.plot(times=(0., 1000., 2000., 3000., 4000.))
 

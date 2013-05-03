@@ -93,9 +93,9 @@ class CustomHTMLFormatter(HTMLFormatter):
                 s = str(attr)
             c = cgi.escape(s)
             # if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version', 'duration'):
-            #     c = "<code>" + c + "</code>"
+            # #    c = "<code>" + c + "</code>"
 
-            if field in ('label', 'repository', 'version'):
+            if field in ('label', 'repository', 'version', 'parameters'):
                 c = "<code>" + c + "</code>"
             
             t += (c,)
@@ -103,9 +103,9 @@ class CustomHTMLFormatter(HTMLFormatter):
         return "  <tr>\n    <td>" + "</td>\n    <td>".join(t) + "    </td>\n  </tr>"
 
     def style(self, table_out):
-        replacements = {'<table>' : '<table style="border:1px solid black;border-collapse:collapse;">',
-                        '<th>'    : '<th style="border:1px solid black;">',
-                        '<td>'    : '<td style="border:1px solid black;">',
+        replacements = {'<table>' : '<table style="border:2px solid black;border-collapse:collapse; font-size:10px;">',
+                        '<th>'    : '<th style="border:2px solid black;background:#b5cfd2">',
+                        '<td>'    : '<td style="border:2px solid black;">',
                         '<code>'  : '<code style="font-size:10px;">'}
         
         for k, v in replacements.iteritems():
