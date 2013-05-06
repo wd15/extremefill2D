@@ -8,6 +8,7 @@ from texttable import Texttable
 from sumatra.formatting import HTMLFormatter
 from sumatra.formatting import fields
 from IPython.core.display import HTML
+from ipy_table import make_table, apply_theme
 
 
 def _quotient_remainder(dividend, divisor):
@@ -156,6 +157,49 @@ def getData(tags, parameters):
     records = getSMTRecords(tags, parameters)
     record = records[0]
     return os.path.join(record.datastore.root, record.output_data[0].path)
+
+def smt_ipy_table(records, fields, parameters=[]):
+    table = [[field.title() for field in fields]]
+    for record in records:
+        record_list = []
+        for field in fields:
+            attr = getattr(record, field)
+            if field == 'timestamp':
+                s = attr.strftime('%Y-%m-%d %H:%M')
+            elif field == 'repository':
+                s = '{0} ({1})'.format(attr.url, attr.upstream)
+            elif field == 'parameters' and parameters:
+                s = ''
+                d = attr.as_dict()
+                for p in parameters:
+                    s += ' {0}: {1},'.format(p, d[p])
+                s = s[1:-1]
+            elif field == 'tags':
+                s = ''
+                for tag in attr:
+                    s += ' {0},'.format(tag)
+                s = s[1:-1]
+            elif field == 'version':
+                s = attr[:12]
+            elif field == 'duration':
+                s = human_readable_duration(attr)
+            else:
+                s = str(attr)
+            c = cgi.escape(s)
+            # if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version', 'duration'):
+            # #    c = "<code>" + c + "</code>"
+
+            if field in ('label', 'repository', 'version', 'parameters'):
+                c = "<code>" + c + "</code>"
+
+            record_list.append(c)
+
+        table.append(record_list)
+    t = make_table(table)
+    t.apply_theme('basic')
+
+    return t
+
 
 if __name__ == '__main__':
     records = getSMTRecords(tags=['serialnumber10'], parameters={'kPlus' : 100.0})
