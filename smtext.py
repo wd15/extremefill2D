@@ -197,8 +197,7 @@ def smt_ipy_table(records, fields, parameters=[]):
         table.append(record_list)
     t = make_table(table)
     t.apply_theme('basic')
-
-    return t
+    return HTML(t._repr_html_())
 
 
 if __name__ == '__main__':
