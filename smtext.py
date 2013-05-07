@@ -167,7 +167,7 @@ def smt_ipy_table(records, fields, parameters=[]):
             if field == 'timestamp':
                 s = attr.strftime('%Y-%m-%d %H:%M')
             elif field == 'repository':
-                s = '{0} ({1})'.format(attr.url, attr.upstream)
+                s = '{0}'.format(attr.upstream)
             elif field == 'parameters' and parameters:
                 s = ''
                 d = attr.as_dict()
