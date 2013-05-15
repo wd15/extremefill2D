@@ -44,7 +44,8 @@ def run(totalSteps=10,
                    NxBase=1200,
                    solver_tol=solver_tol,
                    kPlus=kPlus,
-                   kMinus=kMinus)
+                   kMinus=kMinus,
+                   featureDepth=featureDepth)
 
     shutil.move(datapath, final_datadir)
 
