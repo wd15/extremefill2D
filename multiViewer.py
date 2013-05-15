@@ -7,7 +7,7 @@ from smtext import getSMTRecords
 
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecords, title='', figsize=(8, 6)):
+    def __init__(self, records, baseRecords=None, title='', figsize=(8, 6)):
         self.fig = plt.figure(figsize=figsize)
         
         gs = gridspec.GridSpec(1, len(records))
@@ -20,7 +20,8 @@ class MultiViewer(_BaseViewer):
             ax = self.fig.add_subplot(gs[i])
             self.viewers.append(ContourViewer(record, ax=ax, color='k'))
             self.viewers[-1].ax.set_title(title)
-            self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
+            if baseRecord:
+                self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
     def plotSetup(self, indices=[0], times=None):
         for i, viewer in enumerate(self.viewers):
