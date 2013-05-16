@@ -16,25 +16,28 @@ DTMAX=1.
 TOTALTIME=7000
 
 # non-default
-SERIALNUMBER=18
+SERIALNUMBER=19
 
-for NX in 150 300 600 1200 2400
+for NX in 300 600 1200
 do
-    qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher \
-	--tag=qsub \
-	--tag=serialnumber$SERIALNUMBER \
-	--reason="Rerun base simulations saving the data fields to produce a movie and saving thetaInterface" \
-	--totalSteps=100000000000 \
-	--CFL=$CFL \
-	--Nx=$NX \
-	--sweeps=$SWEEPS \
-	--tol=$TOL \
-	--solver_tol=$SOLVER_TOL \
-	--areaRatio=$AREA_RATIO \
-	--kPlus=$KPLUS \
-	--kMinus=$KMINUS \
-	--featureDepth=$FEATUREDEPTH \
-	--deltaRef=$DELTAREF \
-	--dtMax=$DTMAX \
-        --totalTime=$TOTALTIME
+    for FEATUREDEPTH in 8.5e-5 7.5e-5 6.5e-5 5.5e-5 4.5e-5 3.5e-5 2.5e-5 1.5e-5
+    do
+	qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher \
+	    --tag=qsub \
+	    --tag=serialnumber$SERIALNUMBER \
+	    --reason="Rerun featureDepth simulations as parameter was not passed." \
+	    --totalSteps=100000000000 \
+	    --CFL=$CFL \
+	    --Nx=$NX \
+	    --sweeps=$SWEEPS \
+	    --tol=$TOL \
+	    --solver_tol=$SOLVER_TOL \
+	    --areaRatio=$AREA_RATIO \
+	    --kPlus=$KPLUS \
+	    --kMinus=$KMINUS \
+	    --featureDepth=$FEATUREDEPTH \
+	    --deltaRef=$DELTAREF \
+	    --dtMax=$DTMAX \
+            --totalTime=$TOTALTIME
+    done
 done

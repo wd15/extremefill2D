@@ -27,6 +27,7 @@ class _BaseViewer(object):
 class _BaseSingleViewer(_BaseViewer):
     def __init__(self, record, ax=None, color='k'):
         datafile = os.path.join(record.datastore.root, record.output_data[0].path)
+        self.record = record
         self.data = DictTable(datafile, 'r')
         data0 = self.data[0]
         mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
@@ -45,7 +46,7 @@ class _BaseSingleViewer(_BaseViewer):
         a = a.swapaxes(0,1)
         return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
 
-    def plotSetup(self, indices=[0], times=None):
+    def plotSetup(self, indices=[0], times=None, maxFeatureDepth=None):
         if times is not None:
             indices = []
             index = 0
@@ -57,15 +58,20 @@ class _BaseSingleViewer(_BaseViewer):
             indices = [indices]
         
         delta = 150e-6
-        featureDepth = 56e-6
-        y0 = delta * 0.1 + featureDepth
+
+        featureDepth = self.record.parameters['featureDepth']
+        if maxFeatureDepth is None:
+            maxFeatureDepth = featureDepth
+
+        y0 = delta * 0.1 + maxFeatureDepth
 
         scale = 1e+6
         y0 = y0 * scale
         ymin = 1e-5 * scale - y0
-        ymax = 7.5e-5 * scale - y0
+        # ymax = 7.5e-5 * scale - y0
+        ymax = -ymin * 0.1
 
-        y = self.flip(self.x, scale) - y0
+        y = self.flip(self.x, scale) - y0 + (maxFeatureDepth - featureDepth) * scale
 
         self._plot(y, scale, indices)
 

@@ -24,14 +24,18 @@ class MultiViewer(_BaseViewer):
                 self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
     def plotSetup(self, indices=[0], times=None):
+        maxFeatureDepth = 0
+        for viewer in self.viewers:
+            maxFeatureDepth = max(maxFeatureDepth, viewer.record.parameters['featureDepth'])
+
         for i, viewer in enumerate(self.viewers):
-            viewer.plotSetup(indices=indices, times=times)
+            viewer.plotSetup(indices=indices, times=times, maxFeatureDepth=maxFeatureDepth)
             ax = viewer.ax
-            if i > 1:
+            if ax.colNum > 0:
                 labels = [''] * len(ax.get_yticklabels())
                 ax.set_yticklabels(labels)
                 ax.set_ylabel('')
-            if i != (len(self.viewers) / 2) and i != (len(self.viewers) / 2 - 1):
+            if ax.colNum != ax.numCols / 2:
                 ax.set_xlabel('')
                 labels = [''] * len(ax.get_xticklabels())
                 ax.set_xticklabels(labels)
