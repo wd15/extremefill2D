@@ -21,7 +21,8 @@ def run(totalSteps=10,
         deltaRef=0.03,
         dtMax=100.,
         totalTime=5000.,
-        datadir=os.path.split(__file__)[0]):
+        datadir=os.path.split(__file__)[0],
+        appliedPotential=-0.25):
     
     final_datadir = datadir
     datadir = tempfile.gettempdir()
@@ -46,7 +47,8 @@ def run(totalSteps=10,
                    kPlus=kPlus,
                    kMinus=kMinus,
                    featureDepth=featureDepth,
-                   deltaRef=deltaRef)
+                   deltaRef=deltaRef,
+                   appliedPotential=appliedPotential)
 
     shutil.move(datapath, final_datadir)
 
@@ -63,5 +65,6 @@ if __name__ == '__main__':
         featureDepth=56e-6,
         deltaRef=0.03,
         dtMax=100.,
-        totalTime=5000.)
+        totalTime=5000.,
+        appliedPotential=-0.25)
 
