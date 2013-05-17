@@ -16,11 +16,11 @@ DTMAX=1.
 TOTALTIME=7000
 
 # non-default
-SERIALNUMBER=19
+SERIALNUMBER=20
 
 for NX in 300 600 1200
 do
-    for FEATUREDEPTH in 8.5e-5 7.5e-5 6.5e-5 5.5e-5 4.5e-5 3.5e-5 2.5e-5 1.5e-5
+    for DELTAREF in 0.001 0.005 0.01 0.02 0.03 0.04
     do
 	qsub -cwd -o $QSUBDIR -e $QSUBDIR launcher \
 	    --tag=qsub \

@@ -75,6 +75,10 @@ class _BaseSingleViewer(_BaseViewer):
 
         self._plot(y, scale, indices)
 
+        xmin, xmax = self.ax.get_xlim()
+        rect = plt.Rectangle((xmin, ymin), xmax - xmin, (-featureDepth * scale - ymin) - delta * 0.05, facecolor='0.8', linewidth=0)
+        self.ax.add_patch(rect)
+
         self.ax.set_ylim(ymin, ymax)
         self.ax.set_ylabel(r'$y$ ($\micro\metre$)')
 
