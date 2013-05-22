@@ -46,6 +46,13 @@ class _BaseSingleViewer(_BaseViewer):
         a = a.swapaxes(0,1)
         return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
 
+    def getFeatureDepth(self):
+        if self.record.parameters.as_dict().has_key('featureDepth'):
+            featureDepth = self.record.parameters['featureDepth']
+        else:
+            featureDepth = 56e-6
+        return featureDepth
+
     def plotSetup(self, indices=[0], times=None, maxFeatureDepth=None):
         if times is not None:
             indices = []
@@ -59,7 +66,7 @@ class _BaseSingleViewer(_BaseViewer):
         
         delta = 150e-6
 
-        featureDepth = self.record.parameters['featureDepth']
+        featureDepth = self.getFeatureDepth()
         if maxFeatureDepth is None:
             maxFeatureDepth = featureDepth
 
