@@ -9,6 +9,7 @@ from sumatra.formatting import HTMLFormatter
 from sumatra.formatting import fields
 from IPython.core.display import HTML
 from ipy_table import make_table, apply_theme
+import numpy as np
 
 
 def _quotient_remainder(dividend, divisor):
@@ -148,8 +149,16 @@ def getSMTRecords(records=None, tags=[], parameters={}):
     records_out = []
     for r in records:
         if set(tags).issubset(set(r.tags)):
-            if set(parameters.items()).issubset(set(r.parameters.as_dict().items())):
+            allclose = []
+            for k, v in parameters.items():
+                if np.allclose(v, r.parameters.as_dict()[k]):
+                    allclose.append(True)
+                else:
+                    allclose.append(False)
+            if np.all(allclose):
                 records_out.append(r)
+            # if set(parameters.items()).issubset(set(r.parameters.as_dict().items())):
+            #     records_out.append(r)
 
     return records_out
 
