@@ -7,5 +7,5 @@ if [ "$JOB_ID" ]
 then
     ARG="--tag=$JOB_ID --tag=inline"
 fi
-python script.py "$@" $ARG
+smt run default.param "$@" $ARG
     
