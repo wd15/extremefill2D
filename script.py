@@ -5,15 +5,21 @@ import sys
 
 
 import tables
-from extremefill2D.simulation2D import Simulation2D
 import tempfile
 
 
 pa = imp.load_source('pa', sys.argv[1])
+
+if pa.symmetry:
+    from extremefill2D.simulation2D import Simulation2D as Simulation
+else:
+    from extremefill2D.simulation2D import Simulation2DNoSymmetry as Simulation
+
+
 datapath = os.path.join(tempfile.gettempdir(), 'data.h5')
 
 
-simulation = Simulation2D()
+simulation = Simulation()
 simulation.run(view=False,
                totalSteps=pa.totalSteps,
                sweeps=pa.sweeps,
