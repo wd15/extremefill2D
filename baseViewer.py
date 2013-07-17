@@ -25,13 +25,24 @@ class _BaseViewer(object):
 
 
 class _BaseSingleViewer(_BaseViewer):
-    def __init__(self, record, ax=None, color='k'):
+    def __init__(self, record, ax=None, color='k', symmetric=True):
         datafile = os.path.join(record.datastore.root, record.output_data[0].path)
         self.record = record
         self.data = DictTable(datafile, 'r')
         data0 = self.data[0]
-        mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
+        self.symmetric = symmetric
+
+        if self.symmetric:
+            mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
+        else:
+            mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy']) - \
+                [[0], [(data0['dy'] * data0['ny']) / 2.]]
+        
         self.shape = (mesh.ny, mesh.nx)
+        print 'self.shape',self.shape
+        print 'mesh.dx',mesh.dx
+        print 'mesh.dy',mesh.dy
+
         self.x = mesh.x.value
         self.y = mesh.y.value
         if ax is None:
@@ -44,7 +55,11 @@ class _BaseSingleViewer(_BaseViewer):
     def flip(self, a, scale, negate=False):
         a = np.reshape(a, self.shape)
         a = a.swapaxes(0,1)
-        return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
+        print 'self.symmetric',self.symmetric
+        if self.symmetric:
+            return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
+        else:
+            return a * scale
 
     def getFeatureDepth(self):
         if self.record.parameters.as_dict().has_key('featureDepth'):

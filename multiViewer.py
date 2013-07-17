@@ -23,12 +23,17 @@ class MultiViewer(_BaseViewer):
 
         for j, recordset in enumerate(records):
             for i, (record, title, baseRecord) in enumerate(zip(recordset, titles, baseRecords)):
+                d = record.parameters.as_dict()
+                if 'symmetry' in d.keys():
+                    symmetric = d['symmetry']
+                else:
+                    symmetric = True
                 ax = self.fig.add_subplot(gs[j,i])
-                self.viewers.append(ContourViewer(record, ax=ax, color='k'))
+                self.viewers.append(ContourViewer(record, ax=ax, color='k', symmetric=symmetric))
                 if j == 0:
                     self.viewers[-1].ax.set_title(title)
                 if baseRecord:
-                    self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
+                    self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r', symmetric=symmetric))
 
     def plotSetup(self, indices=[0], times=None):
         maxFeatureDepth = 0

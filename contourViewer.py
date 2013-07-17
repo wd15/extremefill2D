@@ -5,13 +5,18 @@ from smtext import getSMTRecords
 
 class ContourViewer(_BaseSingleViewer):
     def _plot(self, y, scale, indices):
+        print 'min(self.y.flatten())',min(self.y.flatten())
+        print 'max(self.y.flatten())',max(self.y.flatten())
+        print 'min(self.x.flatten())',min(self.x.flatten())
+        print 'max(self.x.flatten())',max(self.x.flatten())
+
+
         x = self.flip(self.y, scale, negate=True)
 
         phi0 = self.data[0]['distance']
         phi0 = self.flip(phi0, scale)
 
         self.ax.contourf(x,y, phi0, (-1e+10, 0, 1e+10), colors=('0.8', 'w'))
-
 
         for index in indices:
             phi = self.data[index]['distance']
