@@ -7,7 +7,6 @@ def batch_launch(reason='', tags=[], **kwargs):
     cmd += ' --reason="{0}"'.format(reason)
     for t in tags:
         cmd += ' --tag={0}'.format(t)
-    print cmd
     os.system(cmd)
 
 
