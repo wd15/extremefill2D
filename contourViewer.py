@@ -5,12 +5,6 @@ from smtext import getSMTRecords
 
 class ContourViewer(_BaseSingleViewer):
     def _plot(self, y, scale, indices):
-        print 'min(self.y.flatten())',min(self.y.flatten())
-        print 'max(self.y.flatten())',max(self.y.flatten())
-        print 'min(self.x.flatten())',min(self.x.flatten())
-        print 'max(self.x.flatten())',max(self.x.flatten())
-
-
         x = self.flip(self.y, scale, negate=True)
 
         phi0 = self.data[0]['distance']

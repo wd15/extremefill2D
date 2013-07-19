@@ -39,10 +39,6 @@ class _BaseSingleViewer(_BaseViewer):
                 [[0], [(data0['dy'] * data0['ny']) / 2.]]
         
         self.shape = (mesh.ny, mesh.nx)
-        print 'self.shape',self.shape
-        print 'mesh.dx',mesh.dx
-        print 'mesh.dy',mesh.dy
-
         self.x = mesh.x.value
         self.y = mesh.y.value
         if ax is None:
@@ -55,7 +51,6 @@ class _BaseSingleViewer(_BaseViewer):
     def flip(self, a, scale, negate=False):
         a = np.reshape(a, self.shape)
         a = a.swapaxes(0,1)
-        print 'self.symmetric',self.symmetric
         if self.symmetric:
             return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
         else:
