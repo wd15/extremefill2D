@@ -207,7 +207,7 @@ class Simulation2D(SimulationXD):
     def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, distance):
         mesh2D = interfaceTheta.mesh
         mesh1D = fp.Grid1D(nx=mesh2D.nx, dx=mesh2D.dx) + mesh2D.origin[[0]]
-        vars2D = super(self.__class__, self).get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar)
+        vars2D = super(Simulation2D, self).get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar)
         listOfVars = [_Interpolate1DVarMax(mesh1D, vars2D[0], distance)]
         return listOfVars + [_Interpolate1DVar(mesh1D, v, distance) for v in vars2D[1:]]
 
@@ -242,6 +242,16 @@ class _Interpolate1DVarMax(_Interpolate1DVarBase):
             value[i] = np.max(self.var2D([x * onesy, inty]))
         return value
             
+
+class Simulation2DNoSymmetry(Simulation2D):
+    def getMesh(self, Nx, featureDepth, perimeterRatio, delta):
+        distanceBelowTrench = self.getDistanceBelowTrench(delta)
+        L = delta + featureDepth + distanceBelowTrench
+        dx = L / Nx
+        Ny = int(1 / perimeterRatio / dx) * 2
+        return fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [Ny * dx / 2.]]
+
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()

@@ -330,6 +330,7 @@ class Simulation(object):
         distance.setValue(-1., where=mesh.x < -featureDepth)
         if hasattr(mesh, 'y'):
             distance.setValue(-1., where=(mesh.x < 0) & (mesh.y > areaRatio / perimeterRatio))
+            distance.setValue(-1., where=(mesh.x < 0) & (mesh.y < -areaRatio / perimeterRatio))
 
         
 if __name__ == '__main__':
