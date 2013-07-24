@@ -241,16 +241,6 @@ class _Interpolate1DVarMax(_Interpolate1DVarBase):
         for i, x in enumerate(self.mesh.x):
             value[i] = np.max(self.var2D([x * onesy, inty]))
         return value
-            
-
-class Simulation2DNoSymmetry(Simulation2D):
-    def getMesh(self, Nx, featureDepth, perimeterRatio, delta):
-        distanceBelowTrench = self.getDistanceBelowTrench(delta)
-        L = delta + featureDepth + distanceBelowTrench
-        dx = L / Nx
-        Ny = int(1 / perimeterRatio / dx) * 2
-        return fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [Ny * dx / 2.]]
-
 
 if __name__ == '__main__':
     import doctest
