@@ -109,11 +109,11 @@ class Simulation(object):
 
         cupric = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{cu}$')
         cupric[:] = bulkCupric
-        cupric.constrain(bulkCupric, mesh.facesRight)
+        cupric.constrain(bulkCupric, mesh.bulkBoundaryFaces)
         
         suppressor = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
         suppressor[:] = bulkSuppressor
-        suppressor.constrain(bulkSuppressor, mesh.facesRight)
+        suppressor.constrain(bulkSuppressor, mesh.bulkBoundaryFaces)
 
         distance = fp.DistanceVariable(mesh=mesh)
         self.initializeDistance(distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase)
@@ -131,7 +131,7 @@ class Simulation(object):
                                              + (2 - alpha) * Fbar * nx.exp(-(2 - alpha) * Fbar * potential))
 
         upper = fp.CellVariable(mesh=mesh)
-        ID = mesh._getNearestCellID(mesh.faceCenters[:,mesh.facesRight.value])
+        ID = mesh._getNearestCellID(mesh.faceCenters[:,mesh.bulkBoundaryFaces.value])
         upper[ID] = kappa / mesh.dx / (deltaRef - delta)
 
         surface, area, harmonic = self.getCoeffs(distance, perimeterRatio, areaRatio, featureDepth)

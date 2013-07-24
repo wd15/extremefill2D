@@ -1,25 +1,25 @@
 import fipy as fp
 from extremefill2D.simulation2D import Simulation2D
-import fipy.tools.numerix as nx
+import fipy.tools.numerix as numerix
 import numpy as np
 
 class Simulation2DAnnular(Simulation2D):
-    def getMesh(self, Nx, featureDepth, perimeterRatio, delta):
-        r"""
-        perimeterRatio = 2 / R, where R is the boundary radius
-        perimeterRatio = perimeter / a_s
-        perimeter = 2 * pi * R
-        area = pi * R**2
-        """
+    def run(self, router=None, rinner=None, rboundary=None, **kwargs):
+        self.rboundary = rboundary
+        self.rinner = rinner
+        self.router = router
+        super(Simulation2DAnnular, self).run(**kwargs)
 
+    def getMesh(self, Nx, featureDepth, perimeterRatio, delta):
         distanceBelowTrench = self.getDistanceBelowTrench(delta)
         L = delta + featureDepth + distanceBelowTrench
         ny = Nx
         dy = L / Nx
         dx = dy
-        R = 2. / perimeterRatio
-        nx = int(R / dx)
-        return fp.CylindricalGrid2D(nx=nx, dx=dx, ny=ny, dy=dy) - [[0], [distanceBelowTrench + featureDepth]]
+        nx = int(self.rboundary / dx)
+        mesh = fp.CylindricalGrid2D(nx=nx, dx=dx, ny=ny, dy=dy) - [[-dx / 100.], [distanceBelowTrench + featureDepth]]
+        mesh.bulkBoundaryFaces = mesh.facesTop
+        return mesh
 
     def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, distance):
         mesh2D = interfaceTheta.mesh
@@ -27,6 +27,21 @@ class Simulation2DAnnular(Simulation2D):
         vars2D = super(Simulation2D, self).get1DVars(interfaceTheta, suppressorBar, cbar, potentialBar)
         listOfVars = [_Interpolate1DVarMax(mesh1D, vars2D[0], distance)]
         return listOfVars + [_Interpolate1DVar(mesh1D, v, distance) for v in vars2D[1:]]
+
+    def initializeDistance(self, distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase):
+        baseMesh = self.getMesh(NxBase, featureDepth, perimeterRatio, delta)
+        baseDistance = fp.DistanceVariable(mesh=baseMesh)
+        self._initializeDistance(baseDistance, featureDepth, perimeterRatio, delta, areaRatio, NxBase)
+        baseDistance.calcDistanceFunction()
+        value = np.array(baseDistance(distance.mesh.cellCenters, order=1))
+        distance.setValue(value)
+
+    def _initializeDistance(self, distance, featureDepth, perimeterRatio, delta, areaRatio, NxBase):
+        distance[:] = 1.        
+        mesh = distance.mesh
+        distance.setValue(-1., where=mesh.y < -featureDepth)
+        distance.setValue(-1., where=(mesh.y < 0) & (mesh.x < self.rinner))        
+        distance.setValue(-1., where=(mesh.y < 0) & (mesh.x > self.router))
 
 class _Interpolate1DVarBase(fp.CellVariable):
     def __init__(self, mesh, var2D, distance):
@@ -36,8 +51,8 @@ class _Interpolate1DVarBase(fp.CellVariable):
         
 class _Interpolate1DVar(_Interpolate1DVarBase):
     def _calcValue(self):
-        value = self.var2D([nx.zeros(self.mesh.nx), self.mesh.x])
-        phi = self.distance([nx.zeros(self.mesh.nx), self.mesh.x,])
+        value = self.var2D([numerix.zeros(self.mesh.nx), self.mesh.x])
+        phi = self.distance([numerix.zeros(self.mesh.nx), self.mesh.x,])
         value[phi < 0] = 0.
         return value
 

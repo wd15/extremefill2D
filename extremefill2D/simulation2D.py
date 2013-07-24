@@ -202,7 +202,9 @@ class Simulation2D(SimulationXD):
         L = delta + featureDepth + distanceBelowTrench
         dx = L / Nx
         Ny = int(1 / perimeterRatio / dx)
-        return fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [0]]
+        mesh = fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [0]]
+        mesh.bulkBoundaryFaces = mesh.facesRight
+        return mesh
 
     def get1DVars(self, interfaceTheta, suppressorBar, cbar, potentialBar, distance):
         mesh2D = interfaceTheta.mesh
@@ -218,7 +220,6 @@ class Simulation2D(SimulationXD):
         baseDistance.calcDistanceFunction()
         value = np.array(baseDistance(distance.mesh.cellCenters, order=1))
         distance.setValue(value)
-
 
 class _Interpolate1DVarBase(fp.CellVariable):
     def __init__(self, mesh, var2D, distance):

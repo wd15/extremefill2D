@@ -8,6 +8,8 @@ class Simulation2DNoSymmetry(Simulation2D):
         L = delta + featureDepth + distanceBelowTrench
         dx = L / Nx
         Ny = int(1 / perimeterRatio / dx) * 2
-        return fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [Ny * dx / 2]]
+        mesh = fp.Grid2D(nx=Nx, dx=dx, ny=Ny, dy=dx) - [[distanceBelowTrench + featureDepth], [Ny * dx / 2]]
+        mesh.bulkBoundaryFaces = mesh.facesRight
+        return mesh
 
 
