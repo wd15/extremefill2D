@@ -28,8 +28,12 @@ class MultiViewer(_BaseViewer):
                     symmetric = d['symmetry']
                 else:
                     symmetric = True
+                if 'annular' in d.keys():
+                    annular = d['symmetry']
+                else:
+                    annular = False
                 ax = self.fig.add_subplot(gs[j,i])
-                self.viewers.append(ContourViewer(record, ax=ax, color='k', symmetric=symmetric))
+                self.viewers.append(ContourViewer(record, ax=ax, color='k', symmetric=symmetric, annular=annular))
                 if j == 0:
                     self.viewers[-1].ax.set_title(title)
                 if baseRecord:

@@ -3,7 +3,6 @@ import shutil
 import imp
 import sys
 
-
 import tables
 import tempfile
 
@@ -13,8 +12,13 @@ pa = imp.load_source('pa', sys.argv[1])
 if pa.symmetry:
     from extremefill2D.simulation2D import Simulation2D as Simulation
 else:
-    from extremefill2D.simulation2D import Simulation2DNoSymmetry as Simulation
+    from extremefill2D.simulation2DNoSymmetry import Simulation2DNoSymmetry as Simulation
 
+if pa.annular:
+    from extremefill2D.simulation2DAnnular import Simulation2DAnnular as Simulation
+    kwargs = {'rinner' : pa.rinner, 'router' : pa.router, 'rboundary' : pa.rboundary}
+else:
+    kwargs = {}
 
 datapath = os.path.join(tempfile.gettempdir(), 'data.h5')
 
@@ -40,7 +44,8 @@ simulation.run(view=False,
                featureDepth=pa.featureDepth,
                deltaRef=pa.deltaRef,
                appliedPotential=pa.appliedPotential,
-               bulkSuppressor=pa.bulkSuppressor)
+               bulkSuppressor=pa.bulkSuppressor,
+               **kwargs)
 
 
 if not hasattr(pa, 'sumatra_label'):
