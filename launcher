@@ -7,5 +7,5 @@ if [ "$JOB_ID" ]
 then
     ARG="--tag=$JOB_ID --tag=inline"
 fi
-smt run default.param "$@"
+smt run annular.param "$@"
     
