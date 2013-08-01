@@ -32,9 +32,10 @@ bulkSuppressor = params.bulkSuppressor
 rinner = params.rinner
 router = params.router
 rboundary = params.rboundary
+dtMax = params.dtMax
+levelset_update_frequency = params.levelset_update_frequency
+totalTime=params.totalTime
 
-
-dtMax = 1e+20
 dtMin = .5e-7
 dt = 0.01
 delta = 150e-6
@@ -52,8 +53,6 @@ kappa = 15.26
 omega = 7.1e-6
 gamma = 2.5e-7
 capacitance = 0.3
-totalTime=1e+100,
-narrow_distance=None
 data_frequency=1
 NxBase=1000
 solver_tol=1e-10
@@ -158,12 +157,7 @@ while (step < totalSteps) and (elapsedTime < totalTime):
     if dataFile is not None and step % data_frequency == 0:
         write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
     
-
-    if narrow_distance is None:
-        narrow_distance = featureDepth / 5.
-    LSFrequency = int(narrow_distance / mesh.dx / CFL)
-
-    if step % LSFrequency == 0:
+    if step % levelset_update_frequency == 0:
         distance.calcDistanceFunction()
 
     extension[:] = depositionRate
