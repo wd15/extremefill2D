@@ -1,0 +1,227 @@
+import os.path
+import cgi
+from math import modf
+
+
+from sumatra.projects import load_project
+from texttable import Texttable
+from sumatra.formatting import HTMLFormatter
+from sumatra.formatting import fields
+from IPython.core.display import HTML
+from ipy_table import make_table, apply_theme
+import numpy as np
+
+
+def _quotient_remainder(dividend, divisor):
+    q = dividend // divisor
+    r = dividend - q * divisor
+    return (q, r)
+
+
+def human_readable_duration(seconds):
+    """
+    Coverts seconds to human readable unit
+
+    >>> human_readable_duration(((6 * 60 + 32) * 60 + 12))
+    '6h 32m 12.00s'
+    >>> human_readable_duration((((8 * 24 + 7) * 60 + 6) * 60 + 5))
+    '8d 7h 6m 5.00s'
+    >>> human_readable_duration((((8 * 24 + 7) * 60 + 6) * 60))
+    '8d 7h 6m'
+    >>> human_readable_duration((((8 * 24 + 7) * 60) * 60))
+    '8d 7h'
+    >>> human_readable_duration((((8 * 24) * 60) * 60))
+    '8d'
+    >>> human_readable_duration((((8 * 24) * 60) * 60) + 0.12)
+    '8d 0.12s'
+
+    """
+    (fractional_part, integer_part) = modf(seconds)
+    (d, rem) = _quotient_remainder(int(integer_part), 60 * 60 * 24)
+    (h, rem) = _quotient_remainder(rem, 60 * 60)
+    (m, rem) = _quotient_remainder(rem, 60)
+    s = rem + fractional_part
+    
+    return ' '.join(
+        templ.format(val)
+        for (val, templ) in [
+            (d, '{0}d'),
+            (h, '{0}h'),
+            (m, '{0}m'),
+            (s, '{0:.2f}s'),
+            ]
+        if val != 0
+        )
+
+class CustomHTMLFormatter(HTMLFormatter):
+    def __init__(self, records, fields=fields, parameters=None):
+        self.fields = fields
+        self.parameters = parameters
+        super(CustomHTMLFormatter, self).__init__(records)
+        
+    def long(self):
+        def format_record(record):
+            output = "  <dt>%s</dt>\n  <dd>\n    <dl>\n" % record.label
+            for field in self.fields:
+                output += "      <dt>%s</dt><dd>%s</dd>\n" % (field, cgi.escape(str(getattr(record, field))))
+            output += "    </dl>\n  </dd>"
+            return output
+        return "<dl>\n" + "\n".join(format_record(record) for record in self.records) + "\n</dl>"
+
+    def format_record(self, record):
+        t = ()
+        for field in self.fields:
+            attr = getattr(record, field)
+            if field == 'timestamp':
+                s = attr.strftime('%Y-%m-%d %H:%M')
+            elif field == 'repository':
+                s = '{0} ({1})'.format(attr.url, attr.upstream)
+            elif field == 'parameters' and self.parameters:
+                s = ''
+                d = attr.as_dict()
+                for p in self.parameters:
+                    s += ' {0}: {1},'.format(p, d[p])
+                s = s[1:-1]
+            elif field == 'tags':
+                s = ''
+                for tag in attr:
+                    s += ' {0},'.format(tag)
+                s = s[1:-1]
+            elif field == 'version':
+                s = attr[:12]
+            elif field == 'duration':
+                s = human_readable_duration(attr)
+            else:
+                s = str(attr)
+            c = cgi.escape(s)
+            # if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version', 'duration'):
+            # #    c = "<code>" + c + "</code>"
+
+            if field in ('label', 'repository', 'version', 'parameters'):
+                c = "<code>" + c + "</code>"
+            
+            t += (c,)
+        
+        return "  <tr>\n    <td>" + "</td>\n    <td>".join(t) + "    </td>\n  </tr>"
+
+    def style(self, table_out):
+        replacements = {'<table>' : '<table style="border:2px solid black;border-collapse:collapse; font-size:10px;">',
+                        '<th>'    : '<th style="border:2px solid black;background:#b5cfd2">',
+                        '<td>'    : '<td style="border:2px solid black;">',
+                        '<code>'  : '<code style="font-size:10px;">'}
+        
+        for k, v in replacements.iteritems():
+            table_out = table_out.replace(k, v)
+
+        return table_out
+
+    def table(self):
+        table_out = "<table>\n" + \
+            "  <tr>\n    <th>" + "</th>\n    <th>".join(field.title() for field in self.fields) + "    </th>\n  </tr>\n" + \
+            "\n".join(self.format_record(record) for record in self.records) + \
+            "\n</table>" + \
+            "\n<br>"
+        
+        return self.style(table_out)
+
+    def ipython_table(self):
+        return HTML(self.table())
+        
+
+
+def markdown_table(records):
+    fields = ['label', 'timestamp', 'reason', 'duration']
+    table = Texttable()
+    table.set_cols_dtype(['t'] * len(fields))
+    rows = [fields]
+    for record in records:
+        rows.append([str(getattr(record, field)) for field in fields])
+    table.add_rows(rows)
+    out = table.draw().replace('=', '-')
+    out = out.replace('\n+-', '\n|-')
+    out = '|' + out[1:-1] + '|'
+    return out
+
+def getSMTRecords(records=None, tags=[], parameters={}):
+    if records is None:
+        project = load_project()
+        records = project.record_store.list(project.name)
+    records_out = []
+    for r in records:
+        if set(tags).issubset(set(r.tags)):
+            allclose = []
+            for k, v in parameters.items():
+                if np.allclose(v, r.parameters.as_dict()[k]):
+                    allclose.append(True)
+                else:
+                    allclose.append(False)
+            if np.all(allclose):
+                records_out.append(r)
+            # if set(parameters.items()).issubset(set(r.parameters.as_dict().items())):
+            #     records_out.append(r)
+
+    return records_out
+
+def getData(tags, parameters):
+    records = getSMTRecords(tags, parameters)
+    record = records[0]
+    return os.path.join(record.datastore.root, record.output_data[0].path)
+
+def smt_ipy_table(records, fields, parameters=[]):
+    table = [[field.title() for field in fields]]
+    for record in records:
+        record_list = []
+        for field in fields:
+            attr = getattr(record, field)
+            if field == 'timestamp':
+                s = attr.strftime('%Y-%m-%d %H:%M')
+            elif field == 'repository':
+                s = '{0}'.format(attr.upstream)
+            elif field == 'parameters' and parameters:
+                s = ''
+                d = attr.as_dict()
+                for p in parameters:
+                    s += ' {0}: {1},'.format(p, d[p])
+                s = s[1:-1]
+            elif field == 'tags':
+                s = ''
+                for tag in attr:
+                    s += ' {0},'.format(tag)
+                s = s[1:-1]
+            elif field == 'version':
+                s = attr[:12]
+            elif field == 'duration':
+                s = human_readable_duration(attr)
+            else:
+                s = str(attr)
+            c = cgi.escape(s)
+            # if field in ('label', 'timestamp', 'repository', 'parameters', 'tags', 'version', 'duration'):
+            # #    c = "<code>" + c + "</code>"
+
+            if field in ('label', 'repository', 'version', 'parameters'):
+                c = "<code>" + c + "</code>"
+
+            record_list.append(c)
+
+        table.append(record_list)
+    t = make_table(table)
+    t.apply_theme('basic')
+    t.set_global_style(wrap=True)
+    return HTML(t._repr_html_())
+
+
+def batch_launch(reason='', tags=[], **kwargs):
+    cmd = 'qsub -cwd -o {0} -e {0} launcher'.format('.qsub')
+    for k, v in kwargs.iteritems():
+        cmd += ' {0}={1}'.format(k, v)
+    cmd += ' --reason="{0}"'.format(reason)
+    for t in tags:
+        cmd += ' --tag={0}'.format(t)
+    os.system(cmd)
+
+
+if __name__ == '__main__':
+    records = getSMTRecords(tags=['serialnumber10'], parameters={'kPlus' : 100.0})
+    #print markdown_table(records)
+    print CustomHTMLFormatter(records, fields=['label', 'timestamp', 'parameters', 'tags'], parameters=['kPlus']).table()
+
