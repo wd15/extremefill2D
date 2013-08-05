@@ -8,9 +8,8 @@ from texttable import Texttable
 from sumatra.formatting import HTMLFormatter
 from sumatra.formatting import fields
 from IPython.core.display import HTML
-from ipy_table import make_table, apply_theme
 import numpy as np
-
+from dicttable import DictTable
 
 def _quotient_remainder(dividend, divisor):
     q = dividend // divisor
@@ -225,3 +224,18 @@ if __name__ == '__main__':
     #print markdown_table(records)
     print CustomHTMLFormatter(records, fields=['label', 'timestamp', 'parameters', 'tags'], parameters=['kPlus']).table()
 
+def write_data(dataFile, elapsedTime, distance, timeStep, potential, cupric, suppressor, interfaceTheta):
+    h5data = DictTable(dataFile, 'a')
+    mesh = distance.mesh
+    dataDict = {'elapsedTime' : elapsedTime,
+                'nx' : mesh.nx,
+                'ny' : mesh.ny,
+                'dx' : mesh.dx,
+                'dy' : mesh.dy,
+                'distance' : np.array(distance),
+                'potential' : np.array(potential),
+                'cupric' : np.array(cupric),
+                'suppressor' : np.array(suppressor),
+                'interfaceTheta' : np.array(interfaceTheta)}
+
+    h5data[timeStep] = dataDict

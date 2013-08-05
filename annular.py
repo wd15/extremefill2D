@@ -10,11 +10,15 @@ import imp
 import sys
 import os
 import tempfile
-from extremefilltools import write_data
+from tools import write_data
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import shutil
 
-params = imp.load_source('params', sys.argv[1])
+filename = sys.argv[1]
+filenamec = filename + 'c'
+params = imp.load_source('params', filename)
+if os.path.exists(filenamec):
+    os.remove(filenamec)
 
 totalSteps = params.totalSteps
 sweeps = params.sweeps
