@@ -13,6 +13,8 @@ import tempfile
 from tools import write_data
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import shutil
+from tools import get_nonuniform_dx
+from tools import DistanceVariableNonUniform as DVNU
 
 filename = sys.argv[1]
 filenamec = filename + 'c'
@@ -38,7 +40,7 @@ router = params.router
 rboundary = params.rboundary
 dtMax = params.dtMax
 levelset_update_frequency = params.levelset_update_frequency
-totalTime=params.totalTime
+totalTime = params.totalTime
 
 dtMin = .5e-7
 dt = 0.01
@@ -57,19 +59,26 @@ kappa = 15.26
 omega = 7.1e-6
 gamma = 2.5e-7
 capacitance = 0.3
-data_frequency=1
-NxBase=1000
-solver_tol=1e-10
+data_frequency =1
+NxBase = 1000
+solver_tol = 1e-10
+spacing_ratio = 1.1
 
 Fbar = faradaysConstant / gasConstant / temperature
 
-distanceBelowTrench = delta * 0.1
-L = delta + featureDepth + distanceBelowTrench
-ny = Nx
-dy = L / Nx
+
+
+dy = featureDepth / Nx
 dx = dy
-nx = int(rboundary / dx)
-mesh = fp.CylindricalGrid2D(nx=nx, dx=dx, ny=ny, dy=dy) - [[-dx / 100.], [distanceBelowTrench + featureDepth]]
+distanceBelowTrench = 10 * dx
+padding = 3 * dx
+
+dx_nonuniform = get_nonuniform_dx(dx, rinner, router, rboundary, padding, spacing_ratio)
+dy_nonuniform = get_nonuniform_dx(dy, distanceBelowTrench,
+                                  distanceBelowTrench + featureDepth,
+                                  distanceBelowTrench + featureDepth + delta, padding, spacing_ratio)
+
+mesh = fp.CylindricalGrid2D(dx=dx_nonuniform, dy=dy_nonuniform) - [[-dx / 100.], [distanceBelowTrench + featureDepth]]
 
 dt = fp.Variable(dt)
 
@@ -84,11 +93,16 @@ suppressor = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
 suppressor[:] = bulkSuppressor
 suppressor.constrain(bulkSuppressor, mesh.facesTop)
 
-distance = fp.DistanceVariable(mesh=mesh, value=1.)
+distance = DVNU(mesh=mesh, value=1.)
 distance.setValue(-1., where=mesh.y < -featureDepth)
 distance.setValue(-1., where=(mesh.y < 0) & (mesh.x < rinner))        
 distance.setValue(-1., where=(mesh.y < 0) & (mesh.x > router))
+
+
 distance.calcDistanceFunction()
+
+# fp.Viewer(distance).plot()
+# raw_input('stopped')
 
 extension = fp.CellVariable(mesh=mesh)
 
@@ -98,7 +112,6 @@ class _InterfaceVar(_InterfaceSurfactantVariable):
 
 theta = fp.SurfactantVariable(distanceVar=distance, hasOld=True, name=r'$\theta$', value=0.)
 interfaceTheta = _InterfaceVar(theta)
-
 
 I0 = (i0 + i1 * interfaceTheta)
 baseCurrent = I0 * (numerix.exp(alpha * Fbar * potential) \
@@ -110,7 +123,8 @@ currentDerivative = cbar * I0 * (alpha * Fbar *  numerix.exp(alpha * Fbar * pote
 
 upper = fp.CellVariable(mesh=mesh)
 ID = mesh._getNearestCellID(mesh.faceCenters[:,mesh.facesTop.value])
-upper[ID] = kappa / mesh.dx / (deltaRef - delta)
+
+upper[ID] = kappa / mesh.dy[-1] / (deltaRef - delta + mesh.dy[-1])
 
 surface = distance.cellInterfaceAreas / distance.mesh.cellVolumes
 area = 1.
@@ -168,7 +182,7 @@ while (step < totalSteps) and (elapsedTime < totalTime):
 
     distance.extendVariable(extension)
 
-    dt.setValue(min(float(CFL * mesh.dx / max(extension.globalValue)), float(dt) * 1.1))
+    dt.setValue(min(float(CFL * dx / max(extension.globalValue)), float(dt) * 1.1))
     dt.setValue(min((float(dt), dtMax)))
     dt.setValue(max((float(dt), dtMin)))
 
@@ -182,7 +196,7 @@ while (step < totalSteps) and (elapsedTime < totalTime):
         thetaRes = thetaEq.sweep(theta, dt=1., solver=thetaSolver)
         res = numerix.array((potentialRes, cupricRes, suppressorRes, thetaRes))
 
-        print 'sweep: {0}, res: {0}'.format(sweep, res)
+        print 'sweep: {0}, res: {1}'.format(sweep, res)
 
 
     print 'dt',dt
