@@ -11,6 +11,7 @@ from IPython.core.display import HTML
 import numpy as np
 from dicttable import DictTable
 import fipy as fp
+from ipy_table import make_table
 
 
 def _quotient_remainder(dividend, divisor):

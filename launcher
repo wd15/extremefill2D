@@ -2,10 +2,6 @@
 source ~/.bashrc
 workon default
 export FIPY_INLINE=True
-ARG=""
-if [ "$JOB_ID" ]
-then
-    ARG="--tag=$JOB_ID --tag=inline"
-fi
+echo "$@"
 smt run annular.param "$@"
     

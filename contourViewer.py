@@ -1,6 +1,6 @@
 import tables
 from baseViewer import _BaseSingleViewer
-from smtext import getSMTRecords
+from tools import getSMTRecords
 
 
 class ContourViewer(_BaseSingleViewer):

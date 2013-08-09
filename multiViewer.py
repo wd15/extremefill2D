@@ -3,11 +3,11 @@ from contourViewer import ContourViewer
 from baseViewer import _BaseViewer
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from smtext import getSMTRecords
+from tools import getSMTRecords
 
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecords=None, title='', figsize=(8, 6)):
+    def __init__(self, records, baseRecords=None, title='', figsize=(8, 6), annular=True):
         self.fig = plt.figure(figsize=figsize)
         if hasattr(records[0], 'label'):
             records = [records]
@@ -28,10 +28,7 @@ class MultiViewer(_BaseViewer):
                     symmetric = d['symmetry']
                 else:
                     symmetric = True
-                if 'annular' in d.keys():
-                    annular = d['symmetry']
-                else:
-                    annular = False
+
                 ax = self.fig.add_subplot(gs[j,i])
                 self.viewers.append(ContourViewer(record, ax=ax, color='k', symmetric=symmetric, annular=annular))
                 if j == 0:

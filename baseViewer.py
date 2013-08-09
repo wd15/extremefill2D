@@ -5,7 +5,7 @@ import tables
 import fipy as fp
 import matplotlib.pyplot as plt
 import numpy as np
-from extremefill2D.dicttable import DictTable
+from dicttable import DictTable
 
 
 class _BaseViewer(object):
@@ -39,6 +39,7 @@ class _BaseSingleViewer(_BaseViewer):
             mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy']) - \
                 [[0], [(data0['dy'] * data0['ny']) / 2.]]
         
+        self.dy = mesh.dy
         self.shape = (mesh.ny, mesh.nx)
         self.x = mesh.x.value
         self.y = mesh.y.value
@@ -81,7 +82,7 @@ class _BaseSingleViewer(_BaseViewer):
         if maxFeatureDepth is None:
             maxFeatureDepth = featureDepth
 
-        y0 = delta * 0.1 + maxFeatureDepth
+        y0 = maxFeatureDepth + np.amin(self.dy) * 10
 
         scale = 1e+6
         y0 = y0 * scale
