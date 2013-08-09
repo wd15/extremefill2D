@@ -41,6 +41,7 @@ rboundary = params.rboundary
 dtMax = params.dtMax
 levelset_update_frequency = params.levelset_update_frequency
 totalTime = params.totalTime
+spacing_ratio = params.spacing_ratio
 
 dtMin = .5e-7
 dt = 0.01
@@ -62,7 +63,6 @@ capacitance = 0.3
 data_frequency =1
 NxBase = 1000
 solver_tol = 1e-10
-spacing_ratio = 1.1
 
 Fbar = faradaysConstant / gasConstant / temperature
 
