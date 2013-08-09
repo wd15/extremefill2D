@@ -79,7 +79,7 @@ dy_nonuniform = get_nonuniform_dx(dy, distanceBelowTrench,
                                   distanceBelowTrench + featureDepth + delta, padding, spacing_ratio)
 
 mesh = fp.CylindricalGrid2D(dx=dx_nonuniform, dy=dy_nonuniform) - [[-dx / 100.], [distanceBelowTrench + featureDepth]]
-
+print 'number of cells:',mesh.numberOfCells
 dt = fp.Variable(dt)
 
 potential = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$\psi$')
