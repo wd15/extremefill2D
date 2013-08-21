@@ -4,14 +4,25 @@ from baseViewer import _BaseViewer
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from tools import getSMTRecords
+import numpy as np
 
+class DummyViewer(object):
+    def __init__(self, reocrd, ax=None, color='k'):
+        self.ax = ax
+
+    def plotSetup(self, indices=None, times=None, maxFeatureDepth=None):
+        pass
+
+    def getFeatureDepth(self):
+        return 56e-6
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecords=None, title='', figsize=(8, 6), annular=True):
-        self.fig = plt.figure(figsize=figsize)
+    def __init__(self, records, baseRecords=None, title='', figsize=(1.5, 6)):
+
         if hasattr(records[0], 'label'):
             records = [records]
         recordset = records[0]
+        self.fig = plt.figure(figsize=np.array(figsize) * np.array((len(recordset), len(records))))
         gs = gridspec.GridSpec(len(records), len(recordset))
         self.viewers = []
         if title is str:
@@ -23,18 +34,16 @@ class MultiViewer(_BaseViewer):
 
         for j, recordset in enumerate(records):
             for i, (record, title, baseRecord) in enumerate(zip(recordset, titles, baseRecords)):
-                d = record.parameters.as_dict()
-                if 'symmetry' in d.keys():
-                    symmetric = d['symmetry']
-                else:
-                    symmetric = True
-
                 ax = self.fig.add_subplot(gs[j,i])
-                self.viewers.append(ContourViewer(record, ax=ax, color='k', symmetric=symmetric, annular=annular))
+                if record and len(record.output_data) > 0:
+                    v = ContourViewer(record, ax=ax, color='k')
+                else:
+                    v = DummyViewer(record, ax=ax, color='k')
+                self.viewers.append(v)
                 if j == 0:
                     self.viewers[-1].ax.set_title(title)
                 if baseRecord:
-                    self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r', symmetric=symmetric))
+                    self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
     def plotSetup(self, indices=[0], times=None):
         maxFeatureDepth = 0

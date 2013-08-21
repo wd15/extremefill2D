@@ -5,11 +5,8 @@ from tools import getSMTRecords
 
 class ContourViewer(_BaseSingleViewer):
     def _plot(self, y, scale, indices):
-        if self.annular:
-            x = self.flip(self.x, scale, negate=True)
-        else:
-            x = self.flip(self.y, scale, negate=True)
-
+        x = self.flip(self.x, scale, negate=True)
+        
         phi0 = self.data[0]['distance']
         phi0 = self.flip(phi0, scale)
 
@@ -23,16 +20,10 @@ class ContourViewer(_BaseSingleViewer):
         self.height = min(cc.collections[0].get_paths()[0].vertices[:,1])
 
         self.ax.set_aspect(1.)
-        if self.annular:
-            xlim = 12e-6 * scale
-            self.ax.set_xlim(0, xlim)
-            self.ax.set_xticks((0, xlim))
-            self.ax.set_xticklabels(('', r'${0:d}$'.format(int(xlim))))
-        else:
-            xlim = 8e-6 * scale
-            self.ax.set_xlim(-xlim, xlim)
-            self.ax.set_xticks((-xlim, 0, xlim))
-            self.ax.set_xticklabels((r'${0:d}$'.format(-int(xlim)), '', r'${0:d}$'.format(int(xlim))))
+        xlim = 12e-6 * scale
+        self.ax.set_xlim(0, xlim)
+        self.ax.set_xticks((0, xlim))
+        self.ax.set_xticklabels(('', r'${0:d}$'.format(int(xlim))))
         self.ax.set_xlabel(r'$x$ ($\micro\metre$)')
 
 

@@ -25,19 +25,13 @@ class _BaseViewer(object):
 
 
 class _BaseSingleViewer(_BaseViewer):
-    def __init__(self, record, ax=None, color='k', symmetric=True, annular=False):
+    def __init__(self, record, ax=None, color='k'):
         datafile = os.path.join(record.datastore.root, record.output_data[0].path)
         self.record = record
         self.data = DictTable(datafile, 'r')
         data0 = self.data[0]
-        self.symmetric = symmetric
-        self.annular = annular
 
-        if self.symmetric or self.annular:
-            mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
-        else:
-            mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy']) - \
-                [[0], [(data0['dy'] * data0['ny']) / 2.]]
+        mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
         
         self.dy = mesh.dy
         self.shape = (mesh.ny, mesh.nx)
@@ -53,10 +47,7 @@ class _BaseSingleViewer(_BaseViewer):
     def flip(self, a, scale, negate=False):
         a = np.reshape(a, self.shape)
         a = a.swapaxes(0,1)
-        if self.symmetric and not self.annular:
-            return np.concatenate((-(2 * negate -1) * a[:,::-1], a), axis=1) * scale
-        else:
-            return a * scale
+        return a * scale
 
     def getFeatureDepth(self):
         if self.record.parameters.as_dict().has_key('featureDepth'):
@@ -83,18 +74,13 @@ class _BaseSingleViewer(_BaseViewer):
             maxFeatureDepth = featureDepth
 
         y0 = maxFeatureDepth + np.amin(self.dy) * 10
-
         scale = 1e+6
         y0 = y0 * scale
-        ymin = 1e-5 * scale - y0
-        # ymax = 7.5e-5 * scale - y0
+        ymin = -60e-6 * scale
         ymax = -ymin * 0.1
 
-        if self.annular:
-            y = self.flip(self.y, scale) - y0 + (maxFeatureDepth - featureDepth) * scale
-        else:
-            y = self.flip(self.x, scale) - y0 + (maxFeatureDepth - featureDepth) * scale
-
+        y = self.flip(self.y, scale) - y0 + (maxFeatureDepth - featureDepth) * scale
+        
         self._plot(y, scale, indices)
 
         xmin, xmax = self.ax.get_xlim()
