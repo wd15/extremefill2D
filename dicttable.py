@@ -41,9 +41,20 @@ class DictTable:
     def __getitem__(self, index):
         h5file = tables.openFile(self.h5filename, mode='r')
 
-        d = {}
-        for array in h5file.listNodes('/' + self.IDprefix + str(index), classname='Array'):
-            d[array.name] = array.read()
+        if type(index) is int:
+            index = [index]
+        
+        s = '/' + self.IDprefix + str(index[0])
+
+        if len(index) == 1:
+            d = {}
+            for array in h5file.listNodes(s, classname='Array'):
+                d[array.name] = array.read()
+        else:
+            for t in index[1:]:
+                s += '/' + str(t)
+
+            d = h5file.getNode(s, classname='Array').read()
 
         h5file.close()
         return d

@@ -98,7 +98,7 @@ class _BaseSingleViewer(_BaseViewer):
 
         latestIndex = self.data.getLatestIndex()
 
-        while index <= latestIndex and self.data[index]['elapsedTime'] < time:
+        while index <= latestIndex and self.data[index, 'elapsedTime'] < time:
             index += indexJump
 
         if index > latestIndex:

@@ -17,31 +17,28 @@ class DummyViewer(object):
         return 56e-6
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecords=None, title='', figsize=(1.5, 6)):
+    def __init__(self, records, baseRecords=None, rowtitle=None, columntitle=None, figsize=(1.5, 6)):
 
+        self.rowtitle = rowtitle
         if hasattr(records[0], 'label'):
             records = [records]
         recordset = records[0]
         self.fig = plt.figure(figsize=np.array(figsize) * np.array((len(recordset), len(records))))
         gs = gridspec.GridSpec(len(records), len(recordset))
         self.viewers = []
-        if title is str:
-            titles = [title] * len(recordset)
-        else:
-            titles = title
         if type(baseRecords) not in (list, tuple):
             baseRecords = [baseRecords] * len(recordset)
-
+            
         for j, recordset in enumerate(records):
-            for i, (record, title, baseRecord) in enumerate(zip(recordset, titles, baseRecords)):
+            for i, (record, baseRecord) in enumerate(zip(recordset, baseRecords)):
                 ax = self.fig.add_subplot(gs[j,i])
                 if record and len(record.output_data) > 0:
                     v = ContourViewer(record, ax=ax, color='k')
                 else:
                     v = DummyViewer(record, ax=ax, color='k')
                 self.viewers.append(v)
-                if j == 0:
-                    self.viewers[-1].ax.set_title(title)
+                if j == 0 and columntitle:
+                    self.viewers[-1].ax.set_title(columntitle(v.record))
                 if baseRecord:
                     self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
@@ -63,7 +60,8 @@ class MultiViewer(_BaseViewer):
                 ax.set_ylabel('')
             else:
                 ylabel = ax.get_ylabel()
-                ylabel += ", Nx={0:d}".format(viewer.record.parameters['Nx'])
+                if self.rowtitle:
+                    ylabel += ", " + self.rowtitle(viewer.record)
                 ax.set_ylabel(ylabel)
             if ax.colNum != ax.numCols / 2 or ax.rowNum < ax.numRows - 1:
                 ax.set_xlabel('')
