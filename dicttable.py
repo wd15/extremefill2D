@@ -37,9 +37,14 @@ class DictTable:
             h5file.createArray(group, k, values[k])
 
         h5file.close()
-        
+
+    def openread(self):
+        if not hasattr(self, 'h5fileread'):
+            self.h5fileread = tables.openFile(self.h5filename, mode='r')
+        return self.h5fileread
+
     def __getitem__(self, index):
-        h5file = tables.openFile(self.h5filename, mode='r')
+        h5file = self.openread()
 
         if type(index) is int:
             index = [index]
@@ -56,12 +61,17 @@ class DictTable:
 
             d = h5file.getNode(s, classname='Array').read()
 
-        h5file.close()
         return d
 
     def getLatestIndex(self):
-        h5file = tables.openFile(self.h5filename, mode='r')
+        h5file = self.openread()
         latestIndex = h5file.root._v_attrs.latestIndex
-        h5file.close()
         return latestIndex
+
+    def __del__(self):
+        if hasattr(self, 'h5fileread'):
+            self.h5fileread.close()
+            del self.h5fileread
+
+        
     

@@ -7,8 +7,9 @@ from tools import getSMTRecords
 import numpy as np
 
 class DummyViewer(object):
-    def __init__(self, reocrd, ax=None, color='k'):
+    def __init__(self, record, ax=None, color='k'):
         self.ax = ax
+        self.record = record
 
     def plotSetup(self, indices=None, times=None, maxFeatureDepth=None):
         pass
