@@ -25,6 +25,7 @@ class ContourViewer(_BaseSingleViewer):
         self.ax.set_xticks((0, xlim))
         self.ax.set_xticklabels(('', r'${0:d}$'.format(int(xlim))))
         self.ax.set_xlabel(r'$x$ ($\micro\metre$)')
+        self.phi = phi
 
 
 if __name__ == '__main__':

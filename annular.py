@@ -42,6 +42,8 @@ dtMax = params.dtMax
 levelset_update_frequency = params.levelset_update_frequency
 totalTime = params.totalTime
 spacing_ratio = params.spacing_ratio
+data_frequency = params.data_frequency
+delete_islands = params.delete_islands
 
 dtMin = .5e-7
 dt = 0.01
@@ -60,7 +62,6 @@ kappa = 15.26
 omega = 7.1e-6
 gamma = 2.5e-7
 capacitance = 0.3
-data_frequency =1
 NxBase = 1000
 solver_tol = 1e-10
 
@@ -165,6 +166,7 @@ cupricSolver = fp.LinearPCGSolver(tolerance=solver_tol)
 suppressorSolver = fp.LinearPCGSolver(tolerance=solver_tol)
 thetaSolver = fp.LinearPCGSolver(tolerance=solver_tol)
 
+extensionGlobalValue = max(extension.globalValue)
 while (step < totalSteps) and (elapsedTime < totalTime):
     
     potential.updateOld()
@@ -173,16 +175,20 @@ while (step < totalSteps) and (elapsedTime < totalTime):
     theta.updateOld()
 
     if dataFile is not None and step % data_frequency == 0:
-        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
+#        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
+        write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue)
     
     if step % levelset_update_frequency == 0:
+        if delete_islands:
+            distance.deleteIslands()
         distance.calcDistanceFunction()
 
     extension[:] = depositionRate
 
     distance.extendVariable(extension)
-
-    dt.setValue(min(float(CFL * dx / max(extension.globalValue)), float(dt) * 1.1))
+    extensionGlobalValue = max(extension.globalValue)
+    print 'extensionGlobalValue',extensionGlobalValue
+    dt.setValue(min(float(CFL * dx / extensionGlobalValue), float(dt) * 1.1))
     dt.setValue(min((float(dt), dtMax)))
     dt.setValue(max((float(dt), dtMin)))
 

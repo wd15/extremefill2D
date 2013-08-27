@@ -1,7 +1,7 @@
 import os.path
 import cgi
 from math import modf
-
+import shutil
 
 from sumatra.projects import load_project
 from texttable import Texttable
@@ -222,12 +222,7 @@ def batch_launch(reason='', tags=[], **kwargs):
     os.system(cmd)
 
 
-if __name__ == '__main__':
-    records = getSMTRecords(tags=['serialnumber10'], parameters={'kPlus' : 100.0})
-    #print markdown_table(records)
-    print CustomHTMLFormatter(records, fields=['label', 'timestamp', 'parameters', 'tags'], parameters=['kPlus']).table()
-
-def write_data(dataFile, elapsedTime, distance, timeStep, potential, cupric, suppressor, interfaceTheta):
+def write_data(dataFile, elapsedTime, distance, timeStep, **otherFields):
     h5data = DictTable(dataFile, 'a')
     mesh = distance.mesh
     dataDict = {'elapsedTime' : elapsedTime,
@@ -235,11 +230,9 @@ def write_data(dataFile, elapsedTime, distance, timeStep, potential, cupric, sup
                 'ny' : mesh.ny,
                 'dx' : mesh.dx,
                 'dy' : mesh.dy,
-                'distance' : np.array(distance),
-                'potential' : np.array(potential),
-                'cupric' : np.array(cupric),
-                'suppressor' : np.array(suppressor),
-                'interfaceTheta' : np.array(interfaceTheta)}
+                'distance' : np.array(distance)}
+    for k, v in otherFields.iteritems():
+        dataDict[k] = np.array(v)
 
     h5data[timeStep] = dataDict
 
@@ -313,3 +306,30 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
             raise Exception, "Non grid meshes can not be used for solving the FMM."
 
         return dx, shape
+
+    def deleteIslands(self):
+        from fipy.tools import numerix
+        from fipy.tools.numerix import MA
+
+        cellToCellIDs = self.mesh._getCellToCellIDs()
+        adjVals = numerix.take(self.value, cellToCellIDs)
+        adjInterfaceValues = MA.masked_array(adjVals, mask = (adjVals * self.value) > 0)
+        masksum = numerix.sum(numerix.logical_not(MA.getmask(adjInterfaceValues)), 0)
+        tmp = MA.logical_and(masksum == 4, self.value > 0)
+        self.value = numerix.array(MA.where(tmp, -1, self.value))
+
+def delete_defunct_smt_directories():
+    data_dir = 'Data'
+    directories = os.listdir(data_dir)
+    records = getSMTRecords()
+    labels = [r.label for r in records]
+    for directory in directories:
+        tail = os.path.split(directory)[1]
+        if tail in labels:
+            pass
+        else:
+            path = os.path.join(data_dir, directory)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)

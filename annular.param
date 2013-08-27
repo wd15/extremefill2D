@@ -18,3 +18,4 @@ router = 8.5e-6
 rboundary = 50e-6
 levelset_update_frequency = 150
 spacing_ratio = 1.1
+data_frequency = 10
