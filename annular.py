@@ -44,6 +44,7 @@ totalTime = params.totalTime
 spacing_ratio = params.spacing_ratio
 data_frequency = params.data_frequency
 delete_islands = params.delete_islands
+shutdown_deposition_rate = params.shutdown_deposition_rate
 
 dtMin = .5e-7
 dt = 0.01
@@ -177,6 +178,9 @@ while (step < totalSteps) and (elapsedTime < totalTime):
     if dataFile is not None and step % data_frequency == 0:
 #        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
         write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue)
+        if step > 10:
+            if extensionGlobalValue < shutdown_deposition_rate:
+                break
     
     if step % levelset_update_frequency == 0:
         if delete_islands:

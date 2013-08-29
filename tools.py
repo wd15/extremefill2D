@@ -144,7 +144,7 @@ def markdown_table(records):
     out = '|' + out[1:-1] + '|'
     return out
 
-def getSMTRecords(records=None, tags=[], parameters={}):
+def getSMTRecords(records=None, tags=[], parameters={}, atol=1e-10, rtol=1e-10):
     if records is None:
         project = load_project()
         records = project.record_store.list(project.name)
@@ -153,7 +153,7 @@ def getSMTRecords(records=None, tags=[], parameters={}):
         if set(tags).issubset(set(r.tags)):
             allclose = []
             for k, v in parameters.items():
-                if np.allclose(v, r.parameters.as_dict()[k]):
+                if np.allclose(v, r.parameters.as_dict()[k], atol=atol, rtol=rtol):
                     allclose.append(True)
                 else:
                     allclose.append(False)
@@ -259,6 +259,7 @@ def geometric_spacing(initial_spacing, domain_size, spacing_ratio=1.1):
     spacing = initial_spacing * spacing_ratio**np.arange(nx)
     spacing[-1] = spacing[-1] + (L - Lestimate)
     return spacing
+
 
 def get_nonuniform_dx(dx, x0, x1, x2, padding, spacing_ratio=1.1):
     """

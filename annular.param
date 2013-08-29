@@ -19,3 +19,5 @@ rboundary = 50e-6
 levelset_update_frequency = 150
 spacing_ratio = 1.1
 data_frequency = 10
+shutdown_deposition_rate = 1e-13
+delete_islands = 1
