@@ -102,6 +102,6 @@ class _BaseSingleViewer(_BaseViewer):
             index += indexJump
 
         if index > latestIndex:
-            index = latestIndex
+            index = int(latestIndex)
 
         return index
