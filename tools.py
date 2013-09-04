@@ -13,7 +13,6 @@ from dicttable import DictTable
 import fipy as fp
 from ipy_table import make_table
 
-
 def _quotient_remainder(dividend, divisor):
     q = dividend // divisor
     r = dividend - q * divisor
@@ -334,3 +333,21 @@ def delete_defunct_smt_directories():
                 shutil.rmtree(path)
             else:
                 os.remove(path)
+
+def getDepositionRates(record):
+    datafile = os.path.join(record.datastore.root, record.output_data[0].path)
+    data = DictTable(datafile, 'r')
+    latestIndex = data.getLatestIndex()
+    indexJump = 10
+    index = 0
+    elapsedTimes = []
+    depositionRates = []
+    while index <= latestIndex:
+        d = data[index]
+        elapsedTimes.append(d['elapsedTime'])
+        depositionRates.append(d['extensionGlobalValue'])
+        index += indexJump
+    return elapsedTimes, depositionRates
+
+
+
