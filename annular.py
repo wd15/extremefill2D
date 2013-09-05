@@ -95,7 +95,7 @@ suppressor = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
 suppressor[:] = bulkSuppressor
 suppressor.constrain(bulkSuppressor, mesh.facesTop)
 
-distance = DVNU(mesh=mesh, value=1., hasOld=True)
+distance = DVNU(mesh=mesh, value=1.)
 distance.setValue(-1., where=mesh.y < -featureDepth)
 distance.setValue(-1., where=(mesh.y < 0) & (mesh.x < rinner))        
 distance.setValue(-1., where=(mesh.y < 0) & (mesh.x > router))
@@ -175,29 +175,31 @@ def extend(depositionRate, extend, distance):
     return max(extension.globalValue)
 
 redo_timestep = False
+
 while (step < totalSteps) and (elapsedTime < totalTime):
     
     potential.updateOld()
     cupric.updateOld()
     suppressor.updateOld()
     theta.updateOld()
-    distance.updateOld()
+    distanceOld = numerix.array(distance).copy()
 
     if (dataFile is not None) and (step % data_frequency == 0) and (not redo_timestep):
 #        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
         write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue)
 
-    if (step % levelset_update_frequency == 0) and (not redo_timestep):
+    if (step % levelset_update_frequency == 0):
         if delete_islands:
             distance.deleteIslands()
         distance.calcDistanceFunction()
-        distance.updateOld()
 
     extensionGlobalValue = extend(depositionRate, extend, distance)
 
     dt.setValue(min(float(CFL * dx / extensionGlobalValue), float(dt) * 1.1))
     dt.setValue(min((float(dt), dtMax)))
     dt.setValue(max((float(dt), dtMin)))
+
+    advectionEq.solve(distance, dt=dt)
 
     for sweep in range(sweeps):
         potentialRes = potentialEq.sweep(potential, dt=dt, solver=potentialSolver)
@@ -208,14 +210,15 @@ while (step < totalSteps) and (elapsedTime < totalTime):
         print 'sweep: {0}, res: {1}'.format(sweep, res)
 
     extensionGlobalValue = extend(depositionRate, extend, distance)
-    if float(dt) > (CFL * dx / extensionGlobalValue):
+    if float(dt) > (CFL * dx / extensionGlobalValue * 1.1):
         dt.setValue(float(dt) * 0.1)
         print 'redo time step'
+        print 'new dt',float(dt)
         potential[:] = potential.old
         cupric[:] = cupric.old
         suppressor[:] = suppressor.old
         theta[:] = theta.old
-        distance[:] = distance.old
+        distance[:] = distanceOld
         redo_timestep = True
     else:
         elapsedTime += float(dt)
