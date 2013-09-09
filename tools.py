@@ -163,6 +163,13 @@ def getSMTRecords(records=None, tags=[], parameters={}, atol=1e-10, rtol=1e-10):
 
     return records_out
 
+def getRecord(records=None, **args):
+    records = getSMTRecords(records=records, parameters=args)
+    if len(records) == 0:
+        return None
+    else:
+        return records[0]
+    
 def getData(tags, parameters):
     records = getSMTRecords(tags, parameters)
     record = records[0]
