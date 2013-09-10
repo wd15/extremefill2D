@@ -39,7 +39,7 @@ rinner = params.rinner
 router = params.router
 rboundary = params.rboundary
 dtMax = params.dtMax
-levelset_update_frequency = params.levelset_update_frequency
+levelset_update_ncell = params.levelset_update_ncell
 totalTime = params.totalTime
 spacing_ratio = params.spacing_ratio
 data_frequency = params.data_frequency
@@ -101,7 +101,7 @@ distance.setValue(-1., where=(mesh.y < 0) & (mesh.x < rinner))
 distance.setValue(-1., where=(mesh.y < 0) & (mesh.x > router))
 
 
-distance.calcDistanceFunction()
+distance.calcDistanceFunction(order=1)
 
 # fp.Viewer(distance).plot()
 # raw_input('stopped')
@@ -188,10 +188,10 @@ while (step < totalSteps) and (elapsedTime < totalTime):
 #        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
         write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue)
 
-    if (step % levelset_update_frequency == 0):
+    if (step % (levelset_update_ncell / CFL) == 0):
         if delete_islands:
             distance.deleteIslands()
-        distance.calcDistanceFunction()
+        distance.calcDistanceFunction(order=1)
 
     extensionGlobalValue = extend(depositionRate, extend, distance)
 
