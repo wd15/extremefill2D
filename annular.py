@@ -8,7 +8,7 @@ from fipy import numerix
 import numpy as np
 import imp
 import sys
-import os
+nimport os
 import tempfile
 from tools import write_data
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
@@ -188,7 +188,7 @@ while (step < totalSteps) and (elapsedTime < totalTime):
 #        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
         write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue)
 
-    if (step % (levelset_update_ncell / CFL) == 0):
+    if (step % int(levelset_update_ncell / CFL) == 0):
         if delete_islands:
             distance.deleteIslands()
         distance.calcDistanceFunction(order=1)
