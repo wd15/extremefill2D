@@ -2,6 +2,8 @@ import os.path
 import cgi
 from math import modf
 import shutil
+import json
+
 
 from sumatra.projects import load_project
 from texttable import Texttable
@@ -356,5 +358,17 @@ def getDepositionRates(record):
         index += indexJump
     return elapsedTimes, depositionRates
 
+def switch_smt_database(db_name):
+    fname = '.smt/project'
+    shutil.copy(fname, fname + '.bkup')
+    f = open(fname, 'r')
+    d = json.load(f)
+    f.close()
+    old_db_name = d['name']
+    d['name'] = db_name
+    f = open(fname, 'w')
+    json.dump(d, f, indent=2)
+    f.close()
+    return old_db_name
 
 
