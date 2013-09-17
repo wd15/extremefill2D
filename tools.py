@@ -14,6 +14,10 @@ import numpy as np
 from dicttable import DictTable
 import fipy as fp
 from ipy_table import make_table
+from scipy.optimize import brentq
+from scipy.interpolate import interp1d
+import tables
+
 
 def _quotient_remainder(dividend, divisor):
     q = dividend // divisor
@@ -371,4 +375,54 @@ def switch_smt_database(db_name):
     f.close()
     return old_db_name
 
+def find_all_zeros(f, x0, x1, N=1000):
+    x = np.linspace(x0, x1, N)
+    y = f(x)
+    sign = y[1:] * y[:-1]
+    mask = sign < 0
+    IDs = np.array(np.nonzero(mask)).flatten()
+    return np.array([brentq(f, x[ID], x[ID + 1]) for ID in IDs])
 
+class VoidSizeFinder(object):
+
+    def find_void_size(self, record):
+        datafile = os.path.join(record.datastore.root, record.output_data[0].path)
+        h5file = tables.openFile(datafile, mode='r')
+        index = h5file.root._v_attrs.latestIndex
+        data = h5file.getNode('/ID' + str(int(index)))
+
+        mindx = min(data.dx.read())
+        featureDepth = record.parameters['featureDepth']
+        distanceBelowTrench = 10 * mindx
+
+        if not hasattr(self, 'mesh'):
+            self.mesh = fp.Grid2D(nx=data.nx.read(), ny=data.ny.read(), dx=data.dx.read(), dy=data.dy.read()) - [[-mindx / 100.], [distanceBelowTrench + featureDepth]]
+        phi = fp.CellVariable(mesh=self.mesh, value=data.distance.read())
+
+        N = 1000
+        rinner = record.parameters['rinner']
+        router = record.parameters['router']
+        X = (rinner + router) / 2. * np.ones(N)
+        Y = np.linspace(-featureDepth, 10e-6, 1000)
+        points = (X, Y)
+        if not hasattr(self, 'nearestCellIDs'):
+            self.nearestCellIDs = self.mesh._getNearestCellID(points)
+        phiInterpolated = phi(points, order=1, nearestCellIDs=self.nearestCellIDs)
+
+        f = interp1d(Y, phiInterpolated)
+        zeros = find_all_zeros(f, Y[0], Y[-1])
+
+        if len(zeros) < 2:
+            void_size = 0.
+        else:
+            void_size = max((zeros[1:] - zeros[:-1])[::2]) / featureDepth
+
+        if len(zeros) % 2 == 0:
+            height = 1.
+        else:
+            height = (featureDepth + zeros[-1]) / featureDepth 
+            height = min(height, 1.)
+
+        h5file.close()
+
+        return void_size, height
