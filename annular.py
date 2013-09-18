@@ -187,6 +187,8 @@ while (step < totalSteps) and (elapsedTime < totalTime):
     if (dataFile is not None) and (step % data_frequency == 0) and (not redo_timestep):
 #        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
         write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue)
+        if step > 0 and extensionGlobalValue < shutdown_deposition_rate:
+            break
 
     if (step % int(levelset_update_ncell / CFL) == 0):
         if delete_islands:
