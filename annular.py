@@ -8,7 +8,7 @@ from fipy import numerix
 import numpy as np
 import imp
 import sys
-nimport os
+import os
 import tempfile
 from tools import write_data
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
