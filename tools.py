@@ -14,7 +14,7 @@ import numpy as np
 from dicttable import DictTable
 import fipy as fp
 from ipy_table import make_table
-from scipy.optimize import brentq
+
 from scipy.interpolate import interp1d
 import tables
 
@@ -381,6 +381,7 @@ def find_all_zeros(f, x0, x1, N=1000):
     sign = y[1:] * y[:-1]
     mask = sign < 0
     IDs = np.array(np.nonzero(mask)).flatten()
+    from scipy.optimize import brentq
     return np.array([brentq(f, x[ID], x[ID + 1]) for ID in IDs])
 
 class VoidSizeFinder(object):
