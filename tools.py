@@ -15,7 +15,7 @@ from dicttable import DictTable
 import fipy as fp
 from ipy_table import make_table
 
-from scipy.interpolate import interp1d
+
 import tables
 
 
@@ -387,6 +387,8 @@ def find_all_zeros(f, x0, x1, N=1000):
 class VoidSizeFinder(object):
 
     def find_void_size(self, record):
+        from scipy.interpolate import interp1d
+
         datafile = os.path.join(record.datastore.root, record.output_data[0].path)
         h5file = tables.openFile(datafile, mode='r')
         index = h5file.root._v_attrs.latestIndex
