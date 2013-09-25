@@ -351,7 +351,7 @@ def getDepositionRates(record):
     datafile = os.path.join(record.datastore.root, record.output_data[0].path)
     data = DictTable(datafile, 'r')
     latestIndex = data.getLatestIndex()
-    indexJump = 10
+    indexJump = record.parameters['data_frequency']
     index = 0
     elapsedTimes = []
     depositionRates = []

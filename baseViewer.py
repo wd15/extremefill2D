@@ -25,7 +25,7 @@ class _BaseViewer(object):
 
 
 class _BaseSingleViewer(_BaseViewer):
-    def __init__(self, record, ax=None, color='k'):
+    def __init__(self, record, ax=None, color='k', indexJump=10):
         datafile = os.path.join(record.datastore.root, record.output_data[0].path)
         self.record = record
         self.data = DictTable(datafile, 'r')
@@ -43,6 +43,8 @@ class _BaseSingleViewer(_BaseViewer):
         else:
             self.ax = ax
         self.color = color
+        
+        self.indexJump = self.record.parameters['data_frequency']
 
     def flip(self, a, scale, negate=False):
         a = np.reshape(a, self.shape)
@@ -94,12 +96,10 @@ class _BaseSingleViewer(_BaseViewer):
         raise NotImplementedError
 
     def getIndex(self, time, index):
-        indexJump = 10
-
         latestIndex = self.data.getLatestIndex()
 
         while index <= latestIndex and self.data[index, 'elapsedTime'] < time:
-            index += indexJump
+            index += self.indexJump
 
         if index > latestIndex:
             index = int(latestIndex)
