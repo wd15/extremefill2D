@@ -45,6 +45,7 @@ spacing_ratio = params.spacing_ratio
 data_frequency = params.data_frequency
 delete_islands = params.delete_islands
 shutdown_deposition_rate = params.shutdown_deposition_rate
+write_potential = params.write_potential
 
 dtMin = .5e-7
 dt = 0.01
@@ -186,7 +187,10 @@ while (step < totalSteps) and (elapsedTime < totalTime):
 
     if (dataFile is not None) and (step % data_frequency == 0) and (not redo_timestep):
 #        write_data(dataFile, elapsedTime, distance, step, potential, cupric, suppressor, interfaceTheta)
-        write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue)
+        kwargs = dict()
+        if write_potential:
+            kwargs['potential'] = potential
+        write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue, **kwargs)
         if step > 0 and extensionGlobalValue < shutdown_deposition_rate:
             break
 

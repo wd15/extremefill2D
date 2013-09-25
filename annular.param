@@ -21,3 +21,5 @@ spacing_ratio = 1.1
 data_frequency = 10
 shutdown_deposition_rate = 1e-13
 delete_islands = 1
+write_potential = 0
+
