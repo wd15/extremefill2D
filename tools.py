@@ -384,9 +384,11 @@ def find_all_zeros(f, x0, x1, N=1000):
     from scipy.optimize import brentq
     return np.array([brentq(f, x[ID], x[ID + 1]) for ID in IDs])
 
-class VoidSizeFinder(object):
+class FeatureProperty(object):
+    def __init__(self, record):
+        self.record = record
 
-    def find_void_size(self, record):
+    def getVoidSize(self, record):
         from scipy.interpolate import interp1d
 
         datafile = os.path.join(record.datastore.root, record.output_data[0].path)
