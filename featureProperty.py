@@ -83,3 +83,27 @@ class FeatureProperty(object):
             index = self.getLatestIndex()
         data = self.h5file.getNode('/ID' + str(int(index)))
         return float(data.elapsedTime.read())
+
+    def getPotential(self, index=None):
+        if not index:
+            index = self.getLatestIndex()
+        data = self.h5file.getNode('/ID' + str(int(index)))
+
+        mindx = min(data.dx.read())
+        featureDepth = self.record.parameters['featureDepth']
+        distanceBelowTrench = 10 * mindx
+
+        if not hasattr(self, 'mesh'):
+            self.mesh = fp.Grid2D(nx=data.nx.read(), ny=data.ny.read(), dx=data.dx.read(), dy=data.dy.read()) - [[-mindx / 100.], [distanceBelowTrench + featureDepth]]
+        potential = fp.CellVariable(mesh=self.mesh, value=data.potential.read())
+
+        rinner = self.record.parameters['rinner']
+        router = self.record.parameters['router']
+        X = (rinner + router) / 2.
+        Y = 0.0
+        point = ((X,), (Y,))
+        if not hasattr(self, 'nearestCellIDsPotential'):
+            self.nearestCellIDsPotential = self.mesh._getNearestCellID(point)
+        monitorValue = potential(point, order=1, nearestCellIDs=self.nearestCellIDsPotential)
+
+        return float(monitorValue[0])
