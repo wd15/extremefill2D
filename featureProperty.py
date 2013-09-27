@@ -78,3 +78,8 @@ class FeatureProperty(object):
             height = min(height, 1.)
         return height
 
+    def getTime(self, index=None):
+        if not index:
+            index = self.getLatestIndex()
+        data = self.h5file.getNode('/ID' + str(int(index)))
+        return float(data.elapsedTime.read())

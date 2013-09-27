@@ -152,7 +152,7 @@ def markdown_table(records):
 def getSMTRecords(records=None, tags=[], parameters={}, atol=1e-10, rtol=1e-10):
     if records is None:
         project = load_project()
-        records = project.record_store.list(project.name)
+        records = project.record_store.list(project.name, tags=tags)
     records_out = []
     for r in records:
         if set(tags).issubset(set(r.tags)):
