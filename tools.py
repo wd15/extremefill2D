@@ -206,6 +206,8 @@ def smt_ipy_table(records, fields, parameters=[]):
                 s = attr[:12]
             elif field == 'duration':
                 s = human_readable_duration(attr)
+            elif field == 'label':
+                s = attr[:8]
             else:
                 s = str(attr)
             c = cgi.escape(s)
