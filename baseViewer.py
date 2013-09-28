@@ -6,14 +6,14 @@ import fipy as fp
 import matplotlib.pyplot as plt
 import numpy as np
 from dicttable import DictTable
-
+import brewer2mpl
 
 class _BaseViewer(object):
-    def plot(self, indices=[0], filename=None, times=None):
-        self.plotSetup(indices=indices, times=times)
+    def plot(self, indices=[0], filename=None, times=None, cutoff=False):
+        self.plotSetup(indices=indices, times=times, cutoff=cutoff)
         self.plotSave(filename)
 
-    def plotSetup(self, indices=[0]):
+    def plotSetup(self, indices=[0], cutoff=None):
         raise NotImplementedError
 
     def plotSave(self, filename):
@@ -58,7 +58,7 @@ class _BaseSingleViewer(_BaseViewer):
             featureDepth = 56e-6
         return featureDepth
 
-    def plotSetup(self, indices=[0], times=None, maxFeatureDepth=None):
+    def plotSetup(self, indices=[0], times=None, maxFeatureDepth=None, cutoff=None):
         if times is not None:
             indices = []
             index = 0
@@ -86,11 +86,15 @@ class _BaseSingleViewer(_BaseViewer):
         self._plot(y, scale, indices)
 
         xmin, xmax = self.ax.get_xlim()
-        rect = plt.Rectangle((xmin, ymin), xmax - xmin, (-featureDepth * scale - ymin) - delta * 0.05, facecolor='0.8', linewidth=0)
+        xmin += self.x[0] * 1e+6
+
+        #set2 = brewer2mpl.get_map('Set2', 'qualitative', 8).mpl_colors
+        set1 = brewer2mpl.get_map('BuGn', 'sequential', 9).mpl_colors
+        rect = plt.Rectangle((xmin, ymin), xmax - xmin, (-featureDepth * scale - ymin) - delta * 0.05, facecolor=set1[4], linewidth=0)
         self.ax.add_patch(rect)
 
         self.ax.set_ylim(ymin, ymax)
-        self.ax.set_ylabel(r'$y$ ($\micro\metre$)')
+        #self.ax.set_ylabel(r'$y$ ($\micro\metre$)')
 
     def _plot(self, y, scale, indices):
         raise NotImplementedError

@@ -6,6 +6,8 @@ import matplotlib.gridspec as gridspec
 from tools import getSMTRecords
 import numpy as np
 
+axislabelfontsize = 16
+
 class DummyViewer(object):
     def __init__(self, record, ax=None, color='k'):
         self.ax = ax
@@ -24,7 +26,7 @@ class MultiViewer(_BaseViewer):
         if hasattr(records[0], 'label'):
             records = [records]
         recordset = records[0]
-        self.fig = plt.figure(figsize=np.array(figsize) * np.array((len(recordset), len(records))))
+        self.fig = plt.figure(figsize=np.array(figsize) * np.array((len(recordset), len(records))), dpi=200)
         gs = gridspec.GridSpec(len(records), len(recordset))
         self.viewers = []
         if type(baseRecords) not in (list, tuple):
@@ -39,11 +41,11 @@ class MultiViewer(_BaseViewer):
                     v = DummyViewer(record, ax=ax, color='k')
                 self.viewers.append(v)
                 if j == 0 and columntitle:
-                    self.viewers[-1].ax.set_title(columntitle(v.record))
+                    self.viewers[-1].ax.set_title(columntitle(v.record), fontdict={'fontsize' : axislabelfontsize})
                 if baseRecord:
                     self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
-    def plotSetup(self, indices=[0], times=None):
+    def plotSetup(self, indices=[0], times=None, cutoff=None):
         maxFeatureDepth = 0
         for viewer in self.viewers:
             maxFeatureDepth = max(maxFeatureDepth, viewer.getFeatureDepth())
@@ -53,21 +55,36 @@ class MultiViewer(_BaseViewer):
         self.fig.set_size_inches(size)
 
         for i, viewer in enumerate(self.viewers):
-            viewer.plotSetup(indices=indices, times=times, maxFeatureDepth=maxFeatureDepth)
+            viewer.plotSetup(indices=indices, times=times, maxFeatureDepth=maxFeatureDepth, cutoff=cutoff)
             ax = viewer.ax
+            labels = [''] * len(ax.get_yticklabels())
+            ax.set_yticklabels(labels)
             if ax.colNum > 0:
-                labels = [''] * len(ax.get_yticklabels())
-                ax.set_yticklabels(labels)
                 ax.set_ylabel('')
             else:
                 ylabel = ax.get_ylabel()
                 if self.rowtitle:
-                    ylabel += ", " + self.rowtitle(viewer.record)
-                ax.set_ylabel(ylabel)
+                    ylabel += self.rowtitle(viewer.record)
+                ax.set_ylabel(ylabel, fontdict={'fontsize' : axislabelfontsize})
             if ax.colNum != ax.numCols / 2 or ax.rowNum < ax.numRows - 1:
                 ax.set_xlabel('')
                 labels = [''] * len(ax.get_xticklabels())
                 ax.set_xticklabels(labels)
+            ax.set_xticks(())
+            ax.set_yticks(())
+
+            all_spines = ['top', 'bottom', 'right', 'left']
+            for spine in all_spines:
+                ax.spines[spine].set_visible(False)
+
+            plt.text(0.08, 0.01, '$\\texttt{{{0}}}$'.format(viewer.record.label[:8]), fontsize=12, transform=ax.transAxes)
+
+        plt.text(0.45, 0.99, '$k^-$ ($1\per\meter$)', transform=self.fig.transFigure, fontsize=axislabelfontsize)
+        plt.text(0.03, 0.5, '$k^+$ ($\power{\meter}{3}\per\mole\cdot\second$)', transform=self.fig.transFigure, fontsize=axislabelfontsize, rotation='vertical')
+
+        plt.tight_layout(pad=2.0, h_pad=1.0, w_pad=0.0)
+        
+#        plt.subplots_adjust(top=2.0)
 
 def plot1DFigure(figNum):
     import extremefill
