@@ -35,7 +35,7 @@ class SchematicViewer(object):
 
         eqnFont = 9
 
-        fig = pylab.figure(figsize=(8, 6), dpi=800)
+        fig = pylab.figure(figsize=(8, 6), dpi=200)
         ax = fig.add_subplot(111, aspect='equal')
 
 
@@ -72,9 +72,9 @@ class SchematicViewer(object):
                     r'\['
                     r'\begin{split}'
                     r'     & \hspace{-25pt} \text{Boundary Layer} \\'
-                    r'    \partial_z^2 \phi &= 0 \\'
-                    r'    \partial_t C_{\text{Sup}} &= \partial_z^2 C_{\text{Sup}}^{} \\'
-                    r'    \partial_t C_{\text{Cu}} &= \partial_z^2 C_{\text{Cu}}^{}'
+                    r'    \nabla^2 \phi &= 0 \\'
+                    r'    \partial_t C_{\text{Sup}} &= \nabla^2 C_{\text{Sup}}^{} \\'
+                    r'    \partial_t C_{\text{Cu}} &= \nabla^2 C_{\text{Cu}}^{}'
                     r'\end{split}'
                     r'\]', fontsize=eqnFont)
 
