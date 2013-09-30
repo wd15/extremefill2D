@@ -83,8 +83,8 @@ class MultiViewer(_BaseViewer):
             if self.labels:
                 plt.text(0.08, 0.01, '$\\texttt{{{0}}}$'.format(viewer.record.label[:8]), fontsize=12, transform=ax.transAxes)
 
-        plt.text(0.45, 0.99, '$k^-$ ($1\per\meter$)', transform=self.fig.transFigure, fontsize=axislabelfontsize)
-        plt.text(0.03, 0.5, '$k^+$ ($\power{\meter}{3}\per\mole\cdot\second$)', transform=self.fig.transFigure, fontsize=axislabelfontsize, rotation='vertical')
+        plt.text(0.45, 0.99, '$k_-$ ($1\per\meter$)', transform=self.fig.transFigure, fontsize=axislabelfontsize)
+        plt.text(0.03, 0.5, '$k_+$ ($\power{\meter}{3}\per\mole\cdot\second$)', transform=self.fig.transFigure, fontsize=axislabelfontsize, rotation='vertical')
 
         plt.tight_layout(pad=2.0, h_pad=1.0, w_pad=0.0)
         

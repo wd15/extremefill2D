@@ -35,7 +35,7 @@ class SchematicViewer(object):
 
         eqnFont = 9
 
-        fig = pylab.figure(figsize=(8, 6))
+        fig = pylab.figure(figsize=(8, 6), dpi=200)
         ax = fig.add_subplot(111, aspect='equal')
 
 
