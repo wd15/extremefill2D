@@ -65,6 +65,8 @@ class FeatureProperty(object):
             void_size = 0.
         else:
             void_size = max((zeros[1:] - zeros[:-1])[::2]) / featureDepth
+            if void_size > 1:
+                void_size = 1.
 
         return void_size
 
