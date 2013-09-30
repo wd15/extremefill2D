@@ -55,6 +55,9 @@ class MultiViewer(_BaseViewer):
         self.fig.set_size_inches(size)
 
         for i, viewer in enumerate(self.viewers):
+            viewer.mirror = self.mirror
+            viewer.cutoff = self.cutoff
+            viewer.cutoffvalue = self.cutoffvalue
             viewer.plotSetup(indices=indices, times=times, maxFeatureDepth=maxFeatureDepth, cutoff=cutoff)
             ax = viewer.ax
             labels = [''] * len(ax.get_yticklabels())
@@ -77,7 +80,8 @@ class MultiViewer(_BaseViewer):
             for spine in all_spines:
                 ax.spines[spine].set_visible(False)
 
-            plt.text(0.08, 0.01, '$\\texttt{{{0}}}$'.format(viewer.record.label[:8]), fontsize=12, transform=ax.transAxes)
+            if self.labels:
+                plt.text(0.08, 0.01, '$\\texttt{{{0}}}$'.format(viewer.record.label[:8]), fontsize=12, transform=ax.transAxes)
 
         plt.text(0.45, 0.99, '$k^-$ ($1\per\meter$)', transform=self.fig.transFigure, fontsize=axislabelfontsize)
         plt.text(0.03, 0.5, '$k^+$ ($\power{\meter}{3}\per\mole\cdot\second$)', transform=self.fig.transFigure, fontsize=axislabelfontsize, rotation='vertical')

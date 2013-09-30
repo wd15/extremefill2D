@@ -9,7 +9,11 @@ from dicttable import DictTable
 import brewer2mpl
 
 class _BaseViewer(object):
-    def plot(self, indices=[0], filename=None, times=None, cutoff=False):
+    def plot(self, indices=[0], filename=None, times=None, cutoffvalue=-1, mirror=False, cutoff=True, labels=False):
+        self.mirror = mirror
+        self.cutoff = cutoff
+        self.cutoffvalue = cutoffvalue
+        self.labels = labels
         self.plotSetup(indices=indices, times=times, cutoff=cutoff)
         self.plotSave(filename)
 
@@ -25,7 +29,7 @@ class _BaseViewer(object):
 
 
 class _BaseSingleViewer(_BaseViewer):
-    def __init__(self, record, ax=None, color='k', indexJump=10):
+    def __init__(self, record, ax=None, color='k', indexJump=10, mirror=False):
         datafile = os.path.join(record.datastore.root, record.output_data[0].path)
         self.record = record
         self.data = DictTable(datafile, 'r')
@@ -43,8 +47,10 @@ class _BaseSingleViewer(_BaseViewer):
         else:
             self.ax = ax
         self.color = color
-        
+        self.mirror = mirror
+
         self.indexJump = self.record.parameters['data_frequency']
+
 
     def flip(self, a, scale, negate=False):
         a = np.reshape(a, self.shape)

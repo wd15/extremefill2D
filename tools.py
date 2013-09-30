@@ -150,7 +150,7 @@ def markdown_table(records):
     return out
 
 def getSMTRecords(records=None, tags=[], parameters={}, atol=1e-10, rtol=1e-10):
-    if records is None:
+    if not records:
         project = load_project()
         records = project.record_store.list(project.name, tags=tags)
     records_out = []
