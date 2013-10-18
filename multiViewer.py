@@ -13,7 +13,7 @@ class DummyViewer(object):
         self.ax = ax
         self.record = record
 
-    def plotSetup(self, indices=None, times=None, maxFeatureDepth=None):
+    def plotSetup(self, indices=None, times=None, maxFeatureDepth=None, cutoff=False):
         pass
 
     def getFeatureDepth(self):
