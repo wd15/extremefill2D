@@ -32,7 +32,7 @@ class ContourViewer(_BaseSingleViewer):
 
             cc = self.ax.contour(x, y, phi, (0,), colors=(Greys[7],), linewidths=(1.5,))
             h = min(cc.collections[0].get_paths()[0].vertices[:,1])
-            print 
+
             if self.cutoff and h > self.cutoffvalue:
                 break
 
