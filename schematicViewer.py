@@ -14,11 +14,7 @@ class SchematicViewer(object):
     def __init__(self, datafile=None):
         pass
 
-    def plot(self, filesuffix=('.png',)):
-
-
-        
-
+    def plot(self, filename=None):
         scale = 1e6
         simulation = Simulation()
         simulation.run(totalSteps=0)
@@ -73,8 +69,8 @@ class SchematicViewer(object):
                     r'\begin{split}'
                     r'     & \hspace{-25pt} \text{Boundary Layer} \\'
                     r'    \nabla^2 \phi &= 0 \\'
-                    r'    \partial_t C_{\text{Sup}} &= \nabla^2 C_{\text{Sup}}^{} \\'
-                    r'    \partial_t C_{\text{Cu}} &= \nabla^2 C_{\text{Cu}}^{}'
+                    r'    \partial_t C_{\text{Sup}} &= D_{\text{Sup}} \nabla^2 C_{\text{Sup}}^{} \\'
+                    r'    \partial_t C_{\text{Cu}} &= D_{\text{Cu}} \nabla^2 C_{\text{Cu}}^{}'
                     r'\end{split}'
                     r'\]', fontsize=eqnFont)
 
@@ -171,8 +167,8 @@ class SchematicViewer(object):
         ax.plot((x1 - ls / 2, x1 + ls / 2), (breakX - hX / 2 + diag / 2, breakX - hX / 2 - diag / 2), 'k', clip_on=False, zorder=101)
         ax.plot((x1 - ls / 2, x1 + ls / 2), (breakX + hX / 2 + diag / 2, breakX + hX / 2 - diag / 2), 'k', clip_on=False, zorder=101)
 
-        for fs in filesuffix:
-            pylab.savefig('figure2.png', dpi=200)
+        if filename:
+            pylab.savefig(filename, dpi=200)
 
 if __name__ == '__main__':
     SchematicViewer().plot()
