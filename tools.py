@@ -434,8 +434,6 @@ class FeatureProperty(object):
 
         return void_size, height
 
-import numpy
-
 def smooth(x,window_len=11,window='hanning'):
     """smooth the data using a window with requested size.
     
@@ -483,12 +481,45 @@ def smooth(x,window_len=11,window='hanning'):
         raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
 
-    s=numpy.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
+    s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
     #print(len(s))
     if window == 'flat': #moving average
-        w=numpy.ones(window_len,'d')
+        w=np.ones(window_len,'d')
     else:
-        w=eval('numpy.'+window+'(window_len)')
+        w=eval('np.'+window+'(window_len)')
 
-    y=numpy.convolve(w/w.sum(),s,mode='valid')
+    y=np.convolve(w/w.sum(),s,mode='valid')
     return y
+
+
+
+def refine_contour_plot(points, values):
+    """
+
+    Take a set of `points` and `values` used to plot a contour plot and returns new points to calculate in order of how the value difference between connecting points is reduced.
+
+    >>> refine_contour_plot([[0, 0], [1, 0], [0, 1]], [0., 1., 10.])
+    [[0., 0.5], [0.5, 0.5], [0.5, 0.]]
+
+    :Parameters:
+      - `points`: Set of (x, y) points.
+      - `values`: Values at the points
+
+    :Returns:
+
+      - `new_points`: set of points to recalculate and improve the contour plot
+
+    """
+    from scipy.spatial import Delaunay
+    tri = Delaunay(points)  
+    indices, indptr = tri.vertex_neighbor_vertices
+    edges = []
+    for i in xrange(len(points)):
+        for j in indptr[indices[i]:indices[i + 1]]:
+            if j > i:
+                edges.append([i, j])
+    edges = np.array(edges)
+    vertexValues = np.array(values)[edges]
+    edgeValue = abs(vertexValues[:,0] - vertexValues[:,1])
+    
+    return ((tri.points[edges[:,0],:] + tri.points[edges[:,1],:]) / 2)[np.argsort(edgeValue)][::-1]
