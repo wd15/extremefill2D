@@ -23,9 +23,13 @@ class ContourViewer(_BaseSingleViewer):
 
         Greys = brewer2mpl.get_map('Greys', 'sequential', 9).mpl_colors
 
+        self.elapsedTimes = [0.]
+
         for index in indices[1:]:
             phi = self.data[index]['distance']
             phi = self.flip(phi, scale)
+            
+            self.elapsedTimes.append(self.data[index, 'elapsedTime'])
 
             if self.mirror:
                 phi = np.concatenate((phi[::-1], phi))

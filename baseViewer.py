@@ -9,11 +9,12 @@ from dicttable import DictTable
 import brewer2mpl
 
 class _BaseViewer(object):
-    def plot(self, indices=[0], filename=None, times=None, cutoffvalue=-1, mirror=False, cutoff=True, labels=False):
+    def plot(self, indices=[0], filename=None, times=None, cutoffvalue=-1, mirror=False, cutoff=True, labels=False, show=True):
         self.mirror = mirror
         self.cutoff = cutoff
         self.cutoffvalue = cutoffvalue
         self.labels = labels
+        self.show = show
         self.plotSetup(indices=indices, times=times, cutoff=cutoff)
         self.plotSave(filename)
 
@@ -23,7 +24,7 @@ class _BaseViewer(object):
     def plotSave(self, filename):
         if filename:
             plt.savefig(filename)
-        else:
+        elif self.show:
             plt.show()
 
 
@@ -96,8 +97,9 @@ class _BaseSingleViewer(_BaseViewer):
 
         #set2 = brewer2mpl.get_map('Set2', 'qualitative', 8).mpl_colors
         set1 = brewer2mpl.get_map('BuGn', 'sequential', 9).mpl_colors
-        rect = plt.Rectangle((xmin, ymin), xmax - xmin, (-featureDepth * scale - ymin) - delta * 0.05, facecolor=set1[4], linewidth=0)
-        self.ax.add_patch(rect)
+        if not self.mirror:
+            rect = plt.Rectangle((xmin, ymin), xmax - xmin, (-featureDepth * scale - ymin) - delta * 0.05, facecolor=set1[4], linewidth=0)
+            self.ax.add_patch(rect)
 
         self.ax.set_ylim(ymin, ymax)
         #self.ax.set_ylabel(r'$y$ ($\micro\metre$)')
