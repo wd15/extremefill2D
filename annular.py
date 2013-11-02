@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+n
 __docformat__ = 'restructuredtext'
 
 import tables
@@ -46,6 +46,8 @@ data_frequency = params.data_frequency
 delete_islands = params.delete_islands
 shutdown_deposition_rate = params.shutdown_deposition_rate
 write_potential = params.write_potential
+write_theta = params.write_theta
+write_suppressor = params.write_suppressor
 
 dtMin = .5e-7
 dt = 0.01
@@ -190,6 +192,10 @@ while (step < totalSteps) and (elapsedTime < totalTime):
         kwargs = dict()
         if write_potential:
             kwargs['potential'] = potential
+        if write_theta:
+            kwargs['interfaceTheta'] = interfaceTheta
+        if write_suppressor:
+            kwargs['suppressor'] = suppressor
         write_data(dataFile, elapsedTime, distance, step, extensionGlobalValue=extensionGlobalValue, **kwargs)
         if step > 0 and extensionGlobalValue < shutdown_deposition_rate:
             break

@@ -22,4 +22,5 @@ data_frequency = 10
 shutdown_deposition_rate = 1e-13
 delete_islands = 1
 write_potential = 0
-
+write_theta = 0
+write_suppressor = 0
