@@ -36,19 +36,19 @@ class SchematicViewer(object):
 
 
         ax.add_patch(pylab.Rectangle((-w / 2, -h), w, h, alpha=0.2, color='black', ec='none', zorder=1))
-        ax.add_patch(pylab.Rectangle((-r / 2, 0), r, d, alpha=0.2, color='black', ec='none', zorder=1))
-        ax.add_patch(pylab.Rectangle((-r / 2, d), r, L - d, alpha=0.1, color='black', ec='none', zorder=1))
+        ax.add_patch(pylab.Rectangle((-r / 2, 0), r + r / 3, d, alpha=0.2, color='black', ec='none', zorder=1))
+        ax.add_patch(pylab.Rectangle((-r / 2, d), r + r / 3, L - d, alpha=0.1, color='black', ec='none', zorder=1))
 
-        pylab.plot((-r / 2, -w / 2, -w / 2, w / 2, w / 2, r / 2),
+        pylab.plot((-r / 2, -w / 2, -w / 2, w / 2, w / 2, r / 2 + r / 3),
                    (0, 0, -h, -h, 0, 0), 'k', lw=3, alpha=0.5)
 
         pylab.plot((-r / 2, -r / 2),
                    (d, 0), 'k--', lw=3, alpha=0.5)
 
-        pylab.plot((r / 2, r / 2),
+        pylab.plot((r / 2 + r / 3, r / 2 + r / 3),
                    (d, 0), 'k--', lw=3, alpha=0.5)
 
-        pylab.plot((-r / 2, r / 2),
+        pylab.plot((-r / 2, r / 2 + r / 3),
                    (L, L), 'k', lw=3, alpha=0.5)
 
 
@@ -142,7 +142,7 @@ class SchematicViewer(object):
 
         asy = 0 + d * 0.1
         
-        ax.add_patch(FancyArrowPatch((-asw / 2, asy),(asw / 2, asy), arrowstyle='<->',mutation_scale=15, lw=1))
+        ax.add_patch(FancyArrowPatch((-asw / 2, asy),(asw / 2 + r / 3, asy), arrowstyle='<->',mutation_scale=15, lw=1))
         pylab.text(-2, asy + 2, r'$R_{\text{Cell}}$', fontsize=eqnFont)
 
         caseYY = caseY + 16
