@@ -81,7 +81,7 @@ class FeatureProperty(object):
         return height
 
     def getTime(self, index=None):
-        if not index:
+        if index is None:
             index = self.getLatestIndex()
         data = self.h5file.getNode('/ID' + str(int(index)))
         return float(data.elapsedTime.read())
@@ -109,3 +109,27 @@ class FeatureProperty(object):
         monitorValue = potential(point, order=1, nearestCellIDs=self.nearestCellIDsPotential)
 
         return float(monitorValue[0])
+
+    def getTheta(self, index=None):
+        if not index:
+            index = self.getLatestIndex()
+        data = self.h5file.getNode('/ID' + str(int(index)))
+
+        mindx = min(data.dx.read())
+        featureDepth = self.record.parameters['featureDepth']
+        distanceBelowTrench = 10 * mindx
+
+        if not hasattr(self, 'mesh'):
+            self.mesh = fp.Grid2D(nx=data.nx.read(), ny=data.ny.read(), dx=data.dx.read(), dy=data.dy.read()) - [[-mindx / 100.], [distanceBelowTrench + featureDepth]]
+        theta = fp.CellVariable(mesh=self.mesh, value=data.interfaceTheta.read())
+
+        rinner = self.record.parameters['rinner']
+        router = self.record.parameters['router']
+        N = 1000
+        X = np.ones(N) * (rinner + router) / 2.
+        Y = np.linspace(-distanceBelowTrench - featureDepth, featureDepth / 5., N)
+        points = (X, Y)
+        if not hasattr(self, 'nearestCellIDsTheta'):
+            self.nearestCellIDsTheta = self.mesh._getNearestCellID(points)
+        values = theta(points, order=0, nearestCellIDs=self.nearestCellIDsTheta)
+        return float(max(values))
