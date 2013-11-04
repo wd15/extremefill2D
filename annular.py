@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-n
+
 __docformat__ = 'restructuredtext'
 
 import tables
