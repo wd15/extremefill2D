@@ -6,8 +6,6 @@ import matplotlib.gridspec as gridspec
 from tools import getSMTRecords
 import numpy as np
 
-axislabelfontsize = 16
-
 class DummyViewer(object):
     def __init__(self, record, ax=None, color='k'):
         self.ax = ax
@@ -20,8 +18,9 @@ class DummyViewer(object):
         return 56e-6
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecords=None, rowtitle=None, columntitle=None, figsize=(1.5, 6), xlabel='', ylabel=''):
-
+    def __init__(self, records, baseRecords=None, rowtitle=None, columntitle=None, figsize=(1.5, 6), xlabel='', ylabel='', axislabelfontsize=16):
+        
+        self.axislabelfontsize = axislabelfontsize
         self.rowtitle = rowtitle
         self.xlabel = xlabel
         self.ylabel = ylabel
@@ -43,7 +42,7 @@ class MultiViewer(_BaseViewer):
                     v = DummyViewer(record, ax=ax, color='k')
                 self.viewers.append(v)
                 if j == 0 and columntitle:
-                    self.viewers[-1].ax.set_title(columntitle(v.record), fontdict={'fontsize' : axislabelfontsize})
+                    self.viewers[-1].ax.set_title(columntitle(v.record), fontdict={'fontsize' : self.axislabelfontsize})
                 if baseRecord:
                     self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
@@ -70,7 +69,7 @@ class MultiViewer(_BaseViewer):
                 ylabel = ax.get_ylabel()
                 if self.rowtitle:
                     ylabel += self.rowtitle(viewer.record)
-                ax.set_ylabel(ylabel, fontdict={'fontsize' : axislabelfontsize})
+                ax.set_ylabel(ylabel, fontdict={'fontsize' : self.axislabelfontsize})
             if ax.colNum != ax.numCols / 2 or ax.rowNum < ax.numRows - 1:
                 ax.set_xlabel('')
                 labels = [''] * len(ax.get_xticklabels())
@@ -85,10 +84,10 @@ class MultiViewer(_BaseViewer):
             if self.labels:
                 plt.text(0.08, 0.01, '$\\texttt{{{0}}}$'.format(viewer.record.label[:8]), fontsize=12, transform=ax.transAxes)
 
-        plt.text(0.45, 0.99, self.xlabel, transform=self.fig.transFigure, fontsize=axislabelfontsize)
-        plt.text(0.03, 0.5, self.ylabel, transform=self.fig.transFigure, fontsize=axislabelfontsize, rotation='vertical')
+        plt.text(0.45, 0.982, self.xlabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize)
+        plt.text(0.03, 0.5, self.ylabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize, rotation='vertical')
 
-        plt.tight_layout(pad=2.0, h_pad=1.0, w_pad=0.0)
+        plt.tight_layout(pad=3.0, h_pad=1.0, w_pad=0.0)
         
 #        plt.subplots_adjust(top=2.0)
 
