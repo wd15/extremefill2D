@@ -84,7 +84,7 @@ class MultiViewer(_BaseViewer):
             if self.labels:
                 plt.text(0.08, 0.01, '$\\texttt{{{0}}}$'.format(viewer.record.label[:8]), fontsize=12, transform=ax.transAxes)
 
-        plt.text(0.45, 0.982, self.xlabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize)
+        plt.text(0.38, 0.982, self.xlabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize)
         plt.text(0.03, 0.5, self.ylabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize, rotation='vertical')
 
         plt.tight_layout(pad=3.0, h_pad=1.0, w_pad=0.0)
