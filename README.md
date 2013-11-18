@@ -8,14 +8,15 @@ simulations for the Extreme Fill 2D model described in a
 the JES. A
 [recent blog post](http://wd15.github.io/2013/05/07/extremefill2d/)
 shows a movie from a simulation as well as a description of Extreme
-Fill.
+Fill. The repository also aims to make the images in the paper
+reproducible.
 
 ## Sumatra
 
-The simulation data used to produce the images was generated using the
-Sumatra simulation management tool. The goal is to make the simulation
-data and the simulation records available publicly. However, at the
-time of writing the data is currently not public.
+The simulation data used to produce the images is generated using the
+[Sumatra](http://pythonhosted.org/Sumatra/) simulation management
+tool. The goal is to make the simulation data and the simulation
+records available publicly.
 
 ## Paper
 
@@ -34,10 +35,9 @@ The repository is licensed with the FreeBSD License, see
 ## Requirements
 
 The [REQUIREMENTS.txt](REQUIREMENTS.txt) file has a complete list of
-packages in the Python environment during development. The most
-important of these are listed. The version numbers are mostly not
-important within reason, but if you have problems the version numbers
-may help.
+packages active in the Python environment during development. The most
+important of these are listed below. The version numbers should not be
+important, but if you have problems the version numbers may help.
 
  * FiPy dev version `6e897df400`
  * IPython dev version `b31eb2f2d9`
@@ -46,11 +46,11 @@ may help.
  * Pandas 0.12.0
  * Scipy 0.13.0
  * Tables 2.4.0
- * Cython==0.19.1
+ * Cython 0.19.1
  * Sumatra dev version `3c00d7ccfb`
  * Brewer2mpl 1.3.1
  * Prettyplotlib 0.1.3
- * Pylsmlib==0.1
+ * Pylsmlib 0.1
  * Scikit-fmm dev version `78a243dd9d`
  
 ## Citing the Notebooks and Images
