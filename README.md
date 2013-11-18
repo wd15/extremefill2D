@@ -4,7 +4,7 @@
 
 This repository contains all the code necessary to reproduce the
 simulations for the Extreme Fill 2D model described in a
-[paper][#paper] by Wheeler, Moffat and Josell recently submitted to
+[paper](#paper) by Wheeler, Moffat and Josell recently submitted to
 the JES. A
 [recent blog post](http://wd15.github.io/2013/05/07/extremefill2d/)
 shows a movie from a simulation as well as a description of Extreme
