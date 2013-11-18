@@ -149,9 +149,9 @@ def markdown_table(records):
     out = '|' + out[1:-1] + '|'
     return out
 
-def getSMTRecords(records=None, tags=[], parameters={}, atol=1e-10, rtol=1e-10):
+def getSMTRecords(records=None, tags=[], parameters={}, atol=1e-10, rtol=1e-10, path='./'):
     if not records:
-        project = load_project()
+        project = load_project(path)
         records = project.record_store.list(project.name, tags=tags)
     records_out = []
     for r in records:
