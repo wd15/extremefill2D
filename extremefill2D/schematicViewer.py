@@ -1,7 +1,6 @@
 import pylab
 
 from matplotlib.patches import FancyArrowPatch
-from extremefill.simulation import Simulation
 
 # from matplotlib import rc
 # matplotlib.use('Agg')
@@ -16,13 +15,15 @@ class SchematicViewer(object):
 
     def plot(self, filename=None):
         scale = 1e6
-        simulation = Simulation()
-        simulation.run(totalSteps=0)
-        parameters = simulation.parameters
-        d = parameters['delta'] * scale * 0.5
-        r = parameters['fieldWidth'] * scale * 1.1
-        h = parameters['featureDepth'] * scale
-        w = parameters['trenchWidth'] * scale * 2
+        delta = 150e-6
+        perimeterRatio=1. / 2.8e-6 * 0.093
+        fieldWidth = 2 / perimeterRatio
+        featureDepth = 56e-6
+        trenchWidth = 2 * 0.093 / perimeterRatio
+        d = delta * scale * 0.5
+        r = fieldWidth * scale * 1.1
+        h = featureDepth * scale
+        w = trenchWidth * scale * 2
         L = d + 0.00002 * scale * 2
         y1 = L + 0.00001 * scale
         x0 = -0.00004 * scale
