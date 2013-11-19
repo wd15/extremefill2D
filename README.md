@@ -5,18 +5,19 @@
 This repository contains all the code necessary to reproduce the
 simulations for the Extreme Fill 2D model described in a
 [paper](#paper) by Wheeler, Moffat and Josell recently submitted to
-the JES. A
+the JES. For further details on Extreme Fill see this
 [recent blog post](http://wd15.github.io/2013/05/07/extremefill2d/)
-shows a movie from a simulation as well as a description of Extreme
-Fill. The repository also aims to make the images in the paper
-reproducible.
+and read the [paper](#paper). The repository aims to make both the
+simulations and the images entirely reproducible.
 
 ## Sumatra
 
-The simulation data used to produce the images is generated using the
-[Sumatra](http://pythonhosted.org/Sumatra/) simulation management
-tool. The goal is to make the simulation data and the simulation
-records available publicly.
+The simulations used to produce the images in the paper were managed
+using the [Sumatra](http://pythonhosted.org/Sumatra/) simulation
+management tool. Sumatra has a web server for displaying the
+simulation records. Using this server, the plan is to have a publicly
+available database of simulation meta-data records as well as publicly
+available simulation data files.
 
 ## Paper
 
@@ -53,15 +54,15 @@ important, but if you have problems the version numbers may help.
  * Pylsmlib 0.1
  * Scikit-fmm dev version `78a243dd9d`
  
-## Citing the Notebooks and Images
+## Citing the Notebooks and Figures
 
-The plan is to either add a citable DOI for the entire project or for
-each individual notebook via Figshare.
+The plan is to either add a citable DOI for each individual notebook
+using Figshare.
 
 ## AMI
 
-An Amazon Machine Image of the software to reproduce the simulations
-and build the figures will be launched soon.
+An Amazon Machine Image of the entire stack to reproduce the images
+and simulations will be launched soon.
 
 ## Authors
 
