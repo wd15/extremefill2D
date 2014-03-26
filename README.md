@@ -1,32 +1,11 @@
-# Extreme Fill 2D
+# Tokyo Electron Work
 
 ## Overview
 
-This repository contains all the code necessary to reproduce the
-simulations for the Extreme Fill 2D model described in a
-[paper](#paper) by Wheeler, Moffat and Josell recently submitted to
-the JES. For further details on Extreme Fill see this
-[recent blog post](http://wd15.github.io/2013/05/07/extremefill2d/)
-and read the [paper](#paper). The repository aims to make both the
-simulations and the images entirely reproducible.
-
-## Sumatra
-
-The simulations used to produce the images in the paper were managed
-using the [Sumatra](http://pythonhosted.org/Sumatra/) simulation
-management tool. Sumatra has a web server for displaying the
-simulation records. Using this server, the plan is to have a publicly
-available database of simulation meta-data records as well as publicly
-available simulation data files.
-
-## Paper
-
-Temporal and Spatial Modeling of Extreme Bottom-Up Filling of Through
-Silicon Vias, D. Wheeler, T. P. Moffat and D. Josell, submitted to the
-Journal of the Electrochemical Society (2013).
-
-Unfortunately, I was unable the upload the paper to a preprint service
-due to issues with the Journal.
+This repository began life from the
+[extremefill2D](https://github.com/wd15/extremefill2D) repository. The
+aim of this work is to implement the Extreme Fill model with constant
+current as opposed to constant potential.
 
 ## License
 
