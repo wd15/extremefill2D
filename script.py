@@ -10,11 +10,13 @@ import imp
 import sys
 import os
 import tempfile
-from tools import write_data
+from telcom.tools import write_data
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import shutil
-from tools import get_nonuniform_dx
-from tools import DistanceVariableNonUniform as DVNU
+from telcom.tools import get_nonuniform_dx
+from telcom.tools import DistanceVariableNonUniform as DVNU
+import fipy.solvers.trilinos as trilinos
+
 
 filename = sys.argv[1]
 filenamec = filename + 'c'
@@ -211,7 +213,7 @@ while (step < totalSteps) and (elapsedTime < totalTime):
     dt.setValue(min((float(dt), dtMax)))
     dt.setValue(max((float(dt), dtMin)))
 
-    advectionEq.solve(distance, dt=dt)
+    advectionEq.solve(distance, dt=dt, solver=trilinos.LinearLUSolver())
 
     for sweep in range(sweeps):
         potentialRes = potentialEq.sweep(potential, dt=dt, solver=potentialSolver)

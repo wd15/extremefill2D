@@ -6,14 +6,12 @@ import json
 
 
 from sumatra.projects import load_project
-from texttable import Texttable
 from sumatra.formatting import HTMLFormatter
 from sumatra.formatting import fields
 from IPython.core.display import HTML
 import numpy as np
 from dicttable import DictTable
 import fipy as fp
-from ipy_table import make_table
 
 
 import tables
@@ -137,6 +135,7 @@ class CustomHTMLFormatter(HTMLFormatter):
 
 
 def markdown_table(records):
+    from texttable import Texttable
     fields = ['label', 'timestamp', 'reason', 'duration']
     table = Texttable()
     table.set_cols_dtype(['t'] * len(fields))
@@ -182,6 +181,7 @@ def getData(tags, parameters):
     return os.path.join(record.datastore.root, record.output_data[0].path)
 
 def smt_ipy_table(records, fields, parameters=[]):
+    from ipy_table import make_table
     table = [[field.title() for field in fields]]
     for record in records:
         record_list = []
