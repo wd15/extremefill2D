@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+"""
+Usage: script.py [<jsonfile>]
+"""
 
 __docformat__ = 'restructuredtext'
 
+from docopt import docopt
+import json
 import tables
 import fipy as fp
 from fipy import numerix
@@ -17,12 +22,14 @@ from telcom.tools import get_nonuniform_dx
 from telcom.tools import DistanceVariableNonUniform as DVNU
 import fipy.solvers.trilinos as trilinos
 
+arguments = docopt(__doc__, version='Run script.py')
+jsonfile = arguments['<jsonfile>']
 
-filename = sys.argv[1]
-filenamec = filename + 'c'
-params = imp.load_source('params', filename)
-if os.path.exists(filenamec):
-    os.remove(filenamec)
+with open(jsonfile, 'rb') as ff:
+    params_dict = json.load(ff)
+
+from collections import namedtuple
+params = namedtuple('ParamsClass', params_dict.keys())(*params_dict.values())
 
 totalSteps = params.totalSteps
 sweeps = params.sweeps
