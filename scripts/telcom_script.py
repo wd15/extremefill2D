@@ -14,11 +14,11 @@ from fipy import numerix
 import numpy as np
 import os
 import tempfile
-from telcom.tools import write_data
+from extremefill2D.tools import write_data
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import shutil
-from telcom.tools import get_nonuniform_dx
-from telcom.tools import DistanceVariableNonUniform as DVNU
+from extremefill2D.tools import get_nonuniform_dx
+from extremefill2D.tools import DistanceVariableNonUniform as DVNU
 import fipy.solvers.trilinos as trilinos
 
 arguments = docopt(__doc__, version='Run script.py')
