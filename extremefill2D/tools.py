@@ -12,7 +12,7 @@ from IPython.core.display import HTML
 import numpy as np
 from dicttable import DictTable
 import fipy as fp
-
+from collections import namedtuple
 
 import tables
 
@@ -523,3 +523,34 @@ def refine_contour_plot(points, values):
     edgeValue = abs(vertexValues[:,0] - vertexValues[:,1])
     
     return ((tri.points[edges[:,0],:] + tri.points[edges[:,1],:]) / 2)[np.argsort(edgeValue)][::-1]
+
+class Parameters(object):
+    def __init__(self, jsonfile):
+        with open(jsonfile, 'rb') as ff:
+            params_dict = json.load(ff)
+        for k, v in params_dict.iteritems():
+            setattr(self, k, v)
+
+class MeshBuilder(object):
+    def __init__(self, params):
+        
+        dy = params.featureDepth / params.Nx
+        dx = dy
+        distanceBelowTrench = 10 * dx
+        padding = 3 * dx
+
+        dx_nonuniform = get_nonuniform_dx(dx, params.rinner,
+                                          params.router,
+                                          params.rboundary, padding,
+                                          params.spacing_ratio)
+        
+        dy_nonuniform = get_nonuniform_dx(dy, distanceBelowTrench,
+                                          distanceBelowTrench + params.featureDepth,
+                                          distanceBelowTrench + params.featureDepth + params.delta,
+                                          padding,
+                                          params.spacing_ratio)
+
+        self.mesh = fp.CylindricalGrid2D(dx=dx_nonuniform, dy=dy_nonuniform) - [[-dx / 100.], [distanceBelowTrench + params.featureDepth]]
+        self.dx = dx
+        
+        

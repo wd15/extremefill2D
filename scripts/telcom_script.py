@@ -6,9 +6,10 @@ Usage: script.py [<jsonfile>]
 
 __docformat__ = 'restructuredtext'
 
-from docopt import docopt
-import json
 import tables
+
+from docopt import docopt
+from extremefill2D.tools import Parameters
 import fipy as fp
 from fipy import numerix
 import numpy as np
@@ -17,37 +18,28 @@ import tempfile
 from extremefill2D.tools import write_data
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import shutil
-from extremefill2D.tools import get_nonuniform_dx
 from extremefill2D.tools import DistanceVariableNonUniform as DVNU
 import fipy.solvers.trilinos as trilinos
+from extremefill2D.tools import MeshBuilder
 
 arguments = docopt(__doc__, version='Run script.py')
-print arguments
 jsonfile = arguments['<jsonfile>']
-
 if not jsonfile:
+    
     jsonfile = 'telcom_script_test.json'
-
-with open(jsonfile, 'rb') as ff:
-    params_dict = json.load(ff)
-
-from collections import namedtuple
-params = namedtuple('ParamsClass', params_dict.keys())(*params_dict.values())
+params = Parameters(jsonfile)
 
 appliedPotential = params.appliedPotential
 CFL = params.CFL
-
-
 kPlus = params.kPlus
 featureDepth = params.featureDepth
 bulkSuppressor = params.bulkSuppressor
-rinner = params.rinner
-router = params.router
-spacing_ratio = params.spacing_ratio
+
+params.delta = 150e-6
+
 
 dtMin = .5e-7
 dt = 0.01
-delta = 150e-6
 i1 = -40.
 i0 = 40.
 diffusionCupric = 2.65e-10
@@ -69,18 +61,9 @@ step = 0
 
 Fbar = faradaysConstant / gasConstant / temperature
 
-dy = featureDepth / params.Nx
-dx = dy
-distanceBelowTrench = 10 * dx
-padding = 3 * dx
+meshBuilder = MeshBuilder(params)
+mesh = meshBuilder.mesh
 
-dx_nonuniform = get_nonuniform_dx(dx, rinner, router, params.rboundary, padding, spacing_ratio)
-dy_nonuniform = get_nonuniform_dx(dy, distanceBelowTrench,
-                                  distanceBelowTrench + featureDepth,
-                                  distanceBelowTrench + featureDepth + delta, padding, spacing_ratio)
-
-mesh = fp.CylindricalGrid2D(dx=dx_nonuniform, dy=dy_nonuniform) - [[-dx / 100.], [distanceBelowTrench + featureDepth]]
-print 'number of cells:',mesh.numberOfCells
 dt = fp.Variable(dt)
 
 potential = fp.CellVariable(mesh=mesh, hasOld=True, name=r'$\psi$')
@@ -96,9 +79,8 @@ suppressor.constrain(bulkSuppressor, mesh.facesTop)
 
 distance = DVNU(mesh=mesh, value=1.)
 distance.setValue(-1., where=mesh.y < -featureDepth)
-distance.setValue(-1., where=(mesh.y < 0) & (mesh.x < rinner))        
-distance.setValue(-1., where=(mesh.y < 0) & (mesh.x > router))
-
+distance.setValue(-1., where=(mesh.y < 0) & (mesh.x < params.rinner))        
+distance.setValue(-1., where=(mesh.y < 0) & (mesh.x > params.router))
 
 distance.calcDistanceFunction(order=1)
 
@@ -125,7 +107,7 @@ currentDerivative = cbar * I0 * (alpha * Fbar *  numerix.exp(alpha * Fbar * pote
 upper = fp.CellVariable(mesh=mesh)
 ID = mesh._getNearestCellID(mesh.faceCenters[:,mesh.facesTop.value])
 
-upper[ID] = kappa / mesh.dy[-1] / (params.deltaRef - delta + mesh.dy[-1])
+upper[ID] = kappa / mesh.dy[-1] / (params.deltaRef - params.delta + mesh.dy[-1])
 
 surface = distance.cellInterfaceAreas / distance.mesh.cellVolumes
 area = 1.
@@ -201,7 +183,7 @@ while (step < params.totalSteps) and (elapsedTime < params.totalTime):
 
     extensionGlobalValue = extend(depositionRate, extend, distance)
 
-    dt.setValue(min(float(CFL * dx / extensionGlobalValue), float(dt) * 1.1))
+    dt.setValue(min(float(CFL * meshBuilder.dx / extensionGlobalValue), float(dt) * 1.1))
     dt.setValue(min((float(dt), params.dtMax)))
     dt.setValue(max((float(dt), dtMin)))
 
@@ -212,7 +194,7 @@ while (step < params.totalSteps) and (elapsedTime < params.totalTime):
         print 'sweep: {0}, res: {1}'.format(sweep, res)
 
     extensionGlobalValue = extend(depositionRate, extend, distance)
-    if float(dt) > (CFL * dx / extensionGlobalValue * 1.1):
+    if float(dt) > (CFL * meshBuilder.dx / extensionGlobalValue * 1.1):
         dt.setValue(float(dt) * 0.1)
         print 'redo time step'
         print 'new dt',float(dt)
