@@ -7,7 +7,6 @@ Usage: script.py [<jsonfile>]
 __docformat__ = 'restructuredtext'
 
 import os
-import tempfile
 import shutil
 from collections import namedtuple
 import json
@@ -15,9 +14,7 @@ import json
 
 import tables
 from docopt import docopt
-import fipy as fp
-
-from extremefill2D.tools import build_mesh, write_data
+from extremefill2D.tools import build_mesh
 from extremefill2D.variables import Variables
 from extremefill2D.equations import Equations
 
@@ -42,30 +39,18 @@ equations = Equations(params, variables)
 
 ## other stuff
 extensionGlobalValue = max(variables.extension.globalValue)
+
+## timestep and sweep
 redo_timestep = False
-
-vars_ = [variables.potential, variables.cupric, variables.suppressor, variables.theta]
-eqs =  [equations.potential, equations.cupric, equations.suppressor, equations.theta]
-solvers = [fp.LinearPCGSolver(tolerance=params.solver_tol)] * 4
-dts = [None, None, None, 1.]
-zipped = zip(vars_, eqs, solvers, dts)
-
-## create extra arguments for writing to the data file
-writes = [params.write_potential, params.write_cupric, params.write_suppressor, params.write_theta]
-names = ['potential', 'cupric', 'suppressor', 'theta']
-data_args = dict((n, v) for w, n, v in zip(writes, names, vars_) if w)
-dataFile = os.path.join(tempfile.gettempdir(), 'data.h5')
-
 elapsedTime = 0.0
 step = 0
+
 while (step < params.totalSteps) and (elapsedTime < params.totalTime):
 
     variables.updateOld()
     
-    if (dataFile is not None) and (step % params.data_frequency == 0) and (not redo_timestep):
-        write_data(dataFile, elapsedTime, variables.distance, step,
-                   extensionGlobalValue=extensionGlobalValue,
-                   **data_args)
+    if (step % params.data_frequency == 0) and (not redo_timestep):
+        variables.write_data(elapsedTime, step)
         if step > 0 and extensionGlobalValue < params.shutdown_deposition_rate:
             break
         
@@ -83,16 +68,12 @@ while (step < params.totalSteps) and (elapsedTime < params.totalTime):
         residuals = equations.sweep(variables.dt)
         print 'sweep: {0}, residuals: {1}'.format(sweep, residuals)
 
-    # for sweep in range(params.sweeps):
-    #     res = [eqn.sweep(v, dt=dt_ or variables.dt, solver=s) for v, eqn, s, dt_ in zipped]
-    #     print 'sweep: {0}, res: {1}'.format(sweep, res)
-
     extensionGlobalValue = variables.extend()
     
     if float(variables.dt) > (params.CFL * mesh.nominal_dx / extensionGlobalValue * 1.1):
         print 'redo time step'
-        print 'new dt',float(variables.dt)
         variables.retreat_step()
+        print 'new dt',float(variables.dt)
         redo_timestep = True
     else:
         elapsedTime += float(variables.dt)
@@ -113,7 +94,7 @@ else:
 
 finaldir = os.path.join('Data', sumatra_label)
 
-shutil.move(dataFile, finaldir)
+shutil.move(variables.dataFile, finaldir)
 
 
     

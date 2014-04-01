@@ -12,8 +12,6 @@ from IPython.core.display import HTML
 import numpy as np
 from dicttable import DictTable
 import fipy as fp
-from fipy import numerix
-
 
 
 def _quotient_remainder(dividend, divisor):
@@ -233,21 +231,6 @@ def batch_launch(reason='', tags=[], **kwargs):
     for t in tags:
         cmd += ' --tag={0}'.format(t)
     os.system(cmd)
-
-
-def write_data(dataFile, elapsedTime, distance, timeStep, **otherFields):
-    h5data = DictTable(dataFile, 'a')
-    mesh = distance.mesh
-    dataDict = {'elapsedTime' : elapsedTime,
-                'nx' : mesh.nx,
-                'ny' : mesh.ny,
-                'dx' : mesh.dx,
-                'dy' : mesh.dy,
-                'distance' : np.array(distance)}
-    for k, v in otherFields.iteritems():
-        dataDict[k] = np.array(v)
-
-    h5data[timeStep] = dataDict
 
 def geometric_spacing(initial_spacing, domain_size, spacing_ratio=1.1):
     """
@@ -515,15 +498,4 @@ def build_mesh(params):
     mesh.nominal_dx = dx
     return mesh
 
-def calc_current(params, variables):
-    coeff_forward = params.alpha * params.Fbar
-    coeff_backward = (2 - params.alpha) * params.Fbar
-    exp_forward = numerix.exp(coeff_forward * variables.potential)
-    exp_backward = numerix.exp(-coeff_backward * variables.potential)
-    I0 = (params.i0 + params.i1 * variables.interfaceTheta)
-    baseCurrent = I0 * (exp_forward - exp_backward)
-    cbar =  variables.cupric / params.bulkCupric
-    current = cbar * baseCurrent
-    currentDerivative = cbar * I0 * (coeff_forward *  exp_forward + coeff_backward * exp_backward)
-    return current, currentDerivative
     

@@ -1,7 +1,12 @@
+import os
+import tempfile
+
+
 import numpy as np
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import fipy as fp
 from fipy import numerix
+from dicttable import DictTable
 
 
 class _InterfaceVar(_InterfaceSurfactantVariable):
@@ -62,7 +67,6 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
         return dx, shape
 
     def deleteIslands(self):
-        from fipy.tools import numerix
         from fipy.tools.numerix import MA
 
         cellToCellIDs = self.mesh._getCellToCellIDs()
@@ -85,6 +89,8 @@ class Variables(object):
         self.interfaceTheta = _InterfaceVar(self.theta)
         self.calc_dep_vars(params)
         self.vars = (self.potential, self.cupric, self.suppressor, self.theta)
+        self.dataFile = os.path.join(tempfile.gettempdir(), 'data.h5')
+        self.params = params
         
     def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
@@ -121,3 +127,17 @@ class Variables(object):
         self.dt.setValue(min(float(params.CFL * mesh.nominal_dx / extensionGlobalValue), float(self.dt) * 1.1))
         self.dt.setValue(min((float(self.dt), params.dtMax)))
         self.dt.setValue(max((float(self.dt), params.dtMin)))
+
+    def write_data(self, elapsedTime, timeStep):
+        h5data = DictTable(self.dataFile, 'a')
+        mesh = self.distance.mesh
+        dataDict = {'elapsedTime' : elapsedTime,
+                    'nx' : mesh.nx,
+                    'ny' : mesh.ny,
+                    'dx' : mesh.dx,
+                    'dy' : mesh.dy,
+                    'distance' : np.array(self.distance)}
+        for name in ['potential', 'cupric', 'suppressor', 'theta']:
+            if getattr(self.params, 'write_' + name):
+                dataDict[name] = np.array(getattr(self, name))
+        h5data[timeStep] = dataDict
