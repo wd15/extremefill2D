@@ -3,6 +3,8 @@ import cgi
 from math import modf
 import shutil
 import json
+import datetime
+
 
 import tables
 from sumatra.projects import load_project
@@ -498,4 +500,16 @@ def build_mesh(params):
     mesh.nominal_dx = dx
     return mesh
 
+def print_data(step, elapsedTime, dt, redo_timestep, residuals):
+    from prettytable import PrettyTable
     
+    x = PrettyTable(['Step Number', 'Elapsed Time', 'dt', 'Redo Timestep', 'Time Written'])
+    x.add_row([step, elapsedTime, dt, redo_timestep, datetime.datetime.now().strftime("%Y-%m-%d %H:%M")])
+    y = PrettyTable(['sweep', 'potential', 'cupric', 'suppressor', 'theta'])
+    for i, row in enumerate(residuals):
+        y.add_row([i] + row)
+
+    print
+    print
+    print x
+    print y   

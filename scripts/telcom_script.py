@@ -14,7 +14,7 @@ import json
 
 import tables
 from docopt import docopt
-from extremefill2D.tools import build_mesh
+from extremefill2D.tools import build_mesh, print_data
 from extremefill2D.variables import Variables
 from extremefill2D.equations import Equations
 
@@ -37,13 +37,11 @@ variables = Variables(params, mesh)
 ## create equations
 equations = Equations(params, variables)
 
-## other stuff
-extensionGlobalValue = max(variables.extension.globalValue)
-
 ## timestep and sweep
 redo_timestep = False
 elapsedTime = 0.0
 step = 0
+extensionGlobalValue = max(variables.extension.globalValue)
 
 while (step < params.totalSteps) and (elapsedTime < params.totalTime):
 
@@ -61,31 +59,22 @@ while (step < params.totalSteps) and (elapsedTime < params.totalTime):
 
     variables.update_dt(params, mesh)
 
-    import fipy.solvers.trilinos as trilinos
-    equations.advection.solve(variables.distance, dt=variables.dt, solver=trilinos.LinearLUSolver())
-    
-    for sweep in range(params.sweeps):
-        residuals = equations.sweep(variables.dt)
-        print 'sweep: {0}, residuals: {1}'.format(sweep, residuals)
+    equations.advection.solve(dt=variables.dt)
 
+    residuals = [equations.sweep(variables.dt) for _ in range(params.sweeps)]
+        
     extensionGlobalValue = variables.extend()
     
     if float(variables.dt) > (params.CFL * mesh.nominal_dx / extensionGlobalValue * 1.1):
-        print 'redo time step'
         variables.retreat_step()
-        print 'new dt',float(variables.dt)
         redo_timestep = True
     else:
         elapsedTime += float(variables.dt)
         step += 1
         redo_timestep = False
+
+    print_data(step, elapsedTime, variables.dt, redo_timestep, residuals)
     
-    print 'dt',variables.dt
-    print 'elapsed time',elapsedTime
-    print 'step',step
-    import datetime
-    print 'time: ',datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    print
 
 if not hasattr(params, 'sumatra_label'):
     sumatra_label = '.'

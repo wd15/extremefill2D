@@ -1,6 +1,15 @@
 import fipy as fp
 import fipy.solvers.trilinos as trilinos
 
+class AdvectionEquation(object):
+    def __init__(self, params, variables):
+        self.equation = fp.TransientTerm() + fp.AdvectionTerm(variables.extension)
+        self.solver = trilinos.LinearLUSolver()
+        self.var = variables.distance
+
+    def solve(self, dt):
+        self.equation.solve(self.var, dt=dt, solver=self.solver)
+
 class Equations(object):
     def __init__(self, params, variables):
         self.harmonic = (variables.distance >= 0).harmonicFaceValue
@@ -9,7 +18,7 @@ class Equations(object):
         self.calc_cupric(params, variables)
         self.calc_suppressor(params, variables)
         self.calc_theta(params, variables)
-        self.calc_advection(params, variables)
+        self.advection = AdvectionEquation(params, variables)
         
     def calc_potential(self, params, variables):
         distance = variables.distance
@@ -51,15 +60,9 @@ class Equations(object):
         self.theta.ef_var = variables.theta
         self.theta.ef_solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
         
-    def calc_advection(self, params, variables):
-        self.advection = fp.TransientTerm() + fp.AdvectionTerm(variables.extension)
-        self.advection.ef_solver = trilinos.LinearLUSolver()
-        self.advection.ef_var = variables.distance
-        self.advection.ef_dt = None
-        
     def sweep(self, dt):
-        residuals = []
-        for eqn in (self.potential, self.cupric, self.suppressor, self.theta):
-            residual = eqn.sweep(eqn.ef_var, dt=eqn.ef_dt or dt, solver=eqn.ef_solver)
-            residuals.append(residual)
-        return residuals
+        eqns = (self.potential, self.cupric, self.suppressor, self.theta)
+        return [eqn.sweep(eqn.ef_var, dt=eqn.ef_dt or dt, solver=eqn.ef_solver) for eqn in eqns]
+
+        
+        
