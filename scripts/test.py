@@ -1,7 +1,7 @@
 import os
 import tables
 import numpy as np
-import shutil
+
 
 def test_telcom():
     datafile = 'telcom_test_data.h5'
@@ -15,9 +15,9 @@ def test_telcom():
 
     import telcom_script
 
-    for attr in ['elapsedTime', 'distance', 'potential', 'theta', 'suppressor', 'cupric']:
+    for attr in ['distance', 'potential', 'theta', 'suppressor', 'cupric']:
         test_value = getattr(data, attr).read()
-        value = getattr(telcom_script, attr)
+        value = getattr(telcom_script.variables, attr)
         assert np.allclose(test_value, value)
 
     h5file.close()
