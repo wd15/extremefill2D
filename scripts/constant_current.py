@@ -43,10 +43,11 @@ elapsedTime = 0.0
 step = 0
 extensionGlobalValue = max(variables.extension.globalValue)
 
+
 while (step < params.totalSteps) and (elapsedTime < params.totalTime):
 
     variables.updateOld()
-    
+
     if (step % params.data_frequency == 0) and (not redo_timestep):
         variables.write_data(elapsedTime, step)
         if step > 0 and extensionGlobalValue < params.shutdown_deposition_rate:
@@ -59,7 +60,7 @@ while (step < params.totalSteps) and (elapsedTime < params.totalTime):
 
     variables.update_dt(params, mesh)
 
-    equations.advection.solve(dt=variables.dt)
+    equations.advection.solve(variables.dt)
 
     residuals = [equations.sweep(variables.dt) for _ in range(params.sweeps)]
         
@@ -72,7 +73,7 @@ while (step < params.totalSteps) and (elapsedTime < params.totalTime):
         elapsedTime += float(variables.dt)
         step += 1
         redo_timestep = False
-
+        
     print_data(step, elapsedTime, variables.dt, redo_timestep, residuals)
     
 

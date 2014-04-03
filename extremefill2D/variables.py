@@ -21,7 +21,7 @@ class ExtremeFillVariable(fp.CellVariable):
 
     def initialize(self, params):
         raise NotImplementedError
-
+    
     
 class PotentialVariable(ExtremeFillVariable):
     def initialize(self, params):
@@ -77,6 +77,16 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
         self.value = numerix.array(MA.where(tmp, -1, self.value))
 
 
+class AreaVariable(fp.Variable):
+    def __init__(self, var, distance):
+        super(AreaVariable, self).__init__()
+        self.var = var
+        self.distance = distance
+        
+    def _calcValue(self):
+        return float(numerix.sum(np.array(self.var) * np.array(self.distance.cellInterfaceAreas)))
+
+    
 class Variables(object):
     def __init__(self, params, mesh):
         self.dt = fp.Variable(params.dt)
@@ -91,20 +101,26 @@ class Variables(object):
         self.vars = (self.potential, self.cupric, self.suppressor, self.theta)
         self.dataFile = os.path.join(tempfile.gettempdir(), 'data.h5')
         self.params = params
-        
+        self.appliedPotential = fp.Variable(params.appliedPotential)
+        self.current = AreaVariable(self.currentDensity, self.distance)
+        self.harmonic = (self.distance >= 0).harmonicFaceValue
+        self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
+                
     def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
-        coeff_forward = params.alpha * Fbar
-        coeff_backward = (2 - params.alpha) * Fbar
-        exp_forward = numerix.exp(coeff_forward * self.potential)
-        exp_backward = numerix.exp(-coeff_backward * self.potential)
+        self.coeff_forward = params.alpha * Fbar
+        self.coeff_backward = (2 - params.alpha) * Fbar
+        exp_forward = numerix.exp(self.coeff_forward * self.potential)
+        exp_backward = numerix.exp(-self.coeff_backward * self.potential)
         I0 = (params.i0 + params.i1 * self.interfaceTheta)
         cbar =  self.cupric / params.bulkCupric
 
+        self.beta_forward = cbar * I0 * exp_forward
+        self.beta_backward = cbar * I0 * exp_backward
         self.baseCurrent = I0 * (exp_forward - exp_backward)
-        self.current = cbar * self.baseCurrent
-        self.currentDerivative = cbar * I0 * (coeff_forward *  exp_forward + coeff_backward * exp_backward)
-        self.depositionRate = self.current * params.omega / params.charge / params.faradaysConstant
+        self.currentDensity = cbar * self.baseCurrent
+        self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
+        self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
 
     def extend(self):
         self.extension[:] = self.depositionRate
@@ -128,7 +144,7 @@ class Variables(object):
         self.dt.setValue(min((float(self.dt), params.dtMax)))
         self.dt.setValue(max((float(self.dt), params.dtMin)))
 
-    def write_data(self, elapsedTime, timeStep):
+    def write_data(self, elapsedTime, timeStep, **kwargs):
         h5data = DictTable(self.dataFile, 'a')
         mesh = self.distance.mesh
         dataDict = {'elapsedTime' : elapsedTime,
@@ -140,4 +156,5 @@ class Variables(object):
         for name in ['potential', 'cupric', 'suppressor', 'theta']:
             if getattr(self.params, 'write_' + name):
                 dataDict[name] = np.array(getattr(self, name))
-        h5data[timeStep] = dataDict
+        h5data[timeStep] = dict(dataDict.items() + kwargs.items())
+
