@@ -24,7 +24,7 @@
 "delete_islands" : true,
 "write_potential" : false,
 "write_theta" : false,
-"write_suppressor" : false
+"write_suppressor" : false,
 "write_cupric" : false,
 "dtMin" : 5e-8,
 "dt" : 0.01,

@@ -1,3 +1,6 @@
+from collections import OrderedDict
+
+
 import fipy as fp
 import fipy.solvers.trilinos as trilinos
 from extremefill2D.variables import AreaVariable
@@ -16,7 +19,7 @@ class AdvectionEquation(object):
 
 
 class AppliedPotentialEquation(object):
-    def __init__(self, variables):
+    def __init__(self, params, variables):
         self.var = variables.appliedPotential
         self.I0 = variables.current
         self._b0 = AreaVariable(variables.beta_forward, variables.distance)
@@ -36,7 +39,8 @@ class AppliedPotentialEquation(object):
         
         e = scipy.fsolve(f, 0., fprime=fprime)
         self.var.setValue(float(self.var) + e)
-
+        return abs(e)
+    
 class SweepEquation(object):
     def sweep(self, dt):
         return self.equation.sweep(self.var, dt=dt, solver=self.solver)
@@ -99,8 +103,18 @@ class Equations(object):
         self.advection = AdvectionEquation(params, variables)
 
     def sweep(self, dt):
-        eqns = (self.potential, self.cupric, self.suppressor, self.theta)
-        return [eqn.sweep(dt) for eqn in eqns]
+        residuals = OrderedDict()
+        for name in ('potential', 'cupric', 'suppressor', 'theta'):
+            residuals[name] = getattr(self, name).sweep(dt)
+        return residuals
 
-        
-        
+class EquationsConstantCurrent(Equations):
+    def __init__(self, params, variables):
+        super(EquationsConstantCurrent, self).__init(params, variables)
+        self.appliedPotential = AppliedPotentialEquation(params, variables)
+
+    def sweep(self, dt):
+        residual = self.appliedPotential.sweep(dt)
+        residuals = super(EquationsConstantCurrent, self).sweep(dt)
+        residuals['appliedPotential'] = residual
+        return residuals

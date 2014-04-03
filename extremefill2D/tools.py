@@ -515,9 +515,9 @@ def print_data(step, elapsedTime, dt, redo_timestep, residuals, **kwargs):
     x = PrettyTable(['Step Number', 'Elapsed Time', 'dt', 'Redo Timestep', 'Time Written'] + kwargs.keys())
     frow = format_row([step, elapsedTime, float(dt), redo_timestep, datetime.datetime.now().strftime("%Y-%m-%d %H:%M")] + kwargs.values())
     x.add_row(frow)
-    y = PrettyTable(['sweep', 'potential', 'cupric', 'suppressor', 'theta'])
+    y = PrettyTable(['sweep'] + residuals[0].keys())
     for i, row in enumerate(residuals):
-        frow = format_row([i] + row)
+        frow = format_row([i] + row.values())
         y.add_row(frow)
 
     print

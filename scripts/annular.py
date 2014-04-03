@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Usage: script.py [<jsonfile>]
+Usage: annular.py [<jsonfile>]
 
 """
 
@@ -22,8 +22,6 @@ from extremefill2D.equations import Equations
 ## read parameters
 arguments = docopt(__doc__, version='Run script.py')
 jsonfile = arguments['<jsonfile>']
-if not jsonfile:
-    jsonfile = 'annular_test.json'
 with open(jsonfile, 'rb') as ff:
     params_dict = json.load(ff)
 params = namedtuple('ParamClass', params_dict.keys())(*params_dict.values())
