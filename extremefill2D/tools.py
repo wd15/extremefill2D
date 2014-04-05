@@ -3,8 +3,10 @@ import cgi
 from math import modf
 import shutil
 import json
+import datetime
 
 
+import tables
 from sumatra.projects import load_project
 from sumatra.formatting import HTMLFormatter
 from sumatra.formatting import fields
@@ -12,9 +14,6 @@ from IPython.core.display import HTML
 import numpy as np
 from dicttable import DictTable
 import fipy as fp
-from collections import namedtuple
-
-import tables
 
 
 def _quotient_remainder(dividend, divisor):
@@ -235,21 +234,6 @@ def batch_launch(reason='', tags=[], **kwargs):
         cmd += ' --tag={0}'.format(t)
     os.system(cmd)
 
-
-def write_data(dataFile, elapsedTime, distance, timeStep, **otherFields):
-    h5data = DictTable(dataFile, 'a')
-    mesh = distance.mesh
-    dataDict = {'elapsedTime' : elapsedTime,
-                'nx' : mesh.nx,
-                'ny' : mesh.ny,
-                'dx' : mesh.dx,
-                'dy' : mesh.dy,
-                'distance' : np.array(distance)}
-    for k, v in otherFields.iteritems():
-        dataDict[k] = np.array(v)
-
-    h5data[timeStep] = dataDict
-
 def geometric_spacing(initial_spacing, domain_size, spacing_ratio=1.1):
     """
     
@@ -303,35 +287,6 @@ def get_nonuniform_dx(dx, x0, x1, x2, padding, spacing_ratio=1.1):
 
     return np.concatenate((dx0, dx1, dx2))
 
-class DistanceVariableNonUniform(fp.DistanceVariable):
-    def getLSMshape(self):
-        mesh = self.mesh
-
-        min_dx = lambda x: fp.numerix.amin(x) if len(fp.numerix.shape(x)) > 0 else x
-        
-        if hasattr(mesh, 'nz'):
-            raise Exception, "3D meshes not yet implemented"
-        elif hasattr(mesh, 'ny'):
-            dx = (min_dx(mesh.dy), min_dx(mesh.dx))
-            shape = (mesh.ny, mesh.nx)
-        elif hasattr(mesh, 'nx'):
-            dx = (min_dx(mesh.dx),)
-            shape = mesh.shape
-        else:
-            raise Exception, "Non grid meshes can not be used for solving the FMM."
-
-        return dx, shape
-
-    def deleteIslands(self):
-        from fipy.tools import numerix
-        from fipy.tools.numerix import MA
-
-        cellToCellIDs = self.mesh._getCellToCellIDs()
-        adjVals = numerix.take(self.value, cellToCellIDs)
-        adjInterfaceValues = MA.masked_array(adjVals, mask = (adjVals * self.value) > 0)
-        masksum = numerix.sum(numerix.logical_not(MA.getmask(adjInterfaceValues)), 0)
-        tmp = MA.logical_and(masksum == 4, self.value > 0)
-        self.value = numerix.array(MA.where(tmp, -1, self.value))
 
 def delete_defunct_smt_directories():
     data_dir = 'Data'
@@ -524,33 +479,49 @@ def refine_contour_plot(points, values):
     
     return ((tri.points[edges[:,0],:] + tri.points[edges[:,1],:]) / 2)[np.argsort(edgeValue)][::-1]
 
-class Parameters(object):
-    def __init__(self, jsonfile):
-        with open(jsonfile, 'rb') as ff:
-            params_dict = json.load(ff)
-        for k, v in params_dict.iteritems():
-            setattr(self, k, v)
+def build_mesh(params):
+    dy = params.featureDepth / params.Nx
+    dx = dy
+    distanceBelowTrench = 10 * dx
+    padding = 3 * dx
 
-class MeshBuilder(object):
-    def __init__(self, params):
+    dx_nonuniform = get_nonuniform_dx(dx, params.rinner,
+                                      params.router,
+                                      params.rboundary, padding,
+                                      params.spacing_ratio)
         
-        dy = params.featureDepth / params.Nx
-        dx = dy
-        distanceBelowTrench = 10 * dx
-        padding = 3 * dx
+    dy_nonuniform = get_nonuniform_dx(dy, distanceBelowTrench,
+                                      distanceBelowTrench + params.featureDepth,
+                                      distanceBelowTrench + params.featureDepth + params.delta,
+                                      padding,
+                                      params.spacing_ratio)
 
-        dx_nonuniform = get_nonuniform_dx(dx, params.rinner,
-                                          params.router,
-                                          params.rboundary, padding,
-                                          params.spacing_ratio)
-        
-        dy_nonuniform = get_nonuniform_dx(dy, distanceBelowTrench,
-                                          distanceBelowTrench + params.featureDepth,
-                                          distanceBelowTrench + params.featureDepth + params.delta,
-                                          padding,
-                                          params.spacing_ratio)
+    mesh = fp.CylindricalGrid2D(dx=dx_nonuniform, dy=dy_nonuniform) - [[-dx / 100.], [distanceBelowTrench + params.featureDepth]]
+    mesh.nominal_dx = dx
+    return mesh
 
-        self.mesh = fp.CylindricalGrid2D(dx=dx_nonuniform, dy=dy_nonuniform) - [[-dx / 100.], [distanceBelowTrench + params.featureDepth]]
-        self.dx = dx
-        
-        
+def print_data(step, elapsedTime, dt, redo_timestep, residuals, **kwargs):
+    from prettytable import PrettyTable
+
+    def format(value):
+        if fp.numerix.isFloat(value):
+            return '{0:1.2e}'.format(float(value))
+        else:
+            return value
+    
+    def format_row(row):
+        return [format(r) for r in row]
+
+    x = PrettyTable(['Step Number', 'Elapsed Time', 'dt', 'Redo Timestep', 'Time Written'] + kwargs.keys())
+    frow = format_row([step, elapsedTime, float(dt), redo_timestep, datetime.datetime.now().strftime("%Y-%m-%d %H:%M")] + kwargs.values())
+    x.add_row(frow)
+    y = PrettyTable(['sweep'] + residuals[0].keys())
+    for i, row in enumerate(residuals):
+        frow = format_row([i] + row.values())
+        y.add_row(frow)
+
+    print
+    print
+    print x
+    print y   
+
