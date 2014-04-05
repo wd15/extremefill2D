@@ -80,8 +80,8 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
 class AreaVariable(fp.Variable):
     def __init__(self, var, distance):
         super(AreaVariable, self).__init__()
-        self.var = var
-        self.distance = distance
+        self.var = self._requires(var)
+        self.distance = self._requires(distance)
         
     def _calcValue(self):
         return float(numerix.sum(np.array(self.var) * np.array(self.distance.cellInterfaceAreas)))
@@ -153,8 +153,8 @@ class Variables(object):
                     'dx' : mesh.dx,
                     'dy' : mesh.dy,
                     'distance' : np.array(self.distance)}
-        for name in ['potential', 'cupric', 'suppressor', 'theta']:
-            if getattr(self.params, 'write_' + name):
-                dataDict[name] = np.array(getattr(self, name))
+        for k, v in self.params.write_data.iteritems():
+            if v:
+                dataDict[k] = np.array(getattr(self, k))
         h5data[timeStep] = dict(dataDict.items() + kwargs.items())
 

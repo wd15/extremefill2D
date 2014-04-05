@@ -21,11 +21,11 @@ class AdvectionEquation(object):
 class AppliedPotentialEquation(object):
     def __init__(self, params, variables):
         self.var = variables.appliedPotential
-        self.I0 = variables.current
+        self.I0 = params.current
         self._b0 = AreaVariable(variables.beta_forward, variables.distance)
         self._b1 = AreaVariable(variables.beta_backward, variables.distance)
-        self._c0 = self.variables.coeff_forward
-        self._c1 = self.variables.coeff_backward
+        self._c0 = variables.coeff_forward
+        self._c1 = variables.coeff_backward
 
     def sweep(self, dt):
         b0 = float(self._b0)
@@ -34,13 +34,16 @@ class AppliedPotentialEquation(object):
         c1 = float(self._c1)
         I0 = float(self.I0)
 
-        f = lambda e: b0 * np.exp(c0 * e) - b1 * np.exp(-c1 * e) - I0
-        fprime = lambda e: b0 * c0 * np.exp(c0 * e) + b1 * c1 * np.exp(-c1 * e)
+        f = lambda e: b0 * np.exp(-c0 * e) - b1 * np.exp(c1 * e) - I0
+        fprime = lambda e: -b0 * c0 * np.exp(c0 * e) - b1 * c1 * np.exp(-c1 * e)
         
-        e = scipy.fsolve(f, 0., fprime=fprime)
-        self.var.setValue(float(self.var) + e)
-        return abs(e)
-    
+        delta = scipy.optimize.fsolve(f, 0., fprime=fprime)[0]
+        delta = np.sign(delta) * min(abs(float(self.var)) / 10, abs(delta))
+        self.var.setValue(float(self.var) + delta)
+
+        return abs(delta)
+
+
 class SweepEquation(object):
     def sweep(self, dt):
         return self.equation.sweep(self.var, dt=dt, solver=self.solver)
@@ -59,7 +62,7 @@ class PotentialEquation(SweepEquation):
           fp.DiffusionTerm(params.kappa * variables.harmonic) \
         - surface * (variables.currentDensity - variables.potential * variables.currentDerivative) \
         - fp.ImplicitSourceTerm(surface * variables.currentDerivative) \
-        - upper * params.appliedPotential - fp.ImplicitSourceTerm(upper) 
+        - upper * variables.appliedPotential - fp.ImplicitSourceTerm(upper) 
         self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
         self.var = variables.potential
 
@@ -108,13 +111,15 @@ class Equations(object):
             residuals[name] = getattr(self, name).sweep(dt)
         return residuals
 
-class EquationsConstantCurrent(Equations):
+class ConstantCurrentEquations(Equations):
     def __init__(self, params, variables):
-        super(EquationsConstantCurrent, self).__init(params, variables)
+        super(ConstantCurrentEquations, self).__init__(params, variables)
         self.appliedPotential = AppliedPotentialEquation(params, variables)
-
+        self.variables = variables
+        
     def sweep(self, dt):
         residual = self.appliedPotential.sweep(dt)
-        residuals = super(EquationsConstantCurrent, self).sweep(dt)
+        residuals = super(ConstantCurrentEquations, self).sweep(dt)
         residuals['appliedPotential'] = residual
+        residuals['current'] = float(self.variables.current)
         return residuals

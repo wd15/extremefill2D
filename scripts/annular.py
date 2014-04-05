@@ -16,7 +16,7 @@ import tables
 from docopt import docopt
 from extremefill2D.tools import build_mesh, print_data
 from extremefill2D.variables import Variables
-from extremefill2D.equations import Equations
+from extremefill2D.equations import Equations, ConstantCurrentEquations
 
 
 ## read parameters
@@ -33,7 +33,11 @@ mesh = build_mesh(params)
 variables = Variables(params, mesh)
 
 ## create equations
-equations = Equations(params, variables)
+if params.constant_current:
+    equations = ConstantCurrentEquations(params, variables)
+else:
+    equations = Equations(params, variables)
+    
 
 ## timestep and sweep
 redo_timestep = False
@@ -71,7 +75,7 @@ while (step < params.totalSteps) and (elapsedTime < params.totalTime):
         step += 1
         redo_timestep = False
 
-    print_data(step, elapsedTime, variables.dt, redo_timestep, residuals)
+    print_data(step, elapsedTime, variables.dt, redo_timestep, residuals, current=float(variables.current))
     
 
 if not hasattr(params, 'sumatra_label'):
