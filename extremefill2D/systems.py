@@ -6,7 +6,7 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 import fipy as fp
-from extremefill2D.tools import build_mesh, print_data
+from extremefill2D.tools import build_mesh
 from extremefill2D.variables import Variables
 from extremefill2D.equations import PotentialEquation, CupricEquation
 from extremefill2D.equations import SuppressorEquation, ThetaEquation
@@ -82,8 +82,12 @@ class ExtremeFillSystem(object):
                            'Elapsed Time' : [elapsedTime],
                            'dt' : [dt],
                            'Redo Timestep' : [redo_timestep]})
+
         col_width = 15
         float_format=lambda x: ('{:10.3e}'.format(x)).rjust(col_width)
+        df_residuals = pd.DataFrame(residuals)
+        
+        print
         print
         print df.to_string(columns=['Step Number', 'dt', 'Elapsed Time', 'Redo Timestep'],
                            index=False,
@@ -93,7 +97,9 @@ class ExtremeFillSystem(object):
                                        'dt' : float_format,
                                        'Redo Timestep' : lambda x: str(x).rjust(col_width),
                                        'Step Number' : lambda x: str(x).rjust(col_width)})
-    
+        print
+        print df_residuals.to_string(float_format=float_format)
+        
     def run(self):
         params = self.params
         mesh = self.distance.mesh
