@@ -1,7 +1,3 @@
-import os
-import tempfile
-
-
 import tables
 import numpy as np
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
@@ -14,35 +10,29 @@ class _InterfaceVar(_InterfaceSurfactantVariable):
         return np.minimum(1, super(_InterfaceVar, self)._calcValue())
 
     
-class ExtremeFillVariable(fp.CellVariable):
-    def __init__(self, params, *args, **kwargs):
-        super(ExtremeFillVariable, self).__init__(*args, **kwargs)
-        self.initialize(params)
-
-    def initialize(self, params):
-        raise NotImplementedError
-    
-    
-class PotentialVariable(ExtremeFillVariable):
-    def initialize(self, params):
+class PotentialVariable(fp.CellVariable):
+    def __init__(self, params, mesh):
+        super(PotentialVariable, self).__init__(mesh=mesh, hasOld=True, name=r'$\psi$')
         self[:] = -params.appliedPotential
 
-        
-class CupricVariable(ExtremeFillVariable):
-    def initialize(self, params):
+
+class CupricVariable(fp.CellVariable):
+    def __init__(self, params, mesh):
+        super(CupricVariable, self).__init__(mesh=mesh, hasOld=True, name=r'$c_{cu}$')
         self[:] = params.bulkCupric
         self.constrain(params.bulkCupric, self.mesh.facesTop)
 
         
-class SuppressorVariable(ExtremeFillVariable):
-    def initialize(self, params):
+class SuppressorVariable(fp.CellVariable):
+    def __init__(self, params, mesh):
+        super(SuppressorVariable, self).__init__(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
         self[:] = params.bulkSuppressor
         self.constrain(params.bulkSuppressor, self.mesh.facesTop)
 
-
+        
 class DistanceVariableNonUniform(fp.DistanceVariable):
-    def __init__(self, params, *args, **kwargs):
-        super(DistanceVariableNonUniform, self).__init__(*args, **kwargs)
+    def __init__(self, params, mesh):
+        super(DistanceVariableNonUniform, self).__init__(mesh=mesh, value=1.)
         self.setValue(-1., where=self.mesh.y < -params.featureDepth)
         self.setValue(-1., where=(self.mesh.y < 0) & (self.mesh.x < params.rinner))        
         self.setValue(-1., where=(self.mesh.y < 0) & (self.mesh.x > params.router))
@@ -89,11 +79,10 @@ class AreaVariable(fp.Variable):
     
 class Variables(object):
     def __init__(self, params, mesh):
-        self.dt = fp.Variable(params.dt)
-        self.potential = PotentialVariable(params, mesh=mesh, hasOld=True, name=r'$\psi$')
-        self.cupric = CupricVariable(params, mesh=mesh, hasOld=True, name=r'$c_{cu}$')
-        self.suppressor = SuppressorVariable(params, mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
-        self.distance = DistanceVariableNonUniform(params, mesh=mesh, value=1.)
+        self.potential = PotentialVariable(params, mesh)
+        self.cupric = CupricVariable(params, mesh)
+        self.suppressor = SuppressorVariable(params, mesh)
+        self.distance = DistanceVariableNonUniform(params, mesh)
         self.extension = fp.CellVariable(mesh=mesh)
         self.theta = fp.SurfactantVariable(distanceVar=self.distance, hasOld=True, name=r'$\theta$', value=0.)
         self.interfaceTheta = _InterfaceVar(self.theta)
@@ -120,28 +109,3 @@ class Variables(object):
         self.currentDensity = cbar * self.baseCurrent
         self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
         self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
-
-    def extend(self):
-        self.extension[:] = self.depositionRate
-        self.distance.extendVariable(self.extension)
-        return max(self.extension.globalValue)
-
-    def updateOld(self):
-        for v in self.vars:
-            v.updateOld()
-        self.distanceOld = numerix.array(self.distance).copy()
-
-    def retreat_step(self):
-        self.dt.setValue(float(self.dt) * 0.1)
-        for v in self.vars:
-            v[:] = v.old
-        self.distance[:] = self.distanceOld
-
-    def update_dt(self, params, mesh):
-        extensionGlobalValue = self.extend()
-        self.dt.setValue(min(float(params.CFL * mesh.nominal_dx / extensionGlobalValue), float(self.dt) * 1.1))
-        self.dt.setValue(min((float(self.dt), params.dtMax)))
-        self.dt.setValue(max((float(self.dt), params.dtMin)))
-
-
-

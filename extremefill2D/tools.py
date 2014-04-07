@@ -500,28 +500,6 @@ def build_mesh(params):
     mesh.nominal_dx = dx
     return mesh
 
-def print_data(step, elapsedTime, dt, redo_timestep, residuals, **kwargs):
-    from prettytable import PrettyTable
 
-    def format(value):
-        if fp.numerix.isFloat(value):
-            return '{0:1.2e}'.format(float(value))
-        else:
-            return value
-    
-    def format_row(row):
-        return [format(r) for r in row]
 
-    x = PrettyTable(['Step Number', 'Elapsed Time', 'dt', 'Redo Timestep', 'Time Written'] + kwargs.keys())
-    frow = format_row([step, elapsedTime, float(dt), redo_timestep, datetime.datetime.now().strftime("%Y-%m-%d %H:%M")] + kwargs.values())
-    x.add_row(frow)
-    y = PrettyTable(['sweep'] + residuals[0].keys())
-    for i, row in enumerate(residuals):
-        frow = format_row([i] + row.values())
-        y.add_row(frow)
-
-    print
-    print
-    print x
-    print y   
 

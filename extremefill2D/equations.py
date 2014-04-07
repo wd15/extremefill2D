@@ -82,13 +82,15 @@ class SuppressorEquation(SweepEquation):
 
 class ThetaEquation(SweepEquation):
     def __init__(self, params, variables):
-        adsorptionCoeff = variables.dt * variables.suppressor * params.kPlus
+        self.dt = fp.Variable(1.)
+        adsorptionCoeff = self.dt * variables.suppressor * params.kPlus
         self.equation = fp.TransientTerm() == fp.ExplicitUpwindConvectionTerm(fp.SurfactantConvectionVariable(variables.distance)) \
           + adsorptionCoeff * variables.surface \
           - fp.ImplicitSourceTerm(adsorptionCoeff * variables.distance._cellInterfaceFlag) \
-          - fp.ImplicitSourceTerm(params.kMinus * variables.depositionRate * variables.dt)
+          - fp.ImplicitSourceTerm(params.kMinus * variables.depositionRate * self.dt)
         self.var = variables.theta
         self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
 
     def sweep(self, dt):
+        self.dt.setValue(dt)
         return super(ThetaEquation, self).sweep(dt=1.)

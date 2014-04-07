@@ -3,13 +3,18 @@ import shutil
 from collections import OrderedDict
 
 
+import pandas as pd
 import numpy as np
+import fipy as fp
 from extremefill2D.tools import build_mesh, print_data
 from extremefill2D.variables import Variables
 from extremefill2D.equations import PotentialEquation, CupricEquation
 from extremefill2D.equations import SuppressorEquation, ThetaEquation
 from extremefill2D.equations import AdvectionEquation, AppliedPotentialEquation
 from extremefill2D.dicttable import DictTable
+from extremefill2D.variables import PotentialVariable, CupricVariable
+from extremefill2D.variables import SuppressorVariable, DistanceVariableNonUniform
+from extremefill2D.variables import _InterfaceVar, AreaVariable
 
 
 class ExtremeFillSystem(object):
@@ -19,19 +24,21 @@ class ExtremeFillSystem(object):
 
         mesh = build_mesh(params)
         
-        self.variables = Variables(params, mesh)
+        variables = Variables(params, mesh)
+        self.distance = variables.distance
+        self.extension = variables.extension
+        self.current = variables.current
+        self.depositionRate = variables.depositionRate
+        self.variables = variables
+        self.equations = (PotentialEquation(params, variables),
+                          CupricEquation(params, variables),
+                          SuppressorEquation(params, variables),
+                          ThetaEquation(params, variables))
         
-        self.potential = PotentialEquation(params, self.variables)
-        self.cupric = CupricEquation(params, self.variables)
-        self.suppressor = SuppressorEquation(params, self.variables)
-        self.theta = ThetaEquation(params, self.variables)
-        self.advection = AdvectionEquation(params, self.variables)
+        self.advection = AdvectionEquation(params, variables)
 
     def sweep(self, dt):
-        residuals = OrderedDict()
-        for name in ('potential', 'cupric', 'suppressor', 'theta'):
-            residuals[name] = getattr(self, name).sweep(dt)
-        return residuals
+        return OrderedDict([[eqn.var.name, eqn.sweep(dt)] for eqn in self.equations])
 
     def write_data(self, elapsedTime, timeStep, **kwargs):
         h5data = DictTable(self.datafile, 'a')
@@ -46,20 +53,60 @@ class ExtremeFillSystem(object):
         #     if v:
         #         dataDict[k] = np.array(getattr(self, k))
         h5data[timeStep] = dict(dataDict.items() + kwargs.items())
+
+    def updateOld(self):
+        for eqn in self.equations:
+            eqn.var.updateOld()
+        self.distanceOld = fp.numerix.array(self.distance).copy()
+        
+    def update_dt(self, dt, params, mesh):
+        extensionGlobalValue = self.extend()
+        dt = min(float(params.CFL * mesh.nominal_dx / extensionGlobalValue), dt * 1.1)
+        dt = min(dt, params.dtMax)
+        return max(dt, params.dtMin)
+
+    def extend(self):
+        self.extension[:] = self.depositionRate
+        self.distance.extendVariable(self.extension)
+        return max(self.extension.globalValue)
+
+    def revert_step(self, dt):
+        dt = dt * 0.1
+        for eqn in self.equations:
+            eqn.var[:] = eqn.var.old
+        self.distance[:] = self.distanceOld
+        return dt
+
+    def print_data(self, step, elapsedTime, dt, redo_timestep, residuals):
+        df = pd.DataFrame({'Step Number' : [step],
+                           'Elapsed Time' : [elapsedTime],
+                           'dt' : [dt],
+                           'Redo Timestep' : [redo_timestep]})
+        col_width = 15
+        float_format=lambda x: ('{:10.3e}'.format(x)).rjust(col_width)
+        print
+        print df.to_string(columns=['Step Number', 'dt', 'Elapsed Time', 'Redo Timestep'],
+                           index=False,
+                           col_space=3,
+                           justify='right',
+                           formatters={'Elapsed Time' : float_format,
+                                       'dt' : float_format,
+                                       'Redo Timestep' : lambda x: str(x).rjust(col_width),
+                                       'Step Number' : lambda x: str(x).rjust(col_width)})
     
     def run(self):
         params = self.params
-        variables = self.variables
-        mesh = self.variables.distance.mesh
+        mesh = self.distance.mesh
         
         redo_timestep = False
         elapsedTime = 0.0
         step = 0
+        dt = params.dt
         extensionGlobalValue = max(self.variables.extension.globalValue)
 
         while (step < params.totalSteps) and (elapsedTime < params.totalTime):
 
-            variables.updateOld()
+            self.updateOld()
 
             if self.datafile and (step % params.data_frequency == 0) and (not redo_timestep):
                 self.write_data(elapsedTime, step)
@@ -67,31 +114,31 @@ class ExtremeFillSystem(object):
                     break
 
             if (step % int(params.levelset_update_ncell / params.CFL) == 0):
-                variables.distance.deleteIslands()
-                variables.distance.calcDistanceFunction(order=1)
+                self.distance.deleteIslands()
+                self.distance.calcDistanceFunction(order=1)
 
-            variables.update_dt(params, mesh)
+            dt = self.update_dt(dt, params, mesh)
 
-            self.advection.solve(dt=variables.dt)
+            self.advection.solve(dt)
 
-            residuals = [self.sweep(variables.dt) for _ in range(params.sweeps)]
+            residuals = [self.sweep(dt) for _ in range(params.sweeps)]
 
-            extensionGlobalValue = variables.extend()
+            extensionGlobalValue = self.extend()
 
-            if float(variables.dt) > (params.CFL * mesh.nominal_dx / extensionGlobalValue * 1.1):
-                variables.retreat_step()
+            if dt > (params.CFL * mesh.nominal_dx / extensionGlobalValue * 1.1):
+                dt = self.revert_step(dt)
                 redo_timestep = True
             else:
-                elapsedTime += float(variables.dt)
+                elapsedTime += dt
                 step += 1
                 redo_timestep = False
 
-            print_data(step, elapsedTime, variables.dt, redo_timestep, residuals, current=float(variables.current))
+            self.print_data(step, elapsedTime, dt, redo_timestep, residuals)
 
 
 class ConstantCurrentSystem(ExtremeFillSystem):
-    def __init__(self, params):
-        super(ConstantCurrentSystem, self).__init__(params)
+    def __init__(self, params, datafile=None):
+        super(ConstantCurrentSystem, self).__init__(params, datafile)
         self.appliedPotentialEqn = AppliedPotentialEquation(params, self.variables)
         
     def sweep(self, dt):

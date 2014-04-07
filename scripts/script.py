@@ -16,11 +16,10 @@ import tempfile
 
 import tables
 from docopt import docopt
-from extremefill2D import ExtremeFillSystem
+from extremefill2D.systems import ExtremeFillSystem, ConstantCurrentSystem
 
 
 if __name__ == '__main__':
-    ## read parameters
     arguments = docopt(__doc__, version='Run script.py')
     jsonfile = arguments['<jsonfile>']
     with open(jsonfile, 'rb') as ff:
@@ -29,7 +28,8 @@ if __name__ == '__main__':
 
     datafile = os.path.join(tempfile.gettempdir(), 'data.h5')
     
-    system = ExtremeFillSystem(params, datafile)
+    # system = ExtremeFillSystem(params, datafile)
+    system = ConstantCurrentSystem(params, datafile)
     system.run()
 
     if not hasattr(params, 'sumatra_label'):
