@@ -1,6 +1,3 @@
-from collections import OrderedDict
-
-
 import fipy as fp
 import fipy.solvers.trilinos as trilinos
 from extremefill2D.variables import AreaVariable
@@ -85,41 +82,15 @@ class SuppressorEquation(SweepEquation):
 
 class ThetaEquation(SweepEquation):
     def __init__(self, params, variables):
-        adsorptionCoeff = variables.dt * variables.suppressor * params.kPlus
+        self.dt = fp.Variable(1.)
+        adsorptionCoeff = self.dt * variables.suppressor * params.kPlus
         self.equation = fp.TransientTerm() == fp.ExplicitUpwindConvectionTerm(fp.SurfactantConvectionVariable(variables.distance)) \
           + adsorptionCoeff * variables.surface \
           - fp.ImplicitSourceTerm(adsorptionCoeff * variables.distance._cellInterfaceFlag) \
-          - fp.ImplicitSourceTerm(params.kMinus * variables.depositionRate * variables.dt)
+          - fp.ImplicitSourceTerm(params.kMinus * variables.depositionRate * self.dt)
         self.var = variables.theta
         self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
 
     def sweep(self, dt):
+        self.dt.setValue(dt)
         return super(ThetaEquation, self).sweep(dt=1.)
-
-    
-class Equations(object):
-    def __init__(self, params, variables):
-        self.potential = PotentialEquation(params, variables)
-        self.cupric = CupricEquation(params, variables)
-        self.suppressor = SuppressorEquation(params, variables)
-        self.theta = ThetaEquation(params, variables)
-        self.advection = AdvectionEquation(params, variables)
-
-    def sweep(self, dt):
-        residuals = OrderedDict()
-        for name in ('potential', 'cupric', 'suppressor', 'theta'):
-            residuals[name] = getattr(self, name).sweep(dt)
-        return residuals
-
-class ConstantCurrentEquations(Equations):
-    def __init__(self, params, variables):
-        super(ConstantCurrentEquations, self).__init__(params, variables)
-        self.appliedPotential = AppliedPotentialEquation(params, variables)
-        self.variables = variables
-        
-    def sweep(self, dt):
-        residual = self.appliedPotential.sweep(dt)
-        residuals = super(ConstantCurrentEquations, self).sweep(dt)
-        residuals['appliedPotential'] = residual
-        residuals['current'] = float(self.variables.current)
-        return residuals
