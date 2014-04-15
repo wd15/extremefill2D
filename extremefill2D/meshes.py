@@ -14,15 +14,15 @@ class ExtremeFill2DMesh(CylindricalNonUniformGrid2D):
     ratio.
     
     Attributes:
-        `nominal_dx`: The ideal value for `dx`. Not the actual value of `dx`
+        nominal_dx: The ideal value for dx. Not the actual value of dx
         
     """
     def __init__(self, params):
-        """Init for `ExtremeFill2DMesh`.
+        """Init for ExtremeFill2DMesh.
 
         Args: 
-            params: a class with `Nx`, `rinner`, `router`, `rboundary`,
-                `spacing_ratio`, `featureDepth` and `delta` attributes.
+            params: a class with Nx, rinner, router, rboundary,
+                spacing_ratio, featureDepth and delta attributes.
 
         """
 
@@ -55,12 +55,12 @@ class ExtremeFill2DMesh(CylindricalNonUniformGrid2D):
         geometrically. The domain starts at 0 and extends out
 
         Args:
-            `dx`: the ideal spacing in the fine region
-            `x0`: the inner position of the fine region
-            `x1`: the outer position of the fine region
-            `x2`: the outer extent of the domain
-            `padding`: the width of padding where the spacing in fine around the nominal fine region
-            `spacing_ratio`: the geometric ration to use when coarsening the mesh
+            dx: the ideal spacing in the fine region
+            x0: the inner position of the fine region
+            x1: the outer position of the fine region
+            x2: the outer extent of the domain
+            padding: the width of padding where the spacing in fine around the nominal fine region
+            spacing_ratio: the geometric ration to use when coarsening the mesh
             
         Returns:
             an array of the spacing
@@ -87,10 +87,13 @@ class ExtremeFill2DMesh(CylindricalNonUniformGrid2D):
         geometrically.
 
         Args:
-            `initial_spacing`: the left hand fine grid spacing
-            `domain_size`: the size of the domain
-            `spacing_ration`: the geometric ratio to use for coarsening the mesh
+            initial_spacing: the left hand fine grid spacing
+            domain_size: the size of the domain
+            spacing_ratio: the geometric ratio to use for coarsening the mesh
 
+        Returns:
+            an array of the spacing
+            
         """
         assert spacing_ratio > 1.
         r = spacing_ratio
