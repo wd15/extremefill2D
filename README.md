@@ -17,7 +17,13 @@ using the [Sumatra](http://pythonhosted.org/Sumatra/) simulation
 management tool. Sumatra has a web server for displaying the
 simulation records. Using this server, the plan is to have a publicly
 available database of simulation meta-data records as well as publicly
-available simulation data files.
+available simulation data files. Sumatra setup:
+
+    $ smt init --store=postgres://wd15:"Ji9waeRe3io@"@dromio.nist.gov/wd15 extremefill2D
+    $ smt configure --executable=python --main=script.py
+    $ smt configure -g uuid
+    $ smt configure -c store-diff
+    $ smt configure --addlabel=parameters
 
 ## Paper
 

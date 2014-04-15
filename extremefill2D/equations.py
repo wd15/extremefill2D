@@ -3,6 +3,7 @@ import fipy.solvers.trilinos as trilinos
 from extremefill2D.variables import AreaVariable
 import numpy as np
 import scipy
+import scipy.optimize
 
 
 class AdvectionEquation(object):
