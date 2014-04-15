@@ -33,23 +33,13 @@ class ExtremeFill2DMesh(CylindricalNonUniformGrid2D):
         Calculate the geometric grid spacing for a grid with an fine grid
         between `r0` and `r1` and a coarse grid elsewhere.
 
-        >>> np.sum(get_nonuniform_dx(0.1, 3., 4., 10, 0.3, 2.)[:7])
-        3.0
-        >>> get_nonuniform_dx(0.1, 3., 4., 10, 0.3, 2.)
-        array([ 2. ,  0.4,  0.2,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,
-            0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.2,
-            0.4,  0.8,  4.2])
-
-        >>> get_nonuniform_dx(0.1, 0., 1., 2., 2., 2.)
-
         """
+        assert (x2 - x1) > padding
 
-        if x0 <= padding or x2 - x1 <= padding:
-            raise Exception, 'padding is too large'
+        inner_padding = min(padding, x0)
+        dx0 = self.geometric_spacing(dx, x0 - inner_padding, spacing_ratio)[::-1]
 
-        dx0 = self.geometric_spacing(dx, x0 - padding, spacing_ratio)[::-1]
-
-        Lx = x1 - x0 + 2 * padding
+        Lx = x1 - x0 + padding + inner_padding
         nx = int(Lx / dx)
         dx1 = (Lx / nx) * np.ones(nx)
 
@@ -64,19 +54,14 @@ class ExtremeFill2DMesh(CylindricalNonUniformGrid2D):
         size given by `initial_spacing`. The grid cells are scaled up by
         `spacing_ratio` and `spacing ratio` must be greater than 1.
 
-        >>> geometric_spacing(1., 10., 1.1)
-        array([ 1.     ,  1.1    ,  1.21   ,  1.331  ,  1.4641 ,  1.61051,  2.28439])
-        >>> np.sum(geometric_spacing(1., 10., 1.1))
-        10.0
-
         """
-        if spacing_ratio <= 1.:
-            raise Exception, 'spacing_ratio must be greater than 1'
+        assert spacing_ratio > 1.
         r = spacing_ratio
         L = domain_size
         dx = initial_spacing
         nx = int(np.log(1 - L * (1 - r) / dx) / np.log(r))
         Lestimate = dx * (1 - r**nx) / (1 - r)
         spacing = initial_spacing * spacing_ratio**np.arange(nx)
-        spacing[-1] = spacing[-1] + (L - Lestimate)
+        if len(spacing) > 0:
+            spacing[-1] = spacing[-1] + (L - Lestimate)
         return spacing

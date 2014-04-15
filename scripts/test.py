@@ -5,7 +5,7 @@ from collections import namedtuple
 import tables
 import numpy as np
 from extremefill2D.systems import ExtremeFillSystem, ConstantCurrentSystem
-
+from extremefill2D.meshes import ExtremeFill2DMesh
 
 def assert_close(v1, v2):
     print v1, v2
@@ -46,4 +46,30 @@ def test_constant_current():
     system = ConstantCurrentSystem(params)
     system.run()
     assert_close(float(system.variables.current), params.current)
+
+def test_mesh():
+    params = read_params()
+    mesh = ExtremeFill2DMesh(params)
+    dx = mesh.get_nonuniform_dx(0.1, 3.0, 4.0, 10.0, 0.3, 2.0)
+    assert_close(np.sum(dx[:7]), 3.0)
+    solution = [ 2. ,  0.4,  0.2,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1, 
+                 0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.1,  0.2,
+                 0.4,  0.8,  4.2]
+    assert_close(dx, solution)
+
+def test_mesh_via():
+    params = read_params()
+    mesh = ExtremeFill2DMesh(params)
+    x2 = 3.0
+    dx = mesh.get_nonuniform_dx(0.2, 0.0, 1.0, x2, 0.4, 2.0)
+    assert_close(np.sum(dx), x2)
+    assert_close(len(dx), 9)
+
+def test_goemtery():
+    params = read_params()
+    mesh = ExtremeFill2DMesh(params)
+    spacing = mesh.geometric_spacing(1., 10., 1.1)
+    solution = [ 1.     ,  1.1    ,  1.21   ,  1.331  ,  1.4641 ,  1.61051,  2.28439]
+    assert_close(spacing, solution)
+    assert_close(np.sum(spacing), 10.0)
 
