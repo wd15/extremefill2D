@@ -46,7 +46,7 @@ class MultiViewer(_BaseViewer):
                 if baseRecord:
                     self.viewers.append(ContourViewer(baseRecord, ax=ax, color='r'))
 
-    def plotSetup(self, indices=[0], times=None, cutoff=None):
+    def plotSetup(self, indices=[0], times=None, cutoff=None, xlim=12e-6, ylim=-60e-6):
         maxFeatureDepth = 0
         for viewer in self.viewers:
             maxFeatureDepth = max(maxFeatureDepth, viewer.getFeatureDepth())
@@ -59,7 +59,7 @@ class MultiViewer(_BaseViewer):
             viewer.mirror = self.mirror
             viewer.cutoff = self.cutoff
             viewer.cutoffvalue = self.cutoffvalue
-            viewer.plotSetup(indices=indices, times=times, maxFeatureDepth=maxFeatureDepth, cutoff=cutoff)
+            viewer.plotSetup(indices=indices, times=times, maxFeatureDepth=maxFeatureDepth, cutoff=cutoff, xlim=xlim, ylim=ylim)
             ax = viewer.ax
             labels = [''] * len(ax.get_yticklabels())
             ax.set_yticklabels(labels)

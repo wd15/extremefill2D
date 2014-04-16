@@ -1,7 +1,9 @@
 #!/bin/bash
 source ~/.bashrc
-workon default
-export FIPY_INLINE=True
+#export FIPY_INLINE=True
 echo "$@"
-smt run annular.param "$@"
+smt run constant_current.json "$@"
+
+
+
     

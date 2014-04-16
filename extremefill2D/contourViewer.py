@@ -6,7 +6,7 @@ import numpy as np
 
 
 class ContourViewer(_BaseSingleViewer):
-    def _plot(self, y, scale, indices):
+    def _plot(self, y, scale, indices, xlim=12e-6):
         x = self.flip(self.x, scale, negate=True)
         
         phi0 = self.data[0]['distance']
@@ -40,19 +40,18 @@ class ContourViewer(_BaseSingleViewer):
             if self.cutoff and h > self.cutoffvalue:
                 break
 
-        self.height = min(cc.collections[0].get_paths()[0].vertices[:,1])
+            self.height = min(cc.collections[0].get_paths()[0].vertices[:,1])
+            self.phi = phi
 
         self.ax.set_aspect(1.)
-        xlim = 12e-6 * scale
+        xlim = xlim * scale
         if self.mirror:
             self.ax.set_xlim(-xlim, xlim)
         else:
             self.ax.set_xlim(0, xlim)
         self.ax.set_xticks(())
         self.ax.set_yticks(())
-#        self.ax.set_xticklabels(('', r'${0:d}$'.format(int(xlim))))
-        #self.ax.set_xlabel(r'$x$ ($\micro\metre$)')
-        self.phi = phi
+
 
 if __name__ == '__main__':
     records = getSMTRecords(tags=['serialnumber18'], parameters={'Nx' : 600})

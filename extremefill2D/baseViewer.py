@@ -9,13 +9,13 @@ from dicttable import DictTable
 import brewer2mpl
 
 class _BaseViewer(object):
-    def plot(self, indices=[0], filename=None, times=None, cutoffvalue=-1, mirror=False, cutoff=True, labels=False, show=True):
+    def plot(self, indices=[0], filename=None, times=None, cutoffvalue=-1, mirror=False, cutoff=True, labels=False, show=True, xlim=12e-6, ylim=-60e-6):
         self.mirror = mirror
         self.cutoff = cutoff
         self.cutoffvalue = cutoffvalue
         self.labels = labels
         self.show = show
-        self.plotSetup(indices=indices, times=times, cutoff=cutoff)
+        self.plotSetup(indices=indices, times=times, cutoff=cutoff, xlim=xlim, ylim=ylim)
         self.plotSave(filename)
 
     def plotSetup(self, indices=[0], cutoff=None):
@@ -65,7 +65,7 @@ class _BaseSingleViewer(_BaseViewer):
             featureDepth = 56e-6
         return featureDepth
 
-    def plotSetup(self, indices=[0], times=None, maxFeatureDepth=None, cutoff=None):
+    def plotSetup(self, indices=[0], times=None, maxFeatureDepth=None, cutoff=None, xlim=12e-6, ylim=-60e-6):
         if times is not None:
             indices = []
             index = 0
@@ -85,12 +85,12 @@ class _BaseSingleViewer(_BaseViewer):
         y0 = maxFeatureDepth + np.amin(self.dy) * 10
         scale = 1e+6
         y0 = y0 * scale
-        ymin = -60e-6 * scale
+        ymin = ylim * scale
         ymax = -ymin * 0.1
 
         y = self.flip(self.y, scale) - y0 + (maxFeatureDepth - featureDepth) * scale
         
-        self._plot(y, scale, indices)
+        self._plot(y, scale, indices, xlim=xlim)
 
         xmin, xmax = self.ax.get_xlim()
         xmin += self.x[0] * 1e+6
@@ -102,7 +102,6 @@ class _BaseSingleViewer(_BaseViewer):
             self.ax.add_patch(rect)
 
         self.ax.set_ylim(ymin, ymax)
-        #self.ax.set_ylabel(r'$y$ ($\micro\metre$)')
 
     def _plot(self, y, scale, indices):
         raise NotImplementedError
