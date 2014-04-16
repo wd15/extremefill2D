@@ -91,7 +91,7 @@ class Variables(object):
         self.params = params
         self.appliedPotential = fp.Variable(params.appliedPotential)
         self.current = AreaVariable(self.currentDensity, self.distance)
-        self.harmonic = (self.distance > 0).harmonicFaceValue
+        self.harmonic = (self.distance >= 0).harmonicFaceValue
         self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
            
