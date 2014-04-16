@@ -11,8 +11,7 @@ def assert_close(v1, v2):
     print v1, v2
     assert np.allclose(v1, v2)
 
-def read_params(**kwargs):
-    jsonfile = 'params.json'
+def read_params(jsonfile='params.json', **kwargs):
     with open(jsonfile, 'rb') as ff:
         params_dict = json.load(ff)
     for k, v in kwargs.iteritems():
@@ -42,7 +41,7 @@ def test():
         yield assert_close, v, o
         
 def test_constant_current():
-    params = read_params(totalSteps=1, sweeps=50)
+    params = read_params(jsonfile='constant_current.json', totalSteps=1, sweeps=50)
     system = ConstantCurrentSystem(params)
     system.run()
     assert_close(float(system.variables.current), params.current)
@@ -73,3 +72,5 @@ def test_goemtery():
     assert_close(spacing, solution)
     assert_close(np.sum(spacing), 10.0)
 
+if __name__ == '__main__':
+    test_constant_current()

@@ -67,7 +67,7 @@ class PotentialEquation(SweepEquation):
 
 class CupricEquation(SweepEquation):
     def __init__(self, params, variables):
-        self.equation = fp.TransientTerm() == fp.DiffusionTerm(params.diffusionCupric * variables.harmonic) \
+        self.equation = fp.TransientTerm() == fp.DiffusionTerm(params.diffusionCupric * variables.masked_harmonic) \
           - fp.ImplicitSourceTerm(variables.baseCurrent * variables.surface / (params.bulkCupric * params.charge * params.faradaysConstant))
         self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
         self.var = variables.cupric
