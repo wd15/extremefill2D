@@ -6,7 +6,7 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 import fipy as fp
-from extremefill2D.variables import Variables
+from extremefill2D.variables import Variables, MaskedVariables
 from extremefill2D.equations import PotentialEquation, CupricEquation
 from extremefill2D.equations import SuppressorEquation, ThetaEquation
 from extremefill2D.equations import AdvectionEquation, AppliedPotentialEquation
@@ -22,8 +22,9 @@ class ExtremeFillSystem(object):
         self.datafile = datafile
 
         mesh = ExtremeFill2DMesh(params)
-        
-        variables = Variables(params, mesh, deposition_mask=self.get_deposition_mask(params, mesh))
+
+        variables = self.getVariables(params, mesh)
+
         self.distance = variables.distance
         self.extension = variables.extension
         self.current = variables.current
@@ -36,12 +37,9 @@ class ExtremeFillSystem(object):
         
         self.advection = AdvectionEquation(params, variables)
 
-    def get_deposition_mask(self, params, mesh):
-        return True
-        
     def getVariables(self, params, mesh):
         return Variables(params, mesh)
-
+        
     def sweep(self, dt):
         return OrderedDict([[eqn.var.name, eqn.sweep(dt)] for eqn in self.equations])
 
@@ -159,12 +157,9 @@ class ConstantCurrentSystem(ExtremeFillSystem):
         residuals['current'] = float(self.variables.current)
         return residuals
 
-    def get_deposition_mask(self, params, mesh):
-        mask = np.ones(mesh.x.shape, dtype=float)
-        Y = mesh.nominal_dx
-        X = params.router - mesh.nominal_dx
-        mask[(mesh.y.value < Y) & (mesh.x.value > X)] = 0.
-        return mask
+    def getVariables(self, params, mesh):
+        return MaskedVariables(params, mesh)
+
         
 
 

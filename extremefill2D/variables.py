@@ -3,6 +3,7 @@ import numpy as np
 from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import fipy as fp
 from fipy import numerix
+from fipy.tools.numerix import MA
 
 
 class _InterfaceVar(_InterfaceSurfactantVariable):
@@ -57,8 +58,6 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
         return dx, shape
 
     def deleteIslands(self):
-        from fipy.tools.numerix import MA
-
         cellToCellIDs = self.mesh._getCellToCellIDs()
         adjVals = numerix.take(self.value, cellToCellIDs)
         adjInterfaceValues = MA.masked_array(adjVals, mask = (adjVals * self.value) > 0)
@@ -77,8 +76,28 @@ class AreaVariable(fp.Variable):
         return float(numerix.sum(np.array(self.var) * np.array(self.distance.cellInterfaceAreas)))
 
 
+class DepositionMask(fp.CellVariable):
+    def __init__(self, distance, params):
+        super(DepositionMask, self).__init__(distance.mesh, hasOld=False)
+        self.distance = self._requires(distance)
+        self.params = params
+
+    def _calcValue(self):
+        mesh = self.distance.mesh
+        mask = np.ones(mesh.x.shape, dtype=int)
+        Y = mesh.nominal_dx
+        X = self.params.router - mesh.nominal_dx
+        mask[(mesh.y.value < Y) & (mesh.x.value > X)] = 0
+        8
+        flag = MA.filled(numerix.take(self.distance._interfaceFlag, self.mesh.cellFaceIDs), 0)
+        flag = numerix.sum(flag, axis=0)
+        corner_flag = numerix.where(numerix.logical_and(self.distance.value > 0, flag > 1), 1, 0)
+
+        return corner_flag | mask
+
+    
 class Variables(object):
-    def __init__(self, params, mesh, deposition_mask=True):
+    def __init__(self, params, mesh):
         self.potential = PotentialVariable(params, mesh)
         self.cupric = CupricVariable(params, mesh)
         self.suppressor = SuppressorVariable(params, mesh)
@@ -92,7 +111,8 @@ class Variables(object):
         self.appliedPotential = fp.Variable(params.appliedPotential)
         self.current = AreaVariable(self.currentDensity, self.distance)
         self.harmonic = (self.distance >= 0).harmonicFaceValue
-        self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
+        self.masked_harmonic = self.harmonic
+        self.masked_harmonic = self.harmonic
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
            
     def calc_dep_vars(self, params):
@@ -111,3 +131,9 @@ class Variables(object):
         self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
         self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
 
+        
+class MaskedVariables(Variables):
+    def __init__(self, params, mesh):
+        super(MaskedVariables, self).__init__(params, mesh)
+        deposition_mask = DepositionMask(self.distance, params)
+        self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
