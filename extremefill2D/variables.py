@@ -76,9 +76,9 @@ class AreaVariable(fp.Variable):
     def _calcValue(self):
         return float(numerix.sum(np.array(self.var) * np.array(self.distance.cellInterfaceAreas)))
 
-    
+
 class Variables(object):
-    def __init__(self, params, mesh):
+    def __init__(self, params, mesh, deposition_mask=True):
         self.potential = PotentialVariable(params, mesh)
         self.cupric = CupricVariable(params, mesh)
         self.suppressor = SuppressorVariable(params, mesh)
@@ -91,9 +91,10 @@ class Variables(object):
         self.params = params
         self.appliedPotential = fp.Variable(params.appliedPotential)
         self.current = AreaVariable(self.currentDensity, self.distance)
-        self.harmonic = (self.distance >= 0).harmonicFaceValue
+        self.harmonic = (self.distance > 0).harmonicFaceValue
+        self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
-                
+           
     def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
         self.coeff_forward = params.alpha * Fbar
@@ -109,3 +110,4 @@ class Variables(object):
         self.currentDensity = cbar * self.baseCurrent
         self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
         self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
+

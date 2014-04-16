@@ -40,5 +40,5 @@
 "NxBase" : 1000,
 "solver_tol" : 1e-10,
 "delta" : 50e-6,
-"current" : 5.3e-7
+"current" : 2e-7
 }
