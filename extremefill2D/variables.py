@@ -81,19 +81,22 @@ class DepositionMask(fp.CellVariable):
         super(DepositionMask, self).__init__(distance.mesh, hasOld=False)
         self.distance = self._requires(distance)
         self.params = params
+        self.mask = self.get_mask()
 
-    def _calcValue(self):
-        mesh = self.distance.mesh
+    def get_mask(self):
+        mesh = self.mesh
         mask = np.ones(mesh.x.shape, dtype=int)
         Y = mesh.nominal_dx
         X = self.params.router - mesh.nominal_dx
         mask[(mesh.y.value < Y) & (mesh.x.value > X)] = 0
-        8
+        return mask
+        
+    def _calcValue(self):
         flag = MA.filled(numerix.take(self.distance._interfaceFlag, self.mesh.cellFaceIDs), 0)
         flag = numerix.sum(flag, axis=0)
         corner_flag = numerix.where(numerix.logical_and(self.distance.value > 0, flag > 1), 1, 0)
 
-        return corner_flag | mask
+        return corner_flag | self.mask
 
     
 class Variables(object):
@@ -111,7 +114,6 @@ class Variables(object):
         self.appliedPotential = fp.Variable(params.appliedPotential)
         self.current = AreaVariable(self.currentDensity, self.distance)
         self.harmonic = (self.distance >= 0).harmonicFaceValue
-        self.masked_harmonic = self.harmonic
         self.masked_harmonic = self.harmonic
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
            
@@ -132,8 +134,15 @@ class Variables(object):
         self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
 
         
-class MaskedVariables(Variables):
+class MaskedVariablesCorner(Variables):
     def __init__(self, params, mesh):
-        super(MaskedVariables, self).__init__(params, mesh)
+        super(MaskedVariablesCorner, self).__init__(params, mesh)
+        deposition_mask = DepositionMask(self.distance, params).mask
+        self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
+
+        
+class MaskedVariablesNoCorner(Variables):
+    def __init__(self, params, mesh):
+        super(MaskedVariablesNoCorner, self).__init__(params, mesh)
         deposition_mask = DepositionMask(self.distance, params)
         self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue

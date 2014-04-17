@@ -6,7 +6,7 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 import fipy as fp
-from extremefill2D.variables import Variables, MaskedVariables
+from extremefill2D.variables import Variables, MaskedVariablesCorner
 from extremefill2D.equations import PotentialEquation, CupricEquation
 from extremefill2D.equations import SuppressorEquation, ThetaEquation
 from extremefill2D.equations import AdvectionEquation, AppliedPotentialEquation
@@ -158,7 +158,8 @@ class ConstantCurrentSystem(ExtremeFillSystem):
         return residuals
 
     def getVariables(self, params, mesh):
-        return MaskedVariables(params, mesh)
+        return MaskedVariablesCorner(params, mesh)
+
 
         
 
