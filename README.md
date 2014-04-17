@@ -34,6 +34,11 @@ Journal of the Electrochemical Society (2013).
 Unfortunately, I was unable the upload the paper to a preprint service
 due to issues with the Journal.
 
+## Notebooks
+
+The IPython notebooks can be viewed at
+[nbviewer.ipython.org](http://nbviewer.ipython.org/github/wd15/extremefill2D/blob/master/notebooks).
+
 ## License
 
 The repository is licensed with the FreeBSD License, see
