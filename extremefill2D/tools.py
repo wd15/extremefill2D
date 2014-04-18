@@ -181,6 +181,7 @@ def getData(tags, parameters):
 
 def smt_ipy_table(records, fields, parameters=[]):
     from ipy_table import make_table
+    import ipy_table
     table = [[field.title() for field in fields]]
     for record in records:
         record_list = []
@@ -220,8 +221,8 @@ def smt_ipy_table(records, fields, parameters=[]):
 
         table.append(record_list)
     t = make_table(table)
-    t.apply_theme('basic')
-    t.set_global_style(wrap=True)
+    ipy_table.apply_theme('basic')
+    ipy_table.set_global_style(wrap=True)
     return HTML(t._repr_html_())
 
 
