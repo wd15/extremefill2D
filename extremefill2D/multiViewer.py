@@ -18,8 +18,8 @@ class DummyViewer(object):
         return 56e-6
 
 class MultiViewer(_BaseViewer):
-    def __init__(self, records, baseRecords=None, rowtitle=None, columntitle=None, figsize=(1.5, 6), xlabel='', ylabel='', axislabelfontsize=16):
-        
+    def __init__(self, records, baseRecords=None, rowtitle=None, columntitle=None, figsize=(1.5, 6), xlabel='', ylabel='', axislabelfontsize=16, record_label=True):
+        self.record_label = record_label
         self.axislabelfontsize = axislabelfontsize
         self.rowtitle = rowtitle
         self.xlabel = xlabel
@@ -80,16 +80,15 @@ class MultiViewer(_BaseViewer):
             all_spines = ['top', 'bottom', 'right', 'left']
             for spine in all_spines:
                 ax.spines[spine].set_visible(False)
-
-            if self.labels:
-                plt.text(0.08, 0.01, '$\\texttt{{{0}}}$'.format(viewer.record.label[:8]), fontsize=12, transform=ax.transAxes)
-
+            
+            if self.record_label:
+                ax.set_title(r'{0}'.format(viewer.record.label[:8]))
+              
         plt.text(0.38, 0.982, self.xlabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize)
         plt.text(0.03, 0.5, self.ylabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize, rotation='vertical')
 
         plt.tight_layout(pad=3.0, h_pad=1.0, w_pad=0.0)
         
-#        plt.subplots_adjust(top=2.0)
 
 def plot1DFigure(figNum):
     import extremefill
