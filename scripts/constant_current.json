@@ -40,5 +40,6 @@
 "NxBase" : 1000,
 "solver_tol" : 1e-10,
 "delta" : 50e-6,
-"current" : 2e-7
+"current" : 2e-7,
+"cap_radius" : 0.0
 }

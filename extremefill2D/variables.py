@@ -116,6 +116,7 @@ class Variables(object):
         self.harmonic = (self.distance >= 0).harmonicFaceValue
         self.masked_harmonic = self.harmonic
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
+        self.calc_hemispherical_cap(params, mesh)
            
     def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
@@ -133,6 +134,15 @@ class Variables(object):
         self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
         self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
 
+    def calc_hemispherical_cap(self, params, mesh):
+        if hasattr(params, 'cap_radius'):
+            cap_radius = params.cap_radius
+        else:
+            cap_radius = 0.0
+        center = (0.0, params.delta)
+        radius = np.sqrt((mesh.x - center[0])**2 + (mesh.y - center[1])**2)
+        array = np.where(radius > cap_radius, 1., 1e-20)
+        self.hemispherical_cap = fp.CellVariable(mesh=mesh, value=array)
         
 class MaskedVariablesCorner(Variables):
     def __init__(self, params, mesh):

@@ -72,5 +72,15 @@ def test_goemtery():
     assert_close(spacing, solution)
     assert_close(np.sum(spacing), 10.0)
 
+def test_hemispherical_cap():
+    params = read_params(jsonfile='constant_current.json', totalSteps=1, sweeps=10, cap_radius=3.75e-5)
+    system = ConstantCurrentSystem(params)
+    system.run()
+    mesh = system.distance.mesh
+    center =(0.0, params.delta)
+    radius = np.sqrt((mesh.x - center[0])**2 + (mesh.y - center[1])**2)
+    mask = np.array(radius < params.cap_radius)
+    assert_close(np.array(system.variables.cupric)[mask], params.bulkCupric)
+    
 if __name__ == '__main__':
-    test_constant_current()
+    test_hemispherical_cap()
