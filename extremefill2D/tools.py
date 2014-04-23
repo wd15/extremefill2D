@@ -442,3 +442,9 @@ class DataWriter(object):
                     'distance' : np.array(variables.distance)}
 
         h5data[timeStep] = dict(dataDict.items() + kwargs.items())
+
+
+class WriteCupricData(DataWriter):
+    def write(self, elapsedTime, timeStep, variables, **kwargs):
+        kwargs['cupric'] = np.array(variables.cupric)
+        super(WriteCupricData, self).write(elapsedTime, timeStep, variables, **kwargs)

@@ -18,7 +18,9 @@ import tables
 from docopt import docopt
 # from extremefill2D.systems import ExtremeFillSystemff
 from extremefill2D.systems import ConstantCurrentSystem
-from extremefill2D.tools import DataWriter
+from extremefill2D.tools import DataWriter, WriteCupricData
+
+
 
 
 if __name__ == '__main__':
@@ -31,7 +33,8 @@ if __name__ == '__main__':
     with tempfile.NamedTemporaryFile(suffix='.h5', delete=False) as f:
         datafile = f.name
 
-    dataWriter = DataWriter(datafile)
+    dataWriter = WriteCupricData(datafile)
+
     # system = ExtremeFillSystem(params, datafile)
     system = ConstantCurrentSystem(params, dataWriter)
     system.run()
