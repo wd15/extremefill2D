@@ -17,9 +17,9 @@ from extremefill2D.variables import _InterfaceVar, AreaVariable
 from extremefill2D.meshes import ExtremeFill2DMesh
 
 class ExtremeFillSystem(object):
-    def __init__(self, params, datafile=None):
+    def __init__(self, params, dataWriter=None):
         self.params = params
-        self.datafile = datafile
+        self.dataWriter = dataWriter
 
         mesh = ExtremeFill2DMesh(params)
 
@@ -42,20 +42,6 @@ class ExtremeFillSystem(object):
         
     def sweep(self, dt):
         return OrderedDict([[eqn.var.name, eqn.sweep(dt)] for eqn in self.equations])
-
-    def write_data(self, elapsedTime, timeStep, **kwargs):
-        h5data = DictTable(self.datafile, 'a')
-        mesh = self.variables.distance.mesh
-        dataDict = {'elapsedTime' : elapsedTime,
-                    'nx' : mesh.nx,
-                    'ny' : mesh.ny,
-                    'dx' : mesh.dx,
-                    'dy' : mesh.dy,
-                    'distance' : np.array(self.variables.distance)}
-        # for k, v in self.params.write_data.iteritems():
-        #     if v:
-        #         dataDict[k] = np.array(getattr(self, k))
-        h5data[timeStep] = dict(dataDict.items() + kwargs.items())
 
     def updateOld(self):
         for eqn in self.equations:
@@ -117,8 +103,8 @@ class ExtremeFillSystem(object):
 
             self.updateOld()
 
-            if self.datafile and (step % params.data_frequency == 0) and (not redo_timestep):
-                self.write_data(elapsedTime, step)
+            if self.dataWriter and (step % params.data_frequency == 0) and (not redo_timestep):
+                self.dataWriter.write(elapsedTime, step, self.variables)
                 if step > 0 and extensionGlobalValue < params.shutdown_deposition_rate:
                     break
 

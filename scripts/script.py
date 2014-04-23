@@ -16,7 +16,9 @@ import tempfile
 
 import tables
 from docopt import docopt
-from extremefill2D.systems import ExtremeFillSystem, ConstantCurrentSystem
+# from extremefill2D.systems import ExtremeFillSystemff
+from extremefill2D.systems import ConstantCurrentSystem
+from extremefill2D.tools import DataWriter
 
 
 if __name__ == '__main__':
@@ -26,10 +28,12 @@ if __name__ == '__main__':
         params_dict = json.load(ff)
     params = namedtuple('ParamClass', params_dict.keys())(*params_dict.values())
 
-    datafile = os.path.join(tempfile.gettempdir(), 'data.h5')
-    
+    with tempfile.NamedTemporaryFile(suffix='.h5', delete=False) as f:
+        datafile = f.name
+
+    dataWriter = DataWriter(datafile)
     # system = ExtremeFillSystem(params, datafile)
-    system = ConstantCurrentSystem(params, datafile)
+    system = ConstantCurrentSystem(params, dataWriter)
     system.run()
 
     if not hasattr(params, 'sumatra_label'):
@@ -38,5 +42,5 @@ if __name__ == '__main__':
         sumatra_label = params.sumatra_label
 
     finaldir = os.path.join('Data', sumatra_label)
-
-    shutil.move(datafile, finaldir)
+    finalpath = os.path.join(finaldir, 'data.h5')                                           
+    shutil.move(datafile, finalpath)

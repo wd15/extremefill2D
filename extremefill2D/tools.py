@@ -216,7 +216,7 @@ def smt_ipy_table(records, fields, parameters=[]):
 
             if field in ('label', 'repository', 'version', 'parameters'):
                 c = "<code>" + c + "</code>"
-
+            
             record_list.append(c)
 
         table.append(record_list)
@@ -427,5 +427,18 @@ def refine_contour_plot(points, values):
     return ((tri.points[edges[:,0],:] + tri.points[edges[:,1],:]) / 2)[np.argsort(edgeValue)][::-1]
 
 
+class DataWriter(object):
+    def __init__(self, datafile):
+        self.datafile = datafile
 
+    def write(self, elapsedTime, timeStep, variables, **kwargs):
+        h5data = DictTable(self.datafile, 'a')
+        mesh = variables.distance.mesh
+        dataDict = {'elapsedTime' : elapsedTime,
+                    'nx' : mesh.nx,
+                    'ny' : mesh.ny,
+                    'dx' : mesh.dx,
+                    'dy' : mesh.dy,
+                    'distance' : np.array(variables.distance)}
 
+        h5data[timeStep] = dict(dataDict.items() + kwargs.items())
