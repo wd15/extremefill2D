@@ -139,9 +139,9 @@ class Variables(object):
             cap_radius = params.cap_radius
         else:
             cap_radius = 0.0
-        center = (0.0, params.delta)
+        center = (0.0, max(mesh.y))
         radius = np.sqrt((mesh.x - center[0])**2 + (mesh.y - center[1])**2)
-        array = np.where(radius > cap_radius, 1., 1e-20)
+        array = np.where(radius > cap_radius, 0, 1)
         self.hemispherical_cap = fp.CellVariable(mesh=mesh, value=array)
         
 class MaskedVariablesCorner(Variables):

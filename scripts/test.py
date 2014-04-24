@@ -73,14 +73,21 @@ def test_goemtery():
     assert_close(np.sum(spacing), 10.0)
 
 def test_hemispherical_cap():
-    params = read_params(jsonfile='constant_current.json', totalSteps=1, sweeps=10, cap_radius=3.75e-5)
+    params = read_params(jsonfile='constant_current.json', totalSteps=1, sweeps=10, cap_radius=3.75e-5, dt=10.0)
     system = ConstantCurrentSystem(params)
     system.run()
     mesh = system.distance.mesh
-    center =(0.0, params.delta)
-    radius = np.sqrt((mesh.x - center[0])**2 + (mesh.y - center[1])**2)
+    x = mesh.x.value
+    y = mesh.y.value
+    center =(0.0, max(y))
+    radius = np.sqrt((x - center[0])**2 + (y - center[1])**2)
     mask = np.array(radius < params.cap_radius)
-    assert_close(np.array(system.variables.cupric)[mask], params.bulkCupric)
+    value = np.array(system.variables.cupric)
+    assert_close(value[mask], params.bulkCupric)
     
+    min_mask = (x > 2e-5) & (x < 4e-5) & (y < params.rinner / 2.)
+    min_value = min(value[min_mask])
+    assert 650. < min_value < 750.
+
 if __name__ == '__main__':
     test_hemispherical_cap()
