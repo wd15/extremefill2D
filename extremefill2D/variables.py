@@ -4,6 +4,7 @@ from fipy.variables.surfactantVariable import _InterfaceSurfactantVariable
 import fipy as fp
 from fipy import numerix
 from fipy.tools.numerix import MA
+from extremefill2D.tools import find_all_zeros
 
 
 class _InterfaceVar(_InterfaceSurfactantVariable):
@@ -98,6 +99,40 @@ class DepositionMask(fp.CellVariable):
 
         return corner_flag | self.mask
 
+
+class CapVariable(fp.CellVariable):
+    def __init__(self, distance, params):
+        super(CapVariable, self).__init__(distance.mesh, hasOld=False)
+        self.distance = self._requires(distance)
+        self.params = params
+        self.ymin = min(self.mesh.y)
+        self.ymax = max(self.mesh.y)
+        N = 1000
+        X = np.zeros(N)
+        Y = np.linspace(self.ymin, self.ymax, 1000)
+        self.X, self.Y = X, Y
+        if not hasattr(self, 'nearestCellIDs'):
+            self.nearestCellIDs = self.mesh._getNearestCellID((X, Y))
+            
+    def getInterfaceHeight(self):
+        from scipy.interpolate import interp1d
+        X, Y = self.X, self.Y
+        phi = self.distance((X, Y), order=0, nearestCellIDs=self.nearestCellIDs)
+        return find_all_zeros(interp1d(Y, phi), Y[0], Y[-1])[-1]
+        
+    def _calcValue(self):
+        mesh = self.mesh
+        y0 = self.getInterfaceHeight()
+        if hasattr(self.params, 'cap_radius'):
+            cap_radius = self.params.cap_radius
+        else:
+            cap_radius = 0.0
+        if not hasattr(self, 'spacing'):
+            self.spacing = self.ymax - y0
+        center = (0.0, y0 + self.spacing)
+        radius = np.sqrt((mesh.x - center[0])**2 + (mesh.y - center[1])**2)
+        return np.where(radius > cap_radius, 0, 1)
+
     
 class Variables(object):
     def __init__(self, params, mesh):
@@ -116,7 +151,7 @@ class Variables(object):
         self.harmonic = (self.distance >= 0).harmonicFaceValue
         self.masked_harmonic = self.harmonic
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
-        self.calc_hemispherical_cap(params, mesh)
+        self.cap = CapVariable(self.distance, params)
            
     def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
@@ -134,15 +169,6 @@ class Variables(object):
         self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
         self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
 
-    def calc_hemispherical_cap(self, params, mesh):
-        if hasattr(params, 'cap_radius'):
-            cap_radius = params.cap_radius
-        else:
-            cap_radius = 0.0
-        center = (0.0, max(mesh.y))
-        radius = np.sqrt((mesh.x - center[0])**2 + (mesh.y - center[1])**2)
-        array = np.where(radius > cap_radius, 0, 1)
-        self.hemispherical_cap = fp.CellVariable(mesh=mesh, value=array)
         
 class MaskedVariablesCorner(Variables):
     def __init__(self, params, mesh):

@@ -89,5 +89,14 @@ def test_hemispherical_cap():
     min_value = min(value[min_mask])
     assert 650. < min_value < 750.
 
+def test_hemispherical_cap_retreat():
+    params = read_params(jsonfile='constant_current.json', totalSteps=1, sweeps=10, cap_radius=3.75e-5, dt=10.0)
+    system = ConstantCurrentSystem(params)
+    system.run()
+    assert np.sum(system.variables.cap.value) == 493
+    phi = system.variables.distance
+    phi.setValue(phi.value - params.router / 2.)
+    assert np.sum(system.variables.cap.value) == 147
+    
 if __name__ == '__main__':
-    test_hemispherical_cap()
+    test_hemispherical_cap_retreat()
