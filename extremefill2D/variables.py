@@ -118,7 +118,12 @@ class CapVariable(fp.CellVariable):
         from scipy.interpolate import interp1d
         X, Y = self.X, self.Y
         phi = self.distance((X, Y), order=0, nearestCellIDs=self.nearestCellIDs)
-        return find_all_zeros(interp1d(Y, phi), Y[0], Y[-1])[-1]
+        zeros = find_all_zeros(interp1d(Y, phi), Y[0], Y[-1])
+        if len(zeros) > 0:
+            height = zeros[-1]
+        else:
+            height = self.ymax
+        return height
         
     def _calcValue(self):
         mesh = self.mesh
@@ -182,3 +187,4 @@ class MaskedVariablesNoCorner(Variables):
         super(MaskedVariablesNoCorner, self).__init__(params, mesh)
         deposition_mask = DepositionMask(self.distance, params)
         self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
+
