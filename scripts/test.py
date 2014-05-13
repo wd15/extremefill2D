@@ -1,5 +1,6 @@
 import json
 from collections import namedtuple
+import os
 
 
 import tables
@@ -7,11 +8,17 @@ import numpy as np
 from extremefill2D.systems import ExtremeFillSystem, ConstantCurrentSystem
 from extremefill2D.meshes import ExtremeFill2DMesh
 
+
 def assert_close(v1, v2):
     print v1, v2
     assert np.allclose(v1, v2)
 
-def read_params(jsonfile='params.json', **kwargs):
+def get_path():
+    return os.path.split(__file__)[0]
+
+def read_params(jsonfile=None, **kwargs):
+    if jsonfile is None:
+        jsonfile = os.path.join(get_path(), 'params.json')
     with open(jsonfile, 'rb') as ff:
         params_dict = json.load(ff)
     for k, v in kwargs.iteritems():
@@ -19,7 +26,7 @@ def read_params(jsonfile='params.json', **kwargs):
     return namedtuple('ParamClass', params_dict.keys())(*params_dict.values())
 
 def read_data(attrs):
-    datafile = 'annular.h5'
+    datafile = os.path.join(get_path(), 'annular.h5')
     h5file = tables.openFile(datafile, mode='r')
     index = h5file.root._v_attrs.latestIndex
     datadict = h5file.getNode('/ID' + str(int(index)))
@@ -40,8 +47,11 @@ def test():
         o = data_other[k]
         yield assert_close, v, o
         
+def constant_current_json():
+    return os.path.join(get_path(), 'constant_current.json')
+
 def test_constant_current():
-    params = read_params(jsonfile='constant_current.json', totalSteps=1, sweeps=50)
+    params = read_params(jsonfile=constant_current_json(), totalSteps=1, sweeps=50)
     system = ConstantCurrentSystem(params)
     system.run()
     assert_close(float(system.variables.current), params.current)
@@ -73,7 +83,7 @@ def test_goemtery():
     assert_close(np.sum(spacing), 10.0)
 
 def test_hemispherical_cap():
-    params = read_params(jsonfile='constant_current.json', totalSteps=1, sweeps=10, cap_radius=3.75e-5, dt=10.0)
+    params = read_params(jsonfile=constant_current_json(), totalSteps=1, sweeps=10, cap_radius=3.75e-5, dt=10.0)
     system = ConstantCurrentSystem(params)
     system.run()
     mesh = system.distance.mesh
@@ -89,5 +99,16 @@ def test_hemispherical_cap():
     min_value = min(value[min_mask])
     assert 650. < min_value < 750.
 
+def test_hemispherical_cap_retreat():
+    params = read_params(jsonfile=constant_current_json(), totalSteps=1, sweeps=10, cap_radius=3.75e-5, dt=10.0)
+    system = ConstantCurrentSystem(params)
+    system.run()
+    assert np.sum(system.variables.cap.value) == 493
+    phi = system.variables.distance
+    phi.setValue(phi.value - params.router / 2.)
+    assert np.sum(system.variables.cap.value) == 147
+    phi.setValue(-1)
+    assert np.sum(system.variables.cap.value) == 0
+
 if __name__ == '__main__':
-    test_hemispherical_cap()
+    read_params()

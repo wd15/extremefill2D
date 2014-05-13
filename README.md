@@ -37,7 +37,7 @@ due to issues with the Journal.
 ## Notebooks
 
 The IPython notebooks can be viewed at
-[nbviewer.ipython.org](http://nbviewer.ipython.org/github/wd15/extremefill2D/blob/master/notebooks).
+[nbviewer.ipython.org](http://nbviewer.ipython.org/github/wd15/extremefill2D/tree/master/notebooks).
 
 ## License
 

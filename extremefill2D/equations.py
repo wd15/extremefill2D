@@ -67,7 +67,7 @@ class PotentialEquation(SweepEquation):
 
 class CupricEquation(SweepEquation):
     def __init__(self, params, variables):
-        cap = variables.hemispherical_cap
+        cap = variables.cap
         self.equation = fp.TransientTerm() == \
           fp.DiffusionTerm(params.diffusionCupric * variables.masked_harmonic) \
         - fp.ImplicitSourceTerm(variables.baseCurrent * variables.surface / \
