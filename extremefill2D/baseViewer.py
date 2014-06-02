@@ -6,7 +6,6 @@ import fipy as fp
 import matplotlib.pyplot as plt
 import numpy as np
 from dicttable import DictTable
-import brewer2mpl
 
 class _BaseViewer(object):
     def plot(self, indices=[0], filename=None, times=None, cutoffvalue=-1, mirror=False, cutoff=True, labels=False, show=True, xlim=12e-6, ylim=-60e-6):
@@ -95,7 +94,7 @@ class _BaseSingleViewer(_BaseViewer):
         xmin, xmax = self.ax.get_xlim()
         xmin += self.x[0] * 1e+6
 
-        #set2 = brewer2mpl.get_map('Set2', 'qualitative', 8).mpl_colors
+        import brewer2mpl
         set1 = brewer2mpl.get_map('BuGn', 'sequential', 9).mpl_colors
         if not self.mirror:
             rect = plt.Rectangle((xmin, ymin), xmax - xmin, (-featureDepth * scale - ymin) - delta * 0.05, facecolor=set1[4], linewidth=0)

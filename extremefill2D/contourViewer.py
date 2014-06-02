@@ -1,12 +1,12 @@
 import tables
 from baseViewer import _BaseSingleViewer
 from tools import getSMTRecords
-import brewer2mpl
 import numpy as np
 
 
 class ContourViewer(_BaseSingleViewer):
     def _plot(self, y, scale, indices, xlim=12e-6):
+        import brewer2mpl
         x = self.flip(self.x, scale, negate=True)
         
         phi0 = self.data[0]['distance']
