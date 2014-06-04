@@ -123,6 +123,7 @@ class ExtremeFillSystem(object):
             if dt > (params.CFL * mesh.nominal_dx / extensionGlobalValue * 1.1):
                 dt = self.revert_step(dt)
                 redo_timestep = True
+                break
             else:
                 elapsedTime += dt
                 step += 1
