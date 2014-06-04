@@ -31,8 +31,8 @@ Temporal and Spatial Modeling of Extreme Bottom-Up Filling of Through
 Silicon Vias, D. Wheeler, T. P. Moffat and D. Josell, submitted to the
 Journal of the Electrochemical Society (2013).
 
-Unfortunately, I was unable the upload the paper to a preprint service
-due to issues with the Journal.
+See the
+[PDF on Figshare](http://figshare.com/articles/Spatial_Temporal_Modeling_of_Extreme_Bottom_up_Filling_of_Through_Silicon_Vias/1041795).
 
 ## Notebooks
 
