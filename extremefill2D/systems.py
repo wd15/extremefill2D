@@ -124,7 +124,6 @@ class ExtremeFillSystem(object):
                 dt = self.revert_step(dt)
                 redo_timestep = True
                 print("CFL number has been exceeded")
-                break
             else:
                 elapsedTime += dt
                 step += 1
