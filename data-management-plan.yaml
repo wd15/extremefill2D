@@ -1,0 +1,117 @@
+---
+# Sample Data Management Plan in YAML.
+#
+# Read into Python dictionary:
+#
+# >>> import yaml
+# >>> file = open('data-management-plan.yaml', 'r')
+# >>> d = yaml.load(
+
+# Summary of Activities
+
+Title: Extreme Fill 2D
+Description: >-
+  Data necessary to reproduce the simulations in "Temporal and Spatial
+  Modeling of Extreme Bottom-Up Filling of Through Silicon Vias", see
+  http://dx.doi.org/10.1149/2.040312jes.
+Category: finite volume simulation data
+Sample: Cu on silicon interconnect fabrication
+Tags:
+  - extremefill
+  - simulation
+  - finite volume
+  - interconnect
+  - electrodeposition
+  - level set
+
+# Data Types and Classisfication
+
+Bureau Code: 006:55
+Program Code: 
+Organization Code: 642
+Preservation Level: working data
+Format: HDF5
+Instrumentation: simulation
+Instrument Model Number: 
+Software Dependencies:
+  ExtremeFill2D:
+    Version: 05b0aec47f
+    Repository URL: https://github.com/wd15/extremefill2D
+  FiPy:
+    Version: 6e897df400
+    Repository URL: https://github.com/usnistgov/fipy
+  IPython:
+    Version: b31eb2f2d9
+    Repostiroy URL: https://github.com/ipython/ipython
+  Matplotlib:
+    Version: 1.2.1
+  Numpy:
+    Version: 1.7.1
+  Pandas:
+    Version: 0.12.0
+  Scipy:
+    Version: 0.13.0
+  Tables:
+    Version: 2.4.0
+  Cython:
+    Version: 0.19.1
+  Sumatra:
+    Version: 3c00d7ccfb
+    Repository URL: https://bitbucket.org/apdavison/sumatra
+  Brewer2mpl: 
+    Version: 1.3.1
+  Prettyplotlib:
+    Version: 0.1.3
+  PyLSMLIB:
+    Version: 0.1
+  Scikit-fmm:
+    Version: 78a243dd9d
+    Repository URL: https://github.com/scikit-fmm/scikit-fmm
+Spatial:
+Temporal:
+Data Dictionary:
+Data Types General Description: >-
+  Numpy arrays stored in an HDF5 file using Python Tables, use
+  https://github.com/wd15/extremefill2D/blob/53e2f01cb00863daf1f02a4c0838013a8710d10d/extremefill2D/dicttable.py
+  to read the data. Meta-data about the data is in a Postgres
+  database stored using Sumatra.
+Data Quality:
+Disclaimer:
+
+# Preservation
+
+Version:
+Release Date:
+Last Update:
+Frequency:
+Back-up Method: >-
+  Stored on CTCMS file system and backed up between using two file servers.
+Preservation General Description:
+  Preserved on a NIST owned backed-up file system.
+
+# Discoverability and Access
+
+Publisher:
+Creator: Daniel Wheeler
+Contributor: Daniel Josell, Tom Moffat
+Contact Name: Daniel Wheeler
+Contact Email: daniel.wheeler@nist.gov
+Unique Identifier:
+Public Access Level: non-public
+Access Level Comment: Unable to make data public due to size of data
+Homepage URL: https://github.com/wd15/extremefill2D
+Download URL:
+  Data Store: genie.nist.gov://users/wd15/git/extremefill2D/scripts/Data
+  Meta Data Store: postgres://wd15:XYZ@dromio.nist.gov/wd15
+  Code Repository: https://github.com/wd15/extremefill2D
+Endpoint: 
+Discoverability and Access General Description:
+  The data and associated meta-data is currently not public. The code
+  to produce the data is available on Github.
+License:
+  Code: FreeBSD
+  Data: 
+Rights:
+Language:
+
+
