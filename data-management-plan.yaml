@@ -5,7 +5,7 @@
 #
 # >>> import yaml
 # >>> file = open('data-management-plan.yaml', 'r')
-# >>> d = yaml.load(
+# >>> d = yaml.load(file)
 
 # Summary of Activities
 
@@ -24,7 +24,7 @@ Tags:
   - electrodeposition
   - level set
 
-# Data Types and Classisfication
+# Data Types and Classification
 
 Bureau Code: 006:55
 Program Code: 
