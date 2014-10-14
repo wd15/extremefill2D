@@ -122,7 +122,11 @@ class ExtremeFillSystem(object):
 
             if dt > (params.CFL * mesh.nominal_dx / extensionGlobalValue * 1.1):
                 dt = self.revert_step(dt)
-                redo_timestep = True
+                if redo_timestep:
+                    break
+                else:
+                    redo_timestep = True
+                print("CFL number has been exceeded")
             else:
                 elapsedTime += dt
                 step += 1
