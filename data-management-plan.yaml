@@ -34,37 +34,37 @@ Format: HDF5
 Instrumentation: simulation
 Instrument Model Number: 
 Software Dependencies:
-  ExtremeFill2D:
+  - name: ExtremeFill2D
     Version: 05b0aec47f
     Repository URL: https://github.com/wd15/extremefill2D
-  FiPy:
+  - name: FiPy
     Version: 6e897df400
     Repository URL: https://github.com/usnistgov/fipy
-  IPython:
+  - name: IPython
     Version: b31eb2f2d9
     Repostiroy URL: https://github.com/ipython/ipython
-  Matplotlib:
+  - name: Matplotlib
     Version: 1.2.1
-  Numpy:
+  - name: Numpy
     Version: 1.7.1
-  Pandas:
+  - name: Pandas
     Version: 0.12.0
-  Scipy:
+  - name: Scipy
     Version: 0.13.0
-  Tables:
+  - name: Tables
     Version: 2.4.0
-  Cython:
+  - name: Cython
     Version: 0.19.1
-  Sumatra:
+  - name: Sumatra
     Version: 3c00d7ccfb
     Repository URL: https://bitbucket.org/apdavison/sumatra
-  Brewer2mpl: 
+  - name: Brewer2mpl
     Version: 1.3.1
-  Prettyplotlib:
+  - name: Prettyplotlib
     Version: 0.1.3
-  PyLSMLIB:
+  - name: PyLSMLIB
     Version: 0.1
-  Scikit-fmm:
+  - name: Scikit-fmm
     Version: 78a243dd9d
     Repository URL: https://github.com/scikit-fmm/scikit-fmm
 Spatial:
