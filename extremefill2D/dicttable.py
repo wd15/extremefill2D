@@ -9,7 +9,7 @@ class DictTable:
     IDprefix = 'ID'
     def __init__(self, h5filename, mode='a'):
         if mode == 'w' and os.path.exists(h5filename):
-            print 'removing %s ' %  h5filename
+            print('removing %s ' %  h5filename)
             os.remove(h5filename)
 
         self.h5filename = h5filename
@@ -22,7 +22,7 @@ class DictTable:
         return _haskey
 
     def __setitem__(self, index, values):
-        h5file = tables.openFile(self.h5filename, mode='a')
+        h5file = tables.open_file(self.h5filename, mode='a')
         h5file.root._v_attrs.latestIndex = index
 
         groupName = self.IDprefix + str(index)
@@ -30,17 +30,17 @@ class DictTable:
         if hasattr(h5file.root, groupName):
             group = h5file.root._f_getChild(groupName)
             group._f_remove(recursive=True)
-            
-        group = h5file.createGroup(h5file.root, groupName)
+
+        group = h5file.create_group(h5file.root, groupName)
 
         for k in values.keys():
-            h5file.createArray(group, k, values[k])
+            h5file.create_array(group, k, values[k])
 
         h5file.close()
 
     def openread(self):
         if not hasattr(self, 'h5fileread'):
-            self.h5fileread = tables.openFile(self.h5filename, mode='r')
+            self.h5fileread = tables.open_file(self.h5filename, mode='r')
         return self.h5fileread
 
     def __getitem__(self, index):
@@ -48,7 +48,7 @@ class DictTable:
 
         if type(index) is int:
             index = [index]
-        
+
         s = '/' + self.IDprefix + str(index[0])
 
         if len(index) == 1:
@@ -72,6 +72,3 @@ class DictTable:
         if hasattr(self, 'h5fileread'):
             self.h5fileread.close()
             del self.h5fileread
-
-        
-    

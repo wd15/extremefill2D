@@ -34,12 +34,12 @@ class ExtremeFillSystem(object):
                           CupricEquation(params, variables),
                           SuppressorEquation(params, variables),
                           ThetaEquation(params, variables))
-        
+
         self.advection = AdvectionEquation(params, variables)
 
     def getVariables(self, params, mesh):
         return Variables(params, mesh)
-        
+
     def sweep(self, dt):
         return OrderedDict([[eqn.var.name, eqn.sweep(dt)] for eqn in self.equations])
 
@@ -47,7 +47,7 @@ class ExtremeFillSystem(object):
         for eqn in self.equations:
             eqn.var.updateOld()
         self.distanceOld = fp.numerix.array(self.distance).copy()
-        
+
     def update_dt(self, dt, params, mesh):
         extensionGlobalValue = self.extend()
         dt = min(float(params.CFL * mesh.nominal_dx / extensionGlobalValue), dt * 1.1)
@@ -75,24 +75,24 @@ class ExtremeFillSystem(object):
         col_width = 15
         float_format=lambda x: ('{:10.3e}'.format(x)).rjust(col_width)
         df_residuals = pd.DataFrame(residuals)
-        
+
         print
         print
-        print df.to_string(columns=['Step Number', 'dt', 'Elapsed Time', 'Redo Timestep'],
+        print(df.to_string(columns=['Step Number', 'dt', 'Elapsed Time', 'Redo Timestep'],
                            index=False,
                            col_space=3,
                            justify='right',
                            formatters={'Elapsed Time' : float_format,
                                        'dt' : float_format,
                                        'Redo Timestep' : lambda x: str(x).rjust(col_width),
-                                       'Step Number' : lambda x: str(x).rjust(col_width)})
+                                       'Step Number' : lambda x: str(x).rjust(col_width)}))
         print
-        print df_residuals.to_string(float_format=float_format)
-        
+        print(df_residuals.to_string(float_format=float_format))
+
     def run(self):
         params = self.params
         mesh = self.distance.mesh
-        
+
         redo_timestep = False
         elapsedTime = 0.0
         step = 0
@@ -149,16 +149,3 @@ class ConstantCurrentSystem(ExtremeFillSystem):
 
     def getVariables(self, params, mesh):
         return MaskedVariablesCorner(params, mesh)
-
-
-        
-
-
-
-
-
-
-
-
-
-

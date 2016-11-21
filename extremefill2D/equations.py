@@ -1,5 +1,5 @@
 import fipy as fp
-import fipy.solvers.trilinos as trilinos
+import fipy.solvers.scipy as scipy_solvers
 from extremefill2D.variables import AreaVariable
 import numpy as np
 import scipy
@@ -9,7 +9,7 @@ import scipy.optimize
 class AdvectionEquation(object):
     def __init__(self, params, variables):
         self.equation = fp.TransientTerm() + fp.AdvectionTerm(variables.extension)
-        self.solver = trilinos.LinearLUSolver()
+        self.solver = scipy_solvers.LinearLUSolver()
         self.var = variables.distance
 
     def solve(self, dt):
@@ -34,7 +34,7 @@ class AppliedPotentialEquation(object):
 
         f = lambda e: b0 * np.exp(-c0 * e) - b1 * np.exp(c1 * e) - I0
         fprime = lambda e: -b0 * c0 * np.exp(c0 * e) - b1 * c1 * np.exp(-c1 * e)
-        
+
         delta = scipy.optimize.fsolve(f, 0., fprime=fprime)[0]
         delta = np.sign(delta) * min(abs(float(self.var)) / 10, abs(delta))
         self.var.setValue(float(self.var) + delta)
@@ -46,7 +46,7 @@ class SweepEquation(object):
     def sweep(self, dt):
         return self.equation.sweep(self.var, dt=dt, solver=self.solver)
 
-    
+
 class PotentialEquation(SweepEquation):
     def __init__(self, params, variables):
         distance = variables.distance
@@ -55,12 +55,12 @@ class PotentialEquation(SweepEquation):
         ID = mesh._getNearestCellID(mesh.faceCenters[:,mesh.facesTop.value])
         upper[ID] = params.kappa / mesh.dy[-1] / (params.deltaRef - params.delta + mesh.dy[-1])
         surface = variables.surface
-        
+
         self.equation = fp.TransientTerm(params.capacitance * surface + (distance < 0)) == \
           fp.DiffusionTerm(params.kappa * variables.harmonic) \
         - surface * (variables.currentDensity - variables.potential * variables.currentDerivative) \
         - fp.ImplicitSourceTerm(surface * variables.currentDerivative) \
-        - upper * variables.appliedPotential - fp.ImplicitSourceTerm(upper) 
+        - upper * variables.appliedPotential - fp.ImplicitSourceTerm(upper)
         self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
         self.var = variables.potential
 
