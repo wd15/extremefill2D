@@ -14,11 +14,10 @@ import os
 import tempfile
 
 
-import tables
 from docopt import docopt
 # from extremefill2D.systems import ExtremeFillSystemff
 from extremefill2D.systems import ConstantCurrentSystem
-from extremefill2D.tools import DataWriter, WriteCupricData
+from extremefill2D.tools import WriteCupricData
 
 
 
@@ -26,7 +25,7 @@ from extremefill2D.tools import DataWriter, WriteCupricData
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='Run script.py')
     jsonfile = arguments['<jsonfile>']
-    with open(jsonfile, 'rb') as ff:
+    with open(jsonfile, 'r') as ff:
         params_dict = json.load(ff)
     params = namedtuple('ParamClass', params_dict.keys())(*params_dict.values())
 
@@ -45,5 +44,5 @@ if __name__ == '__main__':
         sumatra_label = params.sumatra_label
 
     finaldir = os.path.join('Data', sumatra_label)
-    finalpath = os.path.join(finaldir, 'data.h5')                                           
+    finalpath = os.path.join(finaldir, 'data.h5')
     shutil.move(datafile, finalpath)
