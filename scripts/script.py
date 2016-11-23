@@ -15,8 +15,8 @@ import tempfile
 
 
 from docopt import docopt
-# from extremefill2D.systems import ExtremeFillSystemff
-from extremefill2D.systems import ConstantCurrentSystem
+from extremefill2D.systems import ExtremeFillSystem
+# from extremefill2D.systems import ConstantCurrentSystem
 from extremefill2D.tools import WriteCupricData
 
 
@@ -34,8 +34,8 @@ if __name__ == '__main__':
 
     dataWriter = WriteCupricData(datafile)
 
-    # system = ExtremeFillSystem(params, datafile)
-    system = ConstantCurrentSystem(params, dataWriter)
+    system = ExtremeFillSystem(params, dataWriter)
+    # system = ConstantCurrentSystem(params, dataWriter)
     system.run()
 
     if not hasattr(params, 'sumatra_label'):

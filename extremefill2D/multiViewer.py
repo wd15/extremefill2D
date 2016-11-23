@@ -1,9 +1,8 @@
-import tables
-from contourViewer import ContourViewer
-from baseViewer import _BaseViewer
+from .contourViewer import ContourViewer
+from .baseViewer import _BaseViewer
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from tools import getSMTRecords
+from .tools import getSMTRecords
 import numpy as np
 
 class DummyViewer(object):
@@ -32,7 +31,7 @@ class MultiViewer(_BaseViewer):
         self.viewers = []
         if type(baseRecords) not in (list, tuple):
             baseRecords = [baseRecords] * len(recordset)
-            
+
         for j, recordset in enumerate(records):
             for i, (record, baseRecord) in enumerate(zip(recordset, baseRecords)):
                 ax = self.fig.add_subplot(gs[j,i])
@@ -80,15 +79,15 @@ class MultiViewer(_BaseViewer):
             all_spines = ['top', 'bottom', 'right', 'left']
             for spine in all_spines:
                 ax.spines[spine].set_visible(False)
-            
+
             if self.record_label:
                 ax.set_title(r'{0}'.format(viewer.record.label[:8]))
-              
+
         plt.text(0.38, 0.982, self.xlabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize)
         plt.text(0.03, 0.5, self.ylabel, transform=self.fig.transFigure, fontsize=self.axislabelfontsize, rotation='vertical')
 
         plt.tight_layout(pad=3.0, h_pad=1.0, w_pad=0.0)
-        
+
 
 def plot1DFigure(figNum):
     import extremefill
@@ -119,4 +118,3 @@ if __name__ == '__main__':
     title = [r'$k^+$={0:1.1e}'.format(r.parameters['kPlus']) for r in records[0]]
     viewer = MultiViewer(records, title=title, figsize=(12, 9))
     viewer.plot(times=(0., 1000., 2000., 3000., 4000., 5000.))
-

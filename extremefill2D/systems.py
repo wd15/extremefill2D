@@ -89,7 +89,7 @@ class ExtremeFillSystem(object):
         print
         print(df_residuals.to_string(float_format=float_format))
 
-    def run(self):
+    def run(self, print_data=True):
         params = self.params
         mesh = self.distance.mesh
 
@@ -132,7 +132,8 @@ class ExtremeFillSystem(object):
                 step += 1
                 redo_timestep = False
 
-            self.print_data(step, elapsedTime, dt, redo_timestep, residuals)
+            if print_data:
+                self.print_data(step, elapsedTime, dt, redo_timestep, residuals)
 
 
 class ConstantCurrentSystem(ExtremeFillSystem):

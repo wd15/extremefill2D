@@ -19,7 +19,7 @@ class BaseViewer(object):
             labels = ['k'] * len(datafiles)
 
         for datafile, label, color in zip(datafiles, labels, colors):
-            print 'datafile',datafile
+            print('datafile',datafile)
             self.addData(datafile, label, color)
 
     def addBaseData(self, datapath):
@@ -27,7 +27,7 @@ class BaseViewer(object):
 
     def addData(self, datapath, label, color):
         raise NotImplementedError
-    
+
     def getInterpolatedDistanceFunction(self, time, data):
         indexJump = 10
 
@@ -42,7 +42,7 @@ class BaseViewer(object):
             index += indexJump
 
         data.index = index - indexJump
-            
+
         t0 = data[index - indexJump]['elapsedTime']
         t1 = data[index]['elapsedTime']
 
@@ -54,19 +54,19 @@ class BaseViewer(object):
     def getGrid(self, data):
         import fipy as fp
         return fp.Grid2D(nx=data[0]['nx'], ny=data[0]['ny'], dx=data[0]['dx'], dy=data[0]['dy'])
-    
+
     def plot(self, filename=None, filedir=None):
         raise NotImplementedError
 
 class NormViewer(BaseViewer):
     def addBaseData(self, datafile):
         self.basedata = DictTable(datafile, 'r')
-        
+
     def addData(self, datafile, label, color):
         data = DictTable(datafile, 'r')
         self.data.append(self.__getNormData(data) + (label,))
-    
-    def plot(self, filename='Norm2.png', filedir='png'):        
+
+    def plot(self, filename='Norm2.png', filedir='png'):
         for t, d, l, c in self.data:
             pylab.semilogy(t, d, label=l)
 
@@ -81,7 +81,7 @@ class NormViewer(BaseViewer):
 
         if hasattr(self.basedata, 'index'):
             del self.basedata.index
-            
+
         for time in self.times:
             phiBase = self.getInterpolatedDistanceFunction(time, self.basedata)
             phi = self.getInterpolatedDistanceFunction(time, data)
@@ -98,14 +98,14 @@ class NormViewer(BaseViewer):
         grid = self.getGrid(data)
         import fipy as fp
         return np.array(fp.CellVariable(mesh=grid, value=phi)(baseGrid.cellCenters, order=1))
-    
-    
+
+
 class _ContourViewer(BaseViewer):
     def __init__(self, basedatafile=None, datafiles=None, labels=None, times=None, contours=(0,), colors=None):
         self.contours = contours
         self.colors = colors
         super(_ContourViewer, self).__init__(basedatafile=basedatafile, datafiles=datafiles, labels=labels, times=times, colors=colors)
-        
+
     def plot(self, filename=None):
         import matplotlib.pyplot as plt
         fig = plt.figure()
@@ -118,14 +118,14 @@ class _ContourViewer(BaseViewer):
         if filename:
             pylab.savefig(filename)
         pylab.show()
-            
+
     def addData(self, datafile, label, color):
         for time in self.times:
             self.__addDataAtTime(datafile, time, color)
 
     def addBaseData(self, datafile):
         self.addData(datafile, None, 'k')
-            
+
     def __addDataAtTime(self, datafile, time, color):
         data = DictTable(datafile, 'r')
         mesh = self.getGrid(data)
@@ -161,7 +161,7 @@ class Records:
             self.records = project.record_store.list(project.name)
         else:
             self.records = records
-        
+
     def by_tag(self, tag):
         return self.getRecords(lambda r: tag in r.tags)
 
@@ -194,15 +194,15 @@ class Records:
 
     def __getitem__(self, index):
         return self.records[index]
-        
+
 if __name__ == '__main__':
     # for v in (0.02, 0.04, 0.08, 0.16):
-    #     CFLContourViewer(v).plot('contour%1.2f.png' % v) 
+    #     CFLContourViewer(v).plot('contour%1.2f.png' % v)
     records = Records().by_tag('serialnumber4')
     baseRecord = records.by_parameter('sweeps', 32)
     otherRecord = records.by_parameter('sweeps', 1)
-    print baseRecord
-    print otherRecord
+    print(baseRecord)
+    print(otherRecord)
     v = ContourViewer(baseRecord, otherRecord, colors=('r',))
     v.plot()
     # profile.stop()

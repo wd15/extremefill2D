@@ -1,6 +1,5 @@
-import tables
-from baseViewer import _BaseSingleViewer
-from tools import getSMTRecords
+from .baseViewer import _BaseSingleViewer
+from .tools import getSMTRecords
 import numpy as np
 
 
@@ -8,7 +7,7 @@ class ContourViewer(_BaseSingleViewer):
     def _plot(self, y, scale, indices, xlim=12e-6):
         import brewer2mpl
         x = self.flip(self.x, scale, negate=True)
-        
+
         phi0 = self.data[0]['distance']
         phi0 = self.flip(phi0, scale)
 
@@ -28,7 +27,7 @@ class ContourViewer(_BaseSingleViewer):
         for index in indices[1:]:
             phi = self.data[index]['distance']
             phi = self.flip(phi, scale)
-            
+
             self.elapsedTimes.append(self.data[index, 'elapsedTime'])
 
             if self.mirror:
@@ -57,7 +56,3 @@ if __name__ == '__main__':
     records = getSMTRecords(tags=['serialnumber18'], parameters={'Nx' : 600})
     viewer = ContourViewer(record=records[0])
     viewer.plot(indices=200)
-    
-    
-                     
-

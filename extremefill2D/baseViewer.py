@@ -1,11 +1,10 @@
 import os.path
 
 
-import tables
 import fipy as fp
 import matplotlib.pyplot as plt
 import numpy as np
-from dicttable import DictTable
+from .dicttable import DictTable
 
 class _BaseViewer(object):
     def plot(self, indices=[0], filename=None, times=None, cutoffvalue=-1, mirror=False, cutoff=True, labels=False, show=True, xlim=12e-6, ylim=-60e-6):
@@ -36,7 +35,7 @@ class _BaseSingleViewer(_BaseViewer):
         data0 = self.data[0]
 
         mesh = fp.Grid2D(nx=data0['nx'], ny=data0['ny'], dx=data0['dx'], dy=data0['dy'])
-        
+
         self.dy = mesh.dy
         self.shape = (mesh.ny, mesh.nx)
         self.x = mesh.x.value
@@ -74,7 +73,7 @@ class _BaseSingleViewer(_BaseViewer):
 
         if type(indices) is int:
             indices = [indices]
-        
+
         delta = 150e-6
 
         featureDepth = self.getFeatureDepth()
@@ -88,7 +87,7 @@ class _BaseSingleViewer(_BaseViewer):
         ymax = -ymin * 0.1
 
         y = self.flip(self.y, scale) - y0 + (maxFeatureDepth - featureDepth) * scale
-        
+
         self._plot(y, scale, indices, xlim=xlim)
 
         xmin, xmax = self.ax.get_xlim()

@@ -399,8 +399,8 @@ def refine_contour_plot(points, values):
 
     Take a set of `points` and `values` used to plot a contour plot and returns new points to calculate in order of how the value difference between connecting points is reduced.
 
-    >>> refine_contour_plot([[0, 0], [1, 0], [0, 1]], [0., 1., 10.])
-    [[0., 0.5], [0.5, 0.5], [0.5, 0.]]
+    >>> out = refine_contour_plot([[0, 0], [1, 0], [0, 1]], [0., 1., 10.])
+    >>> assert np.allclose(out, [[0., 0.5], [0.5, 0.5], [0.5, 0.]])
 
     :Parameters:
       - `points`: Set of (x, y) points.
@@ -415,7 +415,7 @@ def refine_contour_plot(points, values):
     tri = Delaunay(points)
     indices, indptr = tri.vertex_neighbor_vertices
     edges = []
-    for i in xrange(len(points)):
+    for i in range(len(points)):
         for j in indptr[indices[i]:indices[i + 1]]:
             if j > i:
                 edges.append([i, j])
