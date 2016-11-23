@@ -19,7 +19,8 @@ install:
   - pip install sumatra
   - git clone https://github.com/usnistgov/fipy.git ~/fipy;
   - cd ~/fipy;
-  - 2to3 .
+  - 2to3 --write .
+  - 2to3 --write --doctests_only .
   - python setup.py install;
   - cd $TRAVIS_BUILD_DIR;
   - pip install .
