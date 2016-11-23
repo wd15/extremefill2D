@@ -16,7 +16,7 @@ install:
   - source activate test-environment
   - conda install -q -y -n test-environment numpy scipy pytest pandas pytables
   - conda install -q -y -n test-environment cython matplotlib jupyter
-  - pip install sumatra
+  - pip install sumatra scikit-fmm
   - git clone https://github.com/usnistgov/fipy.git ~/fipy
   - cd ~/fipy
   - 2to3 --write .
