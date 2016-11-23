@@ -17,12 +17,11 @@ install:
   - conda install -q -y -n test-environment numpy scipy pytest pandas pytables
   - conda install -q -y -n test-environment cython matplotlib
   - pip install sumatra
-  - git clone https://github.com/usnistgov/fipy.git ~/fipy;
-  - cd ~/fipy;
+  - git clone https://github.com/usnistgov/fipy.git ~/fipy
+  - cd ~/fipy
   - 2to3 --write .
-  - 2to3 --write --doctests_only .
-  - python setup.py install;
-  - cd $TRAVIS_BUILD_DIR;
+  - python setup.py install
+  - cd $TRAVIS_BUILD_DIR
   - pip install .
 script:
   - py.test
