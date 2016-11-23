@@ -4,8 +4,8 @@ Extreme Fill 2D
 </h1>
 
 <p align="center">
-<a href="https://travis-ci.org/wd15/extremefill2d" target="_blank">
-<img src="https://api.travis-ci.org/wd15/extremefill2d.svg"
+<a href="https://travis-ci.org/wd15/extremefill2D" target="_blank">
+<img src="https://api.travis-ci.org/wd15/extremefill2D.svg"
 alt="Travis CI">
 </a>
 <a href="https://github.com/wd15/extremefill2D/blob/master/LICENSE.md">
