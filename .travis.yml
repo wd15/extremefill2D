@@ -17,7 +17,7 @@ install:
   - conda install -q -y -n test-environment numpy scipy pytest pandas pytables
   - conda install -q -y -n test-environment cython matplotlib
   - pip install sumatra
-  - git clone https://github.com/fipy/fipy.git ~/fipy;
+  - git clone https://github.com/usnistgov/fipy.git ~/fipy;
   - cd ~/fipy;
   - 2to3 .
   - python setup.py install;
