@@ -20,7 +20,7 @@ simulations for the Extreme Fill 2D model described in a
 [paper](https://dx.doi.org/10.1149/2.040312jes) by Wheeler, Moffat and
 Josell submitted to the JES. For further details on Extreme Fill see
 this
-[recent blog post](http://wd15.github.io/2013/05/07/extremefill2d/)
+[recent blog post](http://wd15.github.io/2013/05/07/extremefill2d)
 and read the [paper](https://dx.doi.org/10.1149/2.040312jes). The
 repository aims to make both the simulations and the images entirely
 reproducible.
