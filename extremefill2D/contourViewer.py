@@ -25,6 +25,7 @@ class ContourViewer(_BaseSingleViewer):
         self.elapsedTimes = [0.]
 
         for index in indices[1:]:
+
             phi = self.data[index]['distance']
             phi = self.flip(phi, scale)
 

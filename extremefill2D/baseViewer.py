@@ -28,8 +28,11 @@ class _BaseViewer(object):
 
 
 class _BaseSingleViewer(_BaseViewer):
-    def __init__(self, record, ax=None, color='k', indexJump=10, mirror=False):
-        datafile = os.path.join(record.datastore.root, record.output_data[0].path)
+    def __init__(self, record, ax=None, color='k', indexJump=10, mirror=False, featureDepth=56e-6):
+        if isinstance(record, str):
+            datafile = record
+        else:
+            datafile = os.path.join(record.datastore.root, record.output_data[0].path)
         self.record = record
         self.data = DictTable(datafile, 'r')
         data0 = self.data[0]
@@ -48,20 +51,14 @@ class _BaseSingleViewer(_BaseViewer):
         self.color = color
         self.mirror = mirror
 
-        self.indexJump = self.record.parameters['data_frequency']
+        self.indexJump = indexJump
+        self.featureDepth = featureDepth
 
 
     def flip(self, a, scale, negate=False):
         a = np.reshape(a, self.shape)
         a = a.swapaxes(0,1)
         return a * scale
-
-    def getFeatureDepth(self):
-        if self.record.parameters.as_dict().has_key('featureDepth'):
-            featureDepth = self.record.parameters['featureDepth']
-        else:
-            featureDepth = 56e-6
-        return featureDepth
 
     def plotSetup(self, indices=[0], times=None, maxFeatureDepth=None, cutoff=None, xlim=12e-6, ylim=-60e-6):
         if times is not None:
@@ -76,7 +73,7 @@ class _BaseSingleViewer(_BaseViewer):
 
         delta = 150e-6
 
-        featureDepth = self.getFeatureDepth()
+        featureDepth = self.featureDepth
         if maxFeatureDepth is None:
             maxFeatureDepth = featureDepth
 

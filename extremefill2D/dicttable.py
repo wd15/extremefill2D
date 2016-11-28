@@ -53,13 +53,13 @@ class DictTable:
 
         if len(index) == 1:
             d = {}
-            for array in h5file.listNodes(s, classname='Array'):
+            for array in h5file.list_nodes(s, classname='Array'):
                 d[array.name] = array.read()
         else:
             for t in index[1:]:
                 s += '/' + str(t)
 
-            d = h5file.getNode(s, classname='Array').read()
+            d = h5file.get_node(s, classname='Array').read()
 
         return d
 

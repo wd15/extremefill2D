@@ -1,19 +1,12 @@
-import os
-import shutil
 from collections import OrderedDict
 
 
 import pandas as pd
-import numpy as np
 import fipy as fp
 from extremefill2D.variables import Variables, MaskedVariablesCorner
 from extremefill2D.equations import PotentialEquation, CupricEquation
 from extremefill2D.equations import SuppressorEquation, ThetaEquation
 from extremefill2D.equations import AdvectionEquation, AppliedPotentialEquation
-from extremefill2D.dicttable import DictTable
-from extremefill2D.variables import PotentialVariable, CupricVariable
-from extremefill2D.variables import SuppressorVariable, DistanceVariableNonUniform
-from extremefill2D.variables import _InterfaceVar, AreaVariable
 from extremefill2D.meshes import ExtremeFill2DMesh
 
 class ExtremeFillSystem(object):
@@ -134,6 +127,8 @@ class ExtremeFillSystem(object):
 
             if print_data:
                 self.print_data(step, elapsedTime, dt, redo_timestep, residuals)
+
+        return self.dataWriter.datafile
 
 
 class ConstantCurrentSystem(ExtremeFillSystem):
