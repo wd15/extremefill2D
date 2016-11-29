@@ -128,7 +128,7 @@ class ExtremeFillSystem(object):
             if print_data:
                 self.print_data(step, elapsedTime, dt, redo_timestep, residuals)
 
-        return self.dataWriter.datafile
+
 
 
 class ConstantCurrentSystem(ExtremeFillSystem):
