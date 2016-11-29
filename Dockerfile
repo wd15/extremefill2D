@@ -17,7 +17,7 @@ ENV PATH /home/main/anaconda3/bin:$PATH
 RUN conda config --set always_yes yes --set changeps1 no
 RUN conda update -q conda
 RUN conda install -q -y numpy scipy pytest pandas pytables jupyter
-RUN conda install -q -y cython matplotlib jupyter toolz
+RUN conda install -q -y cython matplotlib jupyter toolz brewer2mpl
 RUN pip install sumatra scikit-fmm
 RUN git clone https://github.com/usnistgov/fipy.git ~/fipy
 WORKDIR /home/main/fipy
