@@ -1,6 +1,7 @@
 import tables
 import os
-##import hashlib
+import numbers
+
 
 class DictTable:
     """
@@ -46,7 +47,7 @@ class DictTable:
     def __getitem__(self, index):
         h5file = self.openread()
 
-        if type(index) is int:
+        if isinstance(index, numbers.Integral):
             index = [index]
 
         s = '/' + self.IDprefix + str(index[0])
