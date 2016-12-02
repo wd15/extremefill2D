@@ -1,6 +1,7 @@
 """Functions to run an ExtremeFill2D simulation
 """
 
+from toolz.curried import curry
 from collections import OrderedDict
 
 import numpy as np
@@ -13,6 +14,7 @@ from ..equations import PotentialEquation, CupricEquation
 from ..equations import SuppressorEquation, ThetaEquation
 
 
+@curry
 def run(params, total_steps, logger=None, input_values=None):
     """Run an ExtremeFill2D simulation
 
