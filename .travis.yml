@@ -25,3 +25,4 @@ install:
   - pip install .
 script:
   - py.test
+  - pylint extremefill2D/fextreme

@@ -1,9 +1,9 @@
 """Functions to run an ExtremeFill2D simulation
 """
 
-from toolz.curried import curry
 from collections import OrderedDict
 
+from toolz.curried import curry  # pylint: disable=no-name-in-module
 import numpy as np
 import fipy as fp
 
@@ -13,7 +13,6 @@ from ..equations import AdvectionEquation
 from ..equations import PotentialEquation, CupricEquation
 from ..equations import SuppressorEquation, ThetaEquation
 
-
 @curry
 def run(params, total_steps, logger=None, input_values=None):
     """Run an ExtremeFill2D simulation
@@ -21,11 +20,9 @@ def run(params, total_steps, logger=None, input_values=None):
     Args:
       params: a namedtuple of parameters, see `params.json` for more
         details
-      elapsed_time: the current elapsed simulation time
-      time_step_duration: the current dt
       total_steps: the total number of steps to run the simulation
       logger: a logger to log output details
-      np_variables: the starting values of the variables
+      input_values: the start values for the parameters
 
     Returns:
       the value of the variables after running the simulation
