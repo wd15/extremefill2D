@@ -14,7 +14,7 @@ install:
   - conda info -a
   - conda create -q -y -n test-environment python=3
   - source activate test-environment
-  - conda install -q -y -n test-environment numpy scipy pytest pandas pytables xarray
+  - conda install -q -y -n test-environment numpy scipy pytest pandas pytables xarray toolz
   - conda install -q -y -n test-environment cython matplotlib jupyter click pytest-cov
   - pip install sumatra scikit-fmm pylint
   - git clone https://github.com/usnistgov/fipy.git ~/fipy
