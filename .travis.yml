@@ -16,7 +16,7 @@ install:
   - source activate test-environment
   - conda install -q -y -n test-environment numpy scipy pytest pandas pytables xarray toolz
   - conda install -q -y -n test-environment cython matplotlib jupyter click pytest-cov
-  - pip install sumatra scikit-fmm pylint
+  - pip install sumatra scikit-fmm pylint datreant.core
   - git clone https://github.com/usnistgov/fipy.git ~/fipy
   - cd ~/fipy
   - 2to3 --write .
