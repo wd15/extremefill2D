@@ -184,7 +184,7 @@ def main(jsonfile, tags=None, steps=0, **extra_params):
         read_json,
         lambda x: {**x, **extra_params},
         save(filepath=os.path.basename(jsonfile), savefunc=save_json), # pylint: disable=no-value-for-parameter
-        do(lambda x: x.__setattr__('tags', tags)),
+        do(lambda x: x.__setattr__('tags', [] if tags is None else tags)),
         run_and_save(steps=steps,  # pylint: disable=no-value-for-parameter
                      paramfile=os.path.basename(jsonfile),
                      write_cdf='data0.nc'),
