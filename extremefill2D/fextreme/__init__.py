@@ -5,9 +5,10 @@ import os
 import tempfile
 import json
 from collections import namedtuple
+import glob
 
 import xarray
-from toolz.curried import pipe, compose, do, curry # pylint: disable=no-name-in-module
+from toolz.curried import pipe, compose, do, curry, last # pylint: disable=no-name-in-module
 import datreant.core
 
 from .run_simulation import run
@@ -51,6 +52,7 @@ def read_json(jsonfile):
         dict_ = json.load(filepointer)
     return dict_
 
+@curry
 def make_new_treant(base_dir='.'):
     """Create a treant with a unique ID
 
@@ -71,6 +73,7 @@ def make_new_treant(base_dir='.'):
         do(lambda x: x.__setattr__('name', x.uuid)),
     )
 
+@curry
 def save_json(filepath, data):
     """Save an object to a JSON file
 
@@ -82,7 +85,7 @@ def save_json(filepath, data):
         json.dump(data, fpointer)
 
 @curry
-def save(data, filepath, savefunc, treant=None):
+def save(data, filepath, savefunc, base_dir='.', treant=None):
     """Save data to a treant with callback
 
     Args:
@@ -95,7 +98,7 @@ def save(data, filepath, savefunc, treant=None):
       the treant
     """
     return pipe(
-        treant or make_new_treant(),
+        treant or make_new_treant(base_dir=base_dir),
         do(lambda treant: savefunc(treant[filepath].makedirs().abspath, data))
     )
 
@@ -141,31 +144,6 @@ def read_if_not_none(filepath, readfunc, treant):
     else:
         return read(filepath, readfunc, treant)
 
-@curry
-def run_and_save(treant, steps, paramfile, write_cdf, read_cdf=None):
-    """Run a simulation for save to a datafile
-
-    Args:
-      treant: the treant to read and write from
-      steps: the number of steps to run
-      write_cdf: the datafile to write to
-      paramfile: the parameter file to read from
-      read_cdf: the datafile to read from
-
-    Returns:
-      a treant with the simulation data
-    """
-    return pipe(
-        treant[paramfile].abspath,
-        read_json,
-        lambda params: namedtuple('parameters', params.keys())(**params),
-        run(total_steps=steps, # pylint: disable=no-value-for-parameter
-            input_values=read_if_not_none(read_cdf, xarray.open_dataset, treant)),
-        xarray.Dataset,
-        lambda data: data.to_netcdf(treant[write_cdf].abspath),
-        lambda _: treant
-    )
-
 
 def main(jsonfile, tags=None, steps=0, **extra_params):
     """Run a simulation and get the datreant ID.
@@ -183,11 +161,78 @@ def main(jsonfile, tags=None, steps=0, **extra_params):
         jsonfile,
         read_json,
         lambda x: {**x, **extra_params},
-        save(filepath=os.path.basename(jsonfile), savefunc=save_json), # pylint: disable=no-value-for-parameter
+        save(filepath=os.path.basename(jsonfile), savefunc=save_json, base_dir='data'), # pylint: disable=no-value-for-parameter
         do(lambda x: x.__setattr__('tags', [] if tags is None else tags)),
         run_and_save(steps=steps,  # pylint: disable=no-value-for-parameter
                      paramfile=os.path.basename(jsonfile),
-                     write_cdf='data0.nc'),
+                     write_cdf='data0.nc')
+    )
+
+
+
+@curry
+def run_and_save(treant, steps, write_cdf, read_cdf=None):
+    """Run a simulation and save to a datafile
+
+    Args:
+      treant: the treant to read and write from
+      steps: the number of steps to run
+      write_cdf: the datafile to write to
+      read_cdf: the datafile to read from
+
+    Returns:
+      a treant with the simulation data
+    """
+    return pipe(
+        treant['params.json'].abspath,
+        read_json,
+        lambda params: namedtuple('parameters', params.keys())(**params),
+        run(total_steps=steps, # pylint: disable=no-value-for-parameter
+            input_values=read_if_not_none(read_cdf, xarray.open_dataset, treant)),
+        xarray.Dataset,
+        lambda data: data.to_netcdf(treant[write_cdf].abspath),
+        lambda _: treant
+    )
+
+def base_path():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
+
+def init_sim(jsonfile, tags=None, **extra_params):
+    return pipe(
+        os.path.join(base_path(), 'data'),
+        make_new_treant,
+        do(lambda treant: treant.__setattr__('tags', [] if tags is None else tags)),
+        do(lambda treant: pipe(os.path.join(base_path(), jsonfile),
+                               read_json,
+                               lambda params: {**params, **extra_params},
+                               save_json(os.path.join(treant.abspath, os.path.basename(jsonfile))))),
+        do(lambda treant: pipe(treant[os.path.basename(jsonfile)].abspath,
+                               read_json,
+                               lambda params: namedtuple('parameters', params.keys())(**params),
+                               run(total_steps=0, input_values=None),
+                               xarray.Dataset,
+                               lambda data: data.to_netcdf(treant['data000000.nc'].abspath)))
+    )
+
+
+def restart_sim(treant, steps):
+    return pipe(
+        treant.abspath,
+        glob.glob,
+        sorted,
+        last,
+        lambda datafile: pipe(
+            datafile,
+            read_json,
+            lambda params: namedtuple('parameters', params.keys())(**params),
+            run(total_steps=steps,
+                input_values=xarray.open_dataset(treant[datafile].abspath)),
+            xarray.Dataset,
+            lambda data: data.to_netcdf(treant['data000000.nc'].abspath))),
+        read_json,
+        lambda params: namedtuple('parameters', params.keys())(**params),
+        run(total_steps=steps, params)
+
     )
 
 def test_main():
