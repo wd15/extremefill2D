@@ -160,13 +160,21 @@ def init_sim(jsonfile, data_path, init_datafile='data0000000.nc', tags=None, **e
             read_json,
             lambda params: {**params, **extra_params},
             save_json(os.path.join(treant.abspath, os.path.basename(jsonfile))))),  # pylint: disable=no-value-for-parameter
-        do(lambda treant: pipe(
+        do(lambda treant: run_and_save(
             treant[os.path.basename(jsonfile)].abspath,
-            read_json,
-            lambda params: namedtuple('parameters', params.keys())(**params),
-            run(total_steps=0, input_values=None),  # pylint: disable=no-value-for-parameter
-            xarray.Dataset,
-            lambda data: data.to_netcdf(treant[init_datafile].abspath)))
+            treant[init_datafile].abspath))
+    )
+
+def run_and_save(jsonpath, datapath, total_steps=0, input_values=None):
+    """Run and save a simulation.
+    """
+    return pipe(
+        jsonpath,
+        read_json,
+        lambda params: namedtuple('parameters', params.keys())(**params),
+        run(total_steps=total_steps, input_values=input_values),
+        xarray.Dataset,
+        lambda data: data.to_netcdf(datapath)
     )
 
 def test_init_sim():
@@ -212,7 +220,7 @@ def next_datafile(filename, steps):
     )
 
 @curry
-def restart_sim(treant, steps,):
+def restart_sim(treant, steps):
     """Restart a simulation from the latest time step.
 
     Args:
@@ -229,15 +237,11 @@ def restart_sim(treant, steps,):
         last,
         lambda leaf: leaf.abspath,
         os.path.basename,
-        lambda datafile: pipe(
+        lambda datafile: run_and_save(
             treant['params.json'].abspath,
-            read_json,
-            lambda params: namedtuple('parameters', params.keys())(**params),
-            run(total_steps=steps,
-                input_values=xarray.open_dataset(treant[datafile].abspath)),  # pylint: disable=no-value-for-parameter
-            xarray.Dataset,
-            lambda data: data.to_netcdf(treant[next_datafile(datafile, steps)].abspath)
-        ),
+            treant[next_datafile(datafile, steps)].abspath,
+            total_steps=steps,
+            input_values=xarray.open_dataset(treant[datafile].abspath)),
         lambda _: treant
     )
 
