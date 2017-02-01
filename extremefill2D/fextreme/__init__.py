@@ -1,14 +1,17 @@
 """Functional implementation of the extremefill2D code.
 """
 
+# pylint: disable=no-value-for-parameter
+
 import os
 import tempfile
 import json
 from collections import namedtuple
 import re
 
+from click.testing import CliRunner
 import xarray
-from toolz.curried import pipe, compose, do, curry, last, juxt, map # pylint: disable=no-name-in-module
+from toolz.curried import pipe, compose, do, curry, last, juxt, map # pylint: disable=no-name-in-module, redefined-builtin
 import datreant.core
 
 from .run_simulation import run
@@ -69,14 +72,12 @@ def make_new_treant(base_dir='.'):
         do(lambda x: x.__setattr__('name', x.uuid)),
     )
 
-def _test_make_new_treant():
+def test_make_new_treant():
+    """Test make_new_treant
     """
-    >>> from click.testing import CliRunner
-    >>> with CliRunner().isolated_filesystem():
-    ...     treant = make_new_treant(base_dir='.')
-    ...     assert treant.name == treant.uuid
-    """
-    pass
+    with CliRunner().isolated_filesystem():
+        treant = make_new_treant(base_dir='.')
+    assert treant.name == treant.uuid
 
 @curry
 def save_json(filepath, data):
@@ -108,15 +109,13 @@ def save(data, filepath, savefunc, base_dir='.', treant=None):
     )
 
 def test_save():
+    """Test save
     """
-    >>> from click.testing import CliRunner
-    >>> with CliRunner().isolated_filesystem():
-    ...     test = dict(a=1)
-    ...     treant = save(test, 'test.json', save_json)
-    ...     actual = read('test.json', read_json, treant)
-    ...     assert test == actual
-    """
-    pass # pragma: no cover
+    with CliRunner().isolated_filesystem():
+        test = dict(a=1)
+        treant = save(test, 'test.json', save_json)
+        actual = read('test.json', read_json, treant)
+        assert test == actual
 
 @curry
 def read(filepath, readfunc, treant):
@@ -141,8 +140,6 @@ def base_path():
 def init_sim(jsonfile, data_path, init_datafile='data0000000.nc', tags=None, **extra_params):
     """Initialize a simulation.
 
-
-
     Args:
       jsonfile: the jsonfile to copy
       data_path: the path in which to make the treant
@@ -158,31 +155,32 @@ def init_sim(jsonfile, data_path, init_datafile='data0000000.nc', tags=None, **e
         data_path,
         make_new_treant,
         do(lambda treant: treant.__setattr__('tags', [] if tags is None else tags)),
-        do(lambda treant: pipe(jsonfile,
-                               read_json,
-                               lambda params: {**params, **extra_params},
-                               save_json(os.path.join(treant.abspath, os.path.basename(jsonfile))))),
-        do(lambda treant: pipe(treant[os.path.basename(jsonfile)].abspath,
-                               read_json,
-                               lambda params: namedtuple('parameters', params.keys())(**params),
-                               run(total_steps=0, input_values=None),
-                               xarray.Dataset,
-                               lambda data: data.to_netcdf(treant[init_datafile].abspath)))
+        do(lambda treant: pipe(
+            jsonfile,
+            read_json,
+            lambda params: {**params, **extra_params},
+            save_json(os.path.join(treant.abspath, os.path.basename(jsonfile))))),  # pylint: disable=no-value-for-parameter
+        do(lambda treant: pipe(
+            treant[os.path.basename(jsonfile)].abspath,
+            read_json,
+            lambda params: namedtuple('parameters', params.keys())(**params),
+            run(total_steps=0, input_values=None),  # pylint: disable=no-value-for-parameter
+            xarray.Dataset,
+            lambda data: data.to_netcdf(treant[init_datafile].abspath)))
     )
 
-def _test_init_sim():
+def test_init_sim():
+    """Test init_sim
     """
-    >>> from click.testing import CliRunner
-    >>> with CliRunner().isolated_filesystem() as dir_:
-    ...     assert pipe(
-    ...         os.path.join(base_path(), 'scripts', 'params.json'),
-    ...         init_sim(data_path=dir_),
-    ...         lambda treant: treant.leaves.abspaths,
-    ...         map(os.path.basename),
-    ...         lambda data: 'data0000000.nc' in data,
-    ...     )
-    """
-    pass
+    with CliRunner().isolated_filesystem() as dir_:
+        assert pipe(
+            os.path.join(base_path(), 'scripts', 'params.json'),
+            init_sim(data_path=dir_),
+            lambda treant: treant.leaves.abspaths,
+            map(os.path.basename),
+            lambda data: 'data0000000.nc' in data,
+        )
+
 
 def next_datafile(filename, steps):
     """Rename a file when using numbers to denote time steps.
@@ -213,8 +211,16 @@ def next_datafile(filename, steps):
         1
     )
 
-def restart_sim(treant, steps):
-    """
+@curry
+def restart_sim(treant, steps,):
+    """Restart a simulation from the latest time step.
+
+    Args:
+      treant: the data store treant
+      steps: the number of steps to execute
+
+    Returns:
+      an updated treant
 
     """
     return pipe(
@@ -228,9 +234,22 @@ def restart_sim(treant, steps):
             read_json,
             lambda params: namedtuple('parameters', params.keys())(**params),
             run(total_steps=steps,
-                input_values=xarray.open_dataset(treant[datafile].abspath)),
+                input_values=xarray.open_dataset(treant[datafile].abspath)),  # pylint: disable=no-value-for-parameter
             xarray.Dataset,
             lambda data: data.to_netcdf(treant[next_datafile(datafile, steps)].abspath)
         ),
         lambda _: treant
     )
+
+def test_restart_sim():
+    """Test restart_sim
+    """
+    with CliRunner().isolated_filesystem() as dir_:
+        assert pipe(
+            os.path.join(base_path(), 'scripts', 'params.json'),
+            init_sim(data_path=dir_),
+            restart_sim(steps=10),
+            lambda treant: treant.leaves.abspaths,
+            map(os.path.basename),
+            lambda data: 'data0000010.nc' in data,
+        )
