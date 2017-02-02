@@ -97,6 +97,8 @@ def run(params, total_steps, logger=None, input_values=None):
                 suppressor=np.array(variables.suppressor),
                 potential=np.array(variables.potential),
                 theta=np.array(variables.theta),
+                x=np.array(mesh.x),
+                y=np.array(mesh.y),
                 time_step_duration=time_step_duration,
                 elapsed_time=elapsed_time)
 
