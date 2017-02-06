@@ -15,7 +15,7 @@ from toolz.curried import pipe, compose, do, curry, last, juxt, map # pylint: di
 import datreant.core
 
 from .run_simulation import run
-
+from .tools import latest
 
 def fcompose(*args):
     """Helper function to compose functions.
@@ -215,7 +215,7 @@ def next_datafile(filename, steps):
             lambda data: (str(data[0] + steps), data[1]),
             lambda data: data[0].zfill(data[1]),
         ),
-        filename,
+        os.path.basename(filename),
         1
     )
 
@@ -232,16 +232,14 @@ def restart_sim(treant, steps):
 
     """
     return pipe(
-        treant.glob('*.nc'),
-        sorted,
-        last,
-        lambda leaf: leaf.abspath,
-        os.path.basename,
-        lambda datafile: run_and_save(
+        latest(treant),
+        juxt(xarray.open_dataset,
+             lambda datafile: treant[next_datafile(datafile, steps)].abspath),
+        lambda data: run_and_save(
             treant['params.json'].abspath,
-            treant[next_datafile(datafile, steps)].abspath,
+            data[1],
             total_steps=steps,
-            input_values=xarray.open_dataset(treant[datafile].abspath)),
+            input_values=data[0]),
         lambda _: treant
     )
 

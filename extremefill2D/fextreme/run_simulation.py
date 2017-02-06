@@ -100,7 +100,8 @@ def run(params, total_steps, logger=None, input_values=None):
                 x=np.array(mesh.x),
                 y=np.array(mesh.y),
                 time_step_duration=time_step_duration,
-                elapsed_time=elapsed_time)
+                elapsed_time=elapsed_time,
+                nominal_dx=mesh.nominal_dx)
 
 
 def update_old(distance, equations):

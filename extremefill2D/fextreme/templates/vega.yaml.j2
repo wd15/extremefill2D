@@ -1,0 +1,40 @@
+---
+width: 500
+height: 500
+
+axes:
+  - type: x
+    scale: x
+  - type: y
+    scale: y
+
+scales:
+  - name: x
+    nice: true
+    range: width
+    domain:
+      data: contour_data
+      field: x
+  - name: y
+    nice: true
+    range: height
+    domain:
+      data: data0
+      field: y
+
+marks:
+  - type: line
+    from:
+      data: data0
+    properties:
+      enter:
+        x:
+          scale: x
+          field: x
+        y:
+          scale: y
+          field: y
+        stroke:
+          value: steelblue
+
+data:
