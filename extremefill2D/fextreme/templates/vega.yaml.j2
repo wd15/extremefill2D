@@ -13,19 +13,20 @@ scales:
     nice: true
     range: width
     domain:
-      data: contour_data
+      data: contour_data0
       field: x
   - name: y
     nice: true
     range: height
     domain:
-      data: data0
+      data: contour_data0
       field: y
 
 marks:
+{%- for datum in data %}
   - type: line
     from:
-      data: data0
+      data: {{ datum.name }}
     properties:
       enter:
         x:
@@ -36,5 +37,6 @@ marks:
           field: y
         stroke:
           value: steelblue
-
+{%- endfor %}
 data:
+{{ data | to_yaml() }}

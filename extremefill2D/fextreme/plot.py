@@ -1,16 +1,53 @@
 """Functions to plot a vega plot from Extremefill data
 """
+import os
+
 import numpy as np
 from skimage import measure
 import xarray
-from toolz.curried import pipe, juxt, map # pylint: disable=redefined-builtin, no-name-in-module
+from toolz.curried import pipe, juxt, map, valmap # pylint: disable=redefined-builtin, no-name-in-module
 from scipy.interpolate import griddata
+import pandas
+import yaml
+import vega
 
-from .tools import latest, tlam
+from .tools import latest, tlam, enum, render_yaml, get_path
 
 
-def get_contours(treant):
-    """Get the contours for plotting
+def vega_plot(treant):
+    """Make a vega plot
+
+    Args:
+      treant: a treant
+
+    Returns
+      a vega.Vega type
+
+    >>> from click.testing import CliRunner
+    >>> from extremefill2D.fextreme import init_sim
+    >>> from extremefill2D.fextreme.tools import base_path
+    >>> with CliRunner().isolated_filesystem() as dir_:
+    ...      assert pipe(
+    ...          os.path.join(base_path(), 'scripts', 'params.json'),
+    ...          init_sim(data_path=dir_),
+    ...          vega_plot,
+    ...          lambda x: type(x) is vega.Vega)
+    """
+    return pipe(
+        treant,
+        get_data,
+        list,
+        lambda x: render_yaml(os.path.join(get_path(__file__),
+                                           'templates',
+                                           'vega.yaml.j2'),
+                              data=x),
+        yaml.load,
+        vega.Vega
+    )
+
+
+def get_data(treant):
+    """Generate a vega contour plot
 
     Args:
       treant: a treant object with the requisite data
@@ -25,7 +62,14 @@ def get_contours(treant):
                        y=x.y.values,
                        z=x.distance.values,
                        dx=x.nominal_dx),
-        get_contours_
+        get_contours_,
+        map(pandas.DataFrame),
+        map(lambda x: x.rename(columns={0: 'x', 1: 'y'})),
+        map(lambda x: x.to_dict(orient='records')),
+        map(map(valmap(float))),
+        map(list),
+        enum(lambda i, x: dict(name='contour_data{0}'.format(i),   # pylint: disable=no-value-for-parameter
+                               values=x)),
     )
 
 def get_contours_(data):
@@ -40,7 +84,7 @@ def get_contours_(data):
     linspace_ = lambda x: pipe(
         x,
         juxt(min, max),
-        tlam(lambda x_, y_: np.linspace(x_, y_, (y_ - x_) / data['dx']))
+        tlam(lambda x_, y_: np.linspace(x_, y_, (y_ - x_) / data['dx']))  # pylint: disable=no-value-for-parameter
     )
     return pipe(
         data,
@@ -52,6 +96,5 @@ def get_contours_(data):
                            (x['xi'][None, :], x['yi'][:, None]),
                            method='cubic'),
         lambda x: measure.find_contours(x, 0.0),
-        map(lambda x: float(data['dx']) * x),
-        list
+        map(lambda x: float(data['dx']) * x)
     )

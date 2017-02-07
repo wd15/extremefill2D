@@ -15,25 +15,8 @@ from toolz.curried import pipe, compose, do, curry, last, juxt, map # pylint: di
 import datreant.core
 
 from .run_simulation import run
-from .tools import latest
+from .tools import latest, base_path, fcompose
 
-def fcompose(*args):
-    """Helper function to compose functions.
-
-    >>> f = lambda x: x - 2
-    >>> g = lambda x: 2 * x
-    >>> f(g(3))
-    4
-    >>> fcompose(g, f)(3)
-    4
-
-    Args:
-      *args: tuple of functions
-
-    Retuns:
-      composed functions
-    """
-    return compose(*args[::-1])
 
 def read_json(jsonfile):
     """Read a json file into a dictionary
@@ -130,11 +113,6 @@ def read(filepath, readfunc, treant):
       the data
     """
     return readfunc(treant[filepath].abspath)
-
-def base_path():
-    """Return the base path for the data directory.
-    """
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
 
 @curry
 def init_sim(jsonfile, data_path, init_datafile='data0000000.nc', tags=None, **extra_params):
