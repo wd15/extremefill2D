@@ -129,8 +129,10 @@ def init_sim(jsonfile, data_path, init_datafile='data0000000.nc', tags=None, **e
       the simulation treant
 
     """
+    mkdirp = do(lambda x: None if os.path.exists(x) else os.makedirs(x))
     return pipe(
         data_path,
+        mkdirp,
         make_new_treant,
         do(lambda treant: treant.__setattr__('tags', [] if tags is None else tags)),
         do(lambda treant: pipe(
