@@ -17,6 +17,7 @@ install:
   - conda install -q -y -n test-environment numpy scipy pytest pandas pytables xarray toolz
   - conda install -q -y -n test-environment cython matplotlib jupyter click pytest-cov
   - conda install -q -y -n test-environment scikit-image
+  - conda install --channel conda-forge -q -y -n test-environment vega
   - pip install sumatra scikit-fmm pylint datreant.core yamlmagic PyYAML
   - git clone https://github.com/usnistgov/fipy.git ~/fipy
   - cd ~/fipy
