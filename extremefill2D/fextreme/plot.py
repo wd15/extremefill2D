@@ -5,7 +5,8 @@ import os
 import numpy as np
 from skimage import measure
 import xarray
-from toolz.curried import pipe, juxt, map, valmap, concat # pylint: disable=redefined-builtin, no-name-in-module
+# pylint: disable=redefined-builtin, no-name-in-module
+from toolz.curried import pipe, juxt, valmap, concat, map
 from scipy.interpolate import griddata
 import pandas
 import yaml
@@ -45,6 +46,7 @@ def vega_plot(treant):
         vega.Vega
     )
 
+
 def vega_contours(treant):
     """
     Get the contours as Vega data.
@@ -65,9 +67,11 @@ def vega_contours(treant):
         map(lambda x: x.to_dict(orient='records')),
         map(map(valmap(float))),
         map(list),
-        enum(lambda i, x: dict(name='contour_data{0}'.format(i), # pylint: disable=no-value-for-parameter
+        # pylint: disable=no-value-for-parameter
+        enum(lambda i, x: dict(name='contour_data{0}'.format(i),
                                values=x)),
     )
+
 
 def contours_from_datafile(datafile):
     """Calculate the contours given a netcdf datafile
@@ -88,6 +92,7 @@ def contours_from_datafile(datafile):
         contours
         )
 
+
 def contours(data):
     """Get zero contours from x, y, z data
 
@@ -97,15 +102,20 @@ def contours(data):
     Returns:
       a list of (N, 2) numpy arrays representing the contours
     """
-    linspace_ = lambda x: pipe(
-        x,
-        juxt(min, max),
-        tlam(lambda x_, y_: np.linspace(x_, y_, (y_ - x_) / data['dx'])) # pylint: disable=no-value-for-parameter
-    )
+    def linspace_(arr, spacing):
+        """Calcuate the linspace based on a spacing
+        """
+        return pipe(
+            arr,
+            juxt(min, max),
+            # pylint: disable=no-value-for-parameter
+            tlam(lambda x_, y_: np.linspace(x_, y_, (y_ - x_) / spacing))
+        )
+
     return pipe(
         data,
-        lambda x: dict(xi=linspace_(x['x']),
-                       yi=linspace_(x['y']),
+        lambda x: dict(xi=linspace_(x['x'], x['dx']),
+                       yi=linspace_(x['y'], x['dx']),
                        **x),
         lambda x: griddata((x['x'], x['y']),
                            x['z'],

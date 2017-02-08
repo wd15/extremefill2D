@@ -1,6 +1,7 @@
+
 """Functions to run an ExtremeFill2D simulation
 """
-
+# flake8: noqa
 from collections import OrderedDict
 
 from toolz.curried import curry  # pylint: disable=no-name-in-module
@@ -12,6 +13,7 @@ from ..variables import Variables
 from ..equations import AdvectionEquation
 from ..equations import PotentialEquation, CupricEquation
 from ..equations import SuppressorEquation, ThetaEquation
+
 
 @curry
 def run(params, total_steps, logger=None, input_values=None):
@@ -68,7 +70,8 @@ def run(params, total_steps, logger=None, input_values=None):
 
         advection.solve(time_step_duration)
 
-        residuals = [sweep(time_step_duration, equations) for _ in range(params.sweeps)]
+        residuals = [sweep(time_step_duration, equations)
+                     for _ in range(params.sweeps)]
 
         extension_global = extend(variables.extension,
                                   variables.depositionRate,

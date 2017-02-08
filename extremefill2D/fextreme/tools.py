@@ -3,7 +3,8 @@
 
 import os
 
-from toolz.curried import curry, pipe, last, map, get, compose # pylint: disable=no-name-in-module, redefined-builtin
+# pylint: disable=no-name-in-module, redefined-builtin
+from toolz.curried import curry, pipe, last, map, get, compose
 import jinja2
 import yaml
 
@@ -21,18 +22,20 @@ def enum(func, seq):
     """
     return pipe(
         enumerate(list(seq)),
-        map(tlam(func)), # pylint: disable=no-value-for-parameter
+        map(tlam(func)),  # pylint: disable=no-value-for-parameter
     )
+
 
 def test_enum():
     """Test enum
     """
     assert pipe(
         ('a', 'b', 'c', 'd'),
-        enum(lambda i, x: (i, x)), # pylint: disable=no-value-for-parameter
+        enum(lambda i, x: (i, x)),  # pylint: disable=no-value-for-parameter
         list,
         lambda x: x == [(0, 'a'), (1, 'b'), (2, 'c'), (3, 'd')]
     )
+
 
 def latest(treant):
     """Get the latest data file available based on a sort.
@@ -43,6 +46,7 @@ def latest(treant):
         last,
         lambda leaf: leaf.abspath,
     )
+
 
 @curry
 def all_files(pattern, treant):
@@ -62,11 +66,13 @@ def all_files(pattern, treant):
         map(lambda leaf: leaf.abspath)
     )
 
+
 @curry
 def tlam(func, tup):
     """Split tuple into arguments
     """
     return func(*tup)
+
 
 @curry
 def render_yaml(tpl_path, **kwargs):
@@ -85,6 +91,7 @@ def render_yaml(tpl_path, **kwargs):
     env.filters['to_yaml'] = yaml.dump
     return env.get_template(filename).render(**kwargs)
 
+
 def get_path(file_):
     """Return the local file path for this file.
 
@@ -98,10 +105,12 @@ def get_path(file_):
         get(0)
     )
 
+
 def base_path():
     """Return the base path for the data directory.
     """
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
+
 
 def fcompose(*args):
     """Helper function to compose functions.

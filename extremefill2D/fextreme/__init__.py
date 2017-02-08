@@ -11,7 +11,8 @@ import re
 
 from click.testing import CliRunner
 import xarray
-from toolz.curried import pipe, compose, do, curry, last, juxt, map # pylint: disable=no-name-in-module, redefined-builtin
+# pylint: disable=no-name-in-module, redefined-builtin
+from toolz.curried import pipe, do, curry, juxt, map
 import datreant.core
 
 from .run_simulation import run
@@ -38,6 +39,7 @@ def read_json(jsonfile):
         dict_ = json.load(filepointer)
     return dict_
 
+
 @curry
 def make_new_treant(base_dir='.'):
     """Create a treant with a unique ID
@@ -55,12 +57,14 @@ def make_new_treant(base_dir='.'):
         do(lambda x: x.__setattr__('name', x.uuid)),
     )
 
+
 def test_make_new_treant():
     """Test make_new_treant
     """
     with CliRunner().isolated_filesystem():
         treant = make_new_treant(base_dir='.')
     assert treant.name == treant.uuid
+
 
 @curry
 def save_json(filepath, data):
@@ -72,6 +76,7 @@ def save_json(filepath, data):
     """
     with open(filepath, 'w') as fpointer:
         json.dump(data, fpointer)
+
 
 @curry
 def save(data, filepath, savefunc, base_dir='.', treant=None):
@@ -91,6 +96,7 @@ def save(data, filepath, savefunc, base_dir='.', treant=None):
         do(lambda treant: savefunc(treant[filepath].makedirs().abspath, data))
     )
 
+
 def test_save():
     """Test save
     """
@@ -99,6 +105,7 @@ def test_save():
         treant = save(test, 'test.json', save_json)
         actual = read('test.json', read_json, treant)
         assert test == actual
+
 
 @curry
 def read(filepath, readfunc, treant):
@@ -114,8 +121,13 @@ def read(filepath, readfunc, treant):
     """
     return readfunc(treant[filepath].abspath)
 
+
 @curry
-def init_sim(jsonfile, data_path, init_datafile='data0000000.nc', tags=None, **extra_params):
+def init_sim(jsonfile,
+             data_path,
+             init_datafile='data0000000.nc',
+             tags=None,
+             **extra_params):
     """Initialize a simulation.
 
     Args:
@@ -134,16 +146,20 @@ def init_sim(jsonfile, data_path, init_datafile='data0000000.nc', tags=None, **e
         data_path,
         mkdirp,
         make_new_treant,
-        do(lambda treant: treant.__setattr__('tags', [] if tags is None else tags)),
+        do(lambda treant: treant.__setattr__('tags',
+                                             [] if tags is None else tags)),
         do(lambda treant: pipe(
             jsonfile,
             read_json,
             lambda params: {**params, **extra_params},
-            save_json(os.path.join(treant.abspath, os.path.basename(jsonfile))))),  # pylint: disable=no-value-for-parameter
+            # pylint: disable=no-value-for-parameter
+            save_json(os.path.join(treant.abspath, os.path.basename(jsonfile)))
+        )),
         do(lambda treant: run_and_save(
             treant[os.path.basename(jsonfile)].abspath,
             treant[init_datafile].abspath))
     )
+
 
 def run_and_save(jsonpath, datapath, total_steps=0, input_values=None):
     """Run and save a simulation.
@@ -156,6 +172,7 @@ def run_and_save(jsonpath, datapath, total_steps=0, input_values=None):
         xarray.Dataset,
         lambda data: data.to_netcdf(datapath)
     )
+
 
 def test_init_sim():
     """Test init_sim
@@ -199,6 +216,7 @@ def next_datafile(filename, steps):
         1
     )
 
+
 @curry
 def restart_sim(treant, steps):
     """Restart a simulation from the latest time step.
@@ -222,6 +240,7 @@ def restart_sim(treant, steps):
             input_values=data[0]),
         lambda _: treant
     )
+
 
 def test_restart_sim():
     """Test restart_sim
