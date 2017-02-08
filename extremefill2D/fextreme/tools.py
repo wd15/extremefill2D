@@ -45,6 +45,24 @@ def latest(treant):
     )
 
 @curry
+def all_files(pattern, treant):
+    """Get the sorted file paths in a Treant
+
+    Args:
+      pattern: a pattern match
+      treant: a Treant object
+
+    Returns:
+      a list of file paths
+    """
+    return pipe(
+        pattern,
+        treant.glob,
+        sorted,
+        map(lambda leaf: leaf.abspath)
+    )
+
+@curry
 def tlam(func, tup):
     """Split tuple into arguments
     """
