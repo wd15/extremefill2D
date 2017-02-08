@@ -18,7 +18,7 @@ install:
   - conda install -q -y -n test-environment cython matplotlib jupyter click pytest-cov
   - conda install -q -y -n test-environment scikit-image
   - conda install --channel conda-forge -q -y -n test-environment vega
-  - pip install sumatra scikit-fmm pylint datreant.core yamlmagic PyYAML nbval flake8
+  - pip install sumatra scikit-fmm pylint datreant.core yamlmagic PyYAML nbval flake8 nblint
   - git clone https://github.com/usnistgov/fipy.git ~/fipy
   - cd ~/fipy
   - 2to3 --write .
@@ -29,3 +29,4 @@ script:
   - py.test
   - pylint --extension-pkg-whitelist=toolz extremefill2D/fextreme
   - flake8 extremefill2D/fextreme
+  - nblint index.ipynb
