@@ -117,9 +117,9 @@ def contours(data):
         lambda x: dict(xi=linspace_(x['x'], x['dx']),
                        yi=linspace_(x['y'], x['dx']),
                        **x),
-        lambda x: griddata((x['x'], x['y']),
+        lambda x: griddata((x['y'], x['x']),
                            x['z'],
-                           (x['xi'][None, :], x['yi'][:, None]),
+                           (x['yi'][None, :], x['xi'][:, None]),
                            method='cubic'),
         lambda x: measure.find_contours(x, 0.0),
         map(lambda x: float(data['dx']) * x)
