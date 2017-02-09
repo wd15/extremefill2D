@@ -2,11 +2,39 @@
 """
 
 import os
+import datreant.core as dtr
 
 # pylint: disable=no-name-in-module, redefined-builtin
-from toolz.curried import curry, pipe, last, map, get, compose
+from toolz.curried import curry, pipe, last, map, get, compose, filter
 import jinja2
 import yaml
+
+
+def get_by_uuid(uuid, path='.'):
+    """Get a Treant by short ID
+
+    Args:
+      uuid: a portion of the uuid
+      path: the search path for Treants
+
+    Returns:
+      a Treant
+
+    >>> from click.testing import CliRunner
+    >>> with CliRunner().isolated_filesystem() as dir_:
+    ...     assert pipe(
+    ...         dir_,
+    ...         dtr.Treant,
+    ...         lambda x: x.uuid == get_by_uuid(x.uuid[:8]).uuid)
+    """
+    return pipe(
+        path,
+        dtr.discover,
+        list,
+        filter(lambda x: uuid in x.uuid),
+        list,
+        get(0, default=None)
+    )
 
 
 @curry

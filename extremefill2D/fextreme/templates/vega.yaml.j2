@@ -2,12 +2,6 @@
 width: 120
 height: 560
 
-axes:
-  - type: x
-    scale: x
-  - type: y
-    scale: y
-
 scales:
   - name: x
     range: width
@@ -18,7 +12,25 @@ scales:
     domain: [0.0, 70e-6]
 
 marks:
-{%- for datum in data %}
+  - type: area
+    from:
+      data: {{ data[0].name }}
+    properties:
+      enter:
+        x:
+          scale: x
+          field: x
+        y:
+          scale: y
+          field: y
+        y2:
+          scale: y
+          value: 0
+        fill:
+          value: "#aed581"
+        fillOpacity:
+          value: 1.0
+{%- for datum in data[1:] %}
   - type: line
     from:
       data: {{ datum.name }}
@@ -31,7 +43,9 @@ marks:
           scale: y
           field: y
         stroke:
-          value: steelblue
+          value: "#558b2f"
+        strokeWidth:
+          value: 2
 {%- endfor %}
 
 data:
