@@ -1,0 +1,58 @@
+---
+width: 120
+height: 560
+
+scales:
+  - name: x
+    range: width
+    domain: [0.0, 15e-6]
+    domainMax: 15e-6
+  - name: y
+    range: height
+    domain: [0.0, 70e-6]
+
+marks:
+  - type: area
+    from:
+      data: {{ data[0].name }}
+    properties:
+      enter:
+        x:
+          scale: x
+          field: x
+        y:
+          scale: y
+          field: y
+        y2:
+          scale: y
+          value: 0
+        fill:
+          value: "#aed581"
+        fillOpacity:
+          value: 1.0
+{%- for datum in data[1:] %}
+  - type: line
+    from:
+      data: {{ datum.name }}
+    properties:
+      enter:
+        x:
+          scale: x
+          field: x
+        y:
+          scale: y
+          field: y
+        stroke:
+          value: "#558b2f"
+        strokeWidth:
+          value: 2
+{%- endfor %}
+
+data:
+{%- for datum in data %}
+  - name: {{ datum.name }}
+    values: {{ datum['values'] }}
+    transform:
+      - type: filter
+        test: "datum.x < 15e-6"
+{%- endfor %}
