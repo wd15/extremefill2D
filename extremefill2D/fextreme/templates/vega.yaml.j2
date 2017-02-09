@@ -1,6 +1,6 @@
 ---
-width: 500
-height: 500
+width: 120
+height: 560
 
 axes:
   - type: x
@@ -10,17 +10,12 @@ axes:
 
 scales:
   - name: x
-    nice: true
     range: width
-    domain:
-      data: contour_data0
-      field: x
+    domain: [0.0, 15e-6]
+    domainMax: 15e-6
   - name: y
-    nice: true
     range: height
-    domain:
-      data: contour_data0
-      field: y
+    domain: [0.0, 70e-6]
 
 marks:
 {%- for datum in data %}
@@ -38,5 +33,12 @@ marks:
         stroke:
           value: steelblue
 {%- endfor %}
+
 data:
-{{ data | to_yaml() }}
+{%- for datum in data %}
+  - name: {{ datum.name }}
+    values: {{ datum['values'] }}
+    transform:
+      - type: filter
+        test: "datum.x < 15e-6"
+{%- endfor %}
