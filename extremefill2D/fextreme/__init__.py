@@ -12,7 +12,7 @@ import re
 from click.testing import CliRunner
 import xarray
 # pylint: disable=no-name-in-module, redefined-builtin
-from toolz.curried import pipe, do, curry, juxt, map
+from toolz.curried import pipe, do, curry, juxt, map, iterate, nth
 import datreant.core
 
 from .run_simulation import run
@@ -239,6 +239,15 @@ def restart_sim(treant, steps):
             total_steps=steps,
             input_values=data[0]),
         lambda _: treant
+    )
+
+def iterate_sim(treant, iterations, steps):
+    """Iterate a simulation multiple times
+    """
+    return pipe(
+        treant,
+        iterate(restart_sim(steps=steps)),
+        nth(iterations)
     )
 
 
