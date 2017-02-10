@@ -15,7 +15,7 @@ import vega
 from .tools import tlam, enum, render_yaml, get_path, all_files
 
 
-def vega_plot(treant):
+def vega_plot_treant(treant):
     """Make a vega plot
 
     Args:
@@ -34,9 +34,14 @@ def vega_plot(treant):
     ...          vega_plot,
     ...          lambda x: type(x) is vega.Vega)
     """
+    return vega_plot_treants([treant])
+
+
+def vega_plot_treants(treants):
     return pipe(
-        treant,
-        vega_contours,
+        treants,
+        enum(lambda i, x: vega_contours(x, counter=i)),
+        concat,
         list,
         lambda x: render_yaml(os.path.join(get_path(__file__),
                                            'templates',
@@ -47,7 +52,7 @@ def vega_plot(treant):
     )
 
 
-def vega_contours(treant):
+def vega_contours(treant, counter=0):
     """
     Get the contours as Vega data.
 
@@ -68,7 +73,7 @@ def vega_contours(treant):
         map(map(valmap(float))),
         map(list),
         # pylint: disable=no-value-for-parameter
-        enum(lambda i, x: dict(name='contour_data{0}'.format(i),
+        enum(lambda i, x: dict(name='contour_data{0}_{1}'.format(i, counter),
                                values=x)),
     )
 
