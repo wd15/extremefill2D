@@ -153,10 +153,10 @@ def init_sim(jsonfile,
             read_json,
             lambda params: {**params, **extra_params},
             # pylint: disable=no-value-for-parameter
-            save_json(os.path.join(treant.abspath, os.path.basename(jsonfile)))
+            save_json(os.path.join(treant.abspath, 'params.json'))
         )),
         do(lambda treant: run_and_save(
-            treant[os.path.basename(jsonfile)].abspath,
+            treant['params.json'].abspath,
             treant[init_datafile].abspath))
     )
 
