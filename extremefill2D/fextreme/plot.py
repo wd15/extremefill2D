@@ -31,15 +31,24 @@ def vega_plot_treant(treant):
     ...      assert pipe(
     ...          os.path.join(base_path(), 'scripts', 'params.json'),
     ...          init_sim(data_path=dir_),
-    ...          vega_plot,
+    ...          vega_plot_treant,
     ...          lambda x: type(x) is vega.Vega)
     """
     return vega_plot_treants([treant])
 
 
 def vega_plot_treants(treants):
+    """Make a vega plot with multiple treants
+
+    Args:
+      treants: a list of treants
+
+    Returns:
+      a vega.Vega type
+    """
     return pipe(
         treants,
+        # pylint: disable=no-value-for-parameter
         enum(lambda i, x: vega_contours(x, counter=i)),
         concat,
         list,

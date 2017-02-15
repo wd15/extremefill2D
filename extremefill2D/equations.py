@@ -20,10 +20,10 @@ class AppliedPotentialEquation(object):
     def __init__(self, params, variables):
         self.var = variables.appliedPotential
         self.I0 = params.current
-        self._b0 = AreaVariable(variables.beta_forward, variables.distance)
-        self._b1 = AreaVariable(variables.beta_backward, variables.distance)
-        self._c0 = variables.coeff_forward
-        self._c1 = variables.coeff_backward
+        self._b0 = AreaVariable(variables.beta_forward0, variables.distance)
+        self._b1 = AreaVariable(variables.beta_backward0, variables.distance)
+        self._c0 = variables.coeff_forward0
+        self._c1 = variables.coeff_backward0
 
     def sweep(self, dt):
         b0 = float(self._b0)

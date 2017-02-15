@@ -161,9 +161,9 @@ class Variables(object):
     def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
         self.coeff_forward0 = params.alpha0 * Fbar
-        self.coeff_backward0 = (1 - params.alpha0) * Fbar
+        self.coeff_backward0 = (params.alpha_ - params.alpha0) * Fbar
         self.coeff_forward1 = params.alpha1 * Fbar
-        self.coeff_backward1 = (1 - params.alpha1) * Fbar
+        self.coeff_backward1 = (params.alpha_ - params.alpha1) * Fbar
         exp_forward0 = numerix.exp(self.coeff_forward0 * self.potential)
         exp_backward0 = numerix.exp(-self.coeff_backward0 * self.potential)
         exp_forward1 = numerix.exp(self.coeff_forward1 * self.potential)

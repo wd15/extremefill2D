@@ -241,14 +241,38 @@ def restart_sim(treant, steps):
         lambda _: treant
     )
 
+
+@curry
 def iterate_sim(treant, iterations, steps):
     """Iterate a simulation multiple times
+
+    Args:
+      treant: the data store treant
+      iterations: total steps is iterations * steps
+      steps: the number of steps per iteration
+
+    Returns:
+      an updated treant
     """
     return pipe(
         treant,
         iterate(restart_sim(steps=steps)),
         nth(iterations)
     )
+
+
+def test_iterate_sim():
+    """Test iterate_sim
+    """
+    with CliRunner().isolated_filesystem() as dir_:
+        assert pipe(
+            os.path.join(base_path(), 'scripts', 'params.json'),
+            init_sim(data_path=dir_),
+            iterate_sim(iterations=1, steps=10),
+            lambda treant: treant.leaves.abspaths,
+            map(os.path.basename),
+            lambda data: 'data0000010.nc' in data,
+        )
 
 
 def test_restart_sim():
