@@ -3,6 +3,7 @@
 
 import os
 import datreant.core as dtr
+import itertools
 
 # pylint: disable=no-name-in-module, redefined-builtin
 from toolz.curried import curry, pipe, last, map, get, compose, filter
@@ -157,3 +158,34 @@ def fcompose(*args):
       composed functions
     """
     return compose(*args[::-1])
+
+def outer_dict(dict_in):
+    """Outer product of dictionary values
+
+    Args:
+      dict_in: a dictionary with iterable values
+
+    Returns:
+      a list of dictionaries
+
+    >>> assert outer_dict(dict(a=[1], b=[2, 3])) == [dict(a=1, b=2), dict(a=1, b=3)]
+    """
+    return pipe(
+        dict_in.items(),
+        lambda x: zip(*x),
+        list,
+        lambda x: (x[0], itertools.product(*x[1])),
+        lambda x: map(lambda y: (x[0], y), x[1]),
+        map(lambda x: zip(*x)),
+        map(dict),
+        list
+    )
+
+@curry
+def set_treant_categories(dict_in, treant):
+    return pipe(
+        dict_in.items(),
+        map(lambda x: treant.categories.__setitem__(x[0], x[1])),
+        list,
+        lambda _: treant
+    )

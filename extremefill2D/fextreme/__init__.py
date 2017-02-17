@@ -16,7 +16,7 @@ from toolz.curried import pipe, do, curry, juxt, map, iterate, nth
 import datreant.core
 
 from .run_simulation import run
-from .tools import latest, base_path, fcompose
+from .tools import latest, base_path, fcompose, set_treant_categories, outer_dict
 
 
 def read_json(jsonfile):
@@ -125,7 +125,6 @@ def read(filepath, readfunc, treant):
 @curry
 def init_sim(jsonfile,
              data_path,
-             init_datafile='data0000000.nc',
              tags=None,
              **extra_params):
     """Initialize a simulation.
@@ -133,7 +132,6 @@ def init_sim(jsonfile,
     Args:
       jsonfile: the jsonfile to copy
       data_path: the path in which to make the treant
-      init_datafile: the file for the intial data
       tags: tag this simulation
       **extra_params: parameters to change from the default
 
@@ -148,6 +146,7 @@ def init_sim(jsonfile,
         make_new_treant,
         do(lambda treant: treant.__setattr__('tags',
                                              [] if tags is None else tags)),
+        set_treant_categories(extra_params),
         do(lambda treant: pipe(
             jsonfile,
             read_json,
@@ -157,7 +156,29 @@ def init_sim(jsonfile,
         )),
         do(lambda treant: run_and_save(
             treant['params.json'].abspath,
-            treant[init_datafile].abspath))
+            treant['data0000000.nc'].abspath))
+    )
+
+
+def multi_init_sim(jsonfile, data_path, pmap, param_grid, tags=None):
+    """Start multiple simulations.
+
+    Args:
+      jsonfile: the jsonfile base parameters
+      data_path: the path in which to make the treants
+      pmap: the map function to use (curried)
+      param_grid: the parameter grid as a function
+      tags: tags for the treants
+
+    Returns:
+      list of treants
+    """
+    return pipe(
+        param_grid,
+        outer_dict,
+        pmap(lambda kwargs: init_sim(jsonfile, data_path, tags=tags, **kwargs)),
+        map(lambda x: x.result()),
+        list
     )
 
 
@@ -248,7 +269,7 @@ def iterate_sim(treant, iterations, steps):
 
     Args:
       treant: the data store treant
-      iterations: total steps is iterations * steps
+      iterations: total time steps is iterations * steps
       steps: the number of steps per iteration
 
     Returns:
