@@ -31,6 +31,7 @@
 "temperature" : 298.0,
 "alpha0" : 0.5,
 "alpha1" : 0.3,
+    "alpha_" : 1,
 "charge" : 2,
 "bulkCupric" : 1000.0,
 "diffusionSuppressor" : 9.2e-11,
