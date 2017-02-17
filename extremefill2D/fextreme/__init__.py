@@ -16,7 +16,8 @@ from toolz.curried import pipe, do, curry, juxt, map, iterate, nth
 import datreant.core
 
 from .run_simulation import run
-from .tools import latest, base_path, fcompose, set_treant_categories, outer_dict
+from .tools import latest, base_path, fcompose
+from .tools import set_treant_categories, outer_dict
 
 
 def read_json(jsonfile):
@@ -172,12 +173,27 @@ def multi_init_sim(jsonfile, data_path, pmap, param_grid, tags=None):
 
     Returns:
       list of treants
+
+    >>> with CliRunner().isolated_filesystem() as dir_:
+    ...     assert pipe(
+    ...         os.path.join(base_path(), 'scripts', 'params1.json'),
+    ...         lambda x: multi_init_sim(x,
+    ...                                  dir_,
+    ...                                  map,
+    ...                                  dict(bulkSuppressor=[-0.16, -0.18])),
+    ...         map(lambda x: x.leaves.abspaths),
+    ...         map(lambda x: map(os.path.basename, x)),
+    ...         map(lambda x: 'params.json' in x),
+    ...         curry(all)
+    ...     )
     """
     return pipe(
         param_grid,
         outer_dict,
-        pmap(lambda kwargs: init_sim(jsonfile, data_path, tags=tags, **kwargs)),
-        map(lambda x: x.result()),
+        pmap(lambda kwargs: init_sim(jsonfile,
+                                     data_path,
+                                     tags=tags,
+                                     **kwargs)),
         list
     )
 

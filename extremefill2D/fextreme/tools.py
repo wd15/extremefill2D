@@ -1,10 +1,10 @@
 """General tools not associated with extremefill
 """
 
+from itertools import repeat, product
 import os
-import datreant.core as dtr
-import itertools
 
+import datreant.core as dtr
 # pylint: disable=no-name-in-module, redefined-builtin
 from toolz.curried import curry, pipe, last, map, get, compose, filter
 import jinja2
@@ -159,6 +159,7 @@ def fcompose(*args):
     """
     return compose(*args[::-1])
 
+
 def outer_dict(dict_in):
     """Outer product of dictionary values
 
@@ -168,24 +169,53 @@ def outer_dict(dict_in):
     Returns:
       a list of dictionaries
 
-    >>> assert outer_dict(dict(a=[1], b=[2, 3])) == [dict(a=1, b=2), dict(a=1, b=3)]
+    >>> assert pipe(
+    ...     dict(a=[1], b=[2, 3]),
+    ...     curry(outer_dict),
+    ...     lambda x: x == [dict(a=1, b=2), dict(a=1, b=3)]
+    ... )
     """
     return pipe(
         dict_in.items(),
         lambda x: zip(*x),
         list,
-        lambda x: (x[0], itertools.product(*x[1])),
-        lambda x: map(lambda y: (x[0], y), x[1]),
+        lambda x: (x[0], product(*x[1])),
+        # pylint: disable=no-value-for-parameter
+        tlam(lambda x, y: zip(repeat(x), y)),
         map(lambda x: zip(*x)),
         map(dict),
         list
     )
 
+
 @curry
 def set_treant_categories(dict_in, treant):
+    """Set all the categories in a treant to dict values.
+
+    Args:
+      dict_in: the key value pairs
+      treant: the treant
+
+    Returns:
+      the updated treant
+    """
     return pipe(
         dict_in.items(),
         map(lambda x: treant.categories.__setitem__(x[0], x[1])),
         list,
         lambda _: treant
     )
+
+
+def test_set_treant_categories():
+    """Test set_treant_categories
+    """
+    from click.testing import CliRunner
+    with CliRunner().isolated_filesystem() as dir_:
+        assert pipe(
+            dir_,
+            dtr.Treant,
+            # pylint: disable=no-value-for-parameter
+            set_treant_categories(dict(a=1)),
+            lambda x: x.categories['a'] == 1
+        )
