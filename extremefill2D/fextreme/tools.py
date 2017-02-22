@@ -219,3 +219,32 @@ def test_set_treant_categories():
             set_treant_categories(dict(a=1)),
             lambda x: x.categories['a'] == 1
         )
+
+
+@curry
+def ifexpr(fpredicate, ftrue, ffalse, arg):
+    """Functional if expression.
+
+    Args:
+      fpredicate: true/false function on arg
+      ftrue: run if fpredicate is true with arg
+      ffalse: run if fpredicate is false with arg
+      arg: the arg to run on the functions
+
+    Returns:
+      the result of either ftrue or ffalse
+    """
+    if fpredicate(arg):
+        return ftrue(arg)
+    else:
+        return ffalse(arg)
+
+
+def test_ifexpr():
+    """Test ifexpr
+    """
+    func = ifexpr(lambda x: x > 2.5,  # pylint: disable=no-value-for-parameter
+                  lambda x: x * 2,
+                  lambda x: x / 2)
+    assert func(2) == 1
+    assert func(3) == 6

@@ -12,11 +12,12 @@ import re
 from click.testing import CliRunner
 import xarray
 # pylint: disable=no-name-in-module, redefined-builtin
-from toolz.curried import pipe, do, curry, juxt, map, iterate, nth
+from toolz.curried import pipe, do, curry, juxt, map
+from toolz.curried import iterate, nth, excepts, identity
 import datreant.core
 
 from .run_simulation import run
-from .tools import latest, base_path, fcompose
+from .tools import latest, base_path, fcompose, ifexpr
 from .tools import set_treant_categories, outer_dict
 
 
@@ -155,7 +156,7 @@ def init_sim(jsonfile,
             # pylint: disable=no-value-for-parameter
             save_json(os.path.join(treant.abspath, 'params.json'))
         )),
-        do(lambda treant: run_and_save(
+        do(lambda treant: read_run_save(
             treant['params.json'].abspath,
             treant['data0000000.nc'].abspath))
     )
@@ -198,16 +199,32 @@ def multi_init_sim(jsonfile, data_path, pmap, param_grid, tags=None):
     )
 
 
-def run_and_save(jsonpath, datapath, total_steps=0, input_values=None):
-    """Run and save a simulation.
+@curry
+def run_save(params, total_steps, input_values, datapath):
+    """Run and save a simulation
+    """
+    return pipe(
+        params,
+        run(total_steps=total_steps, input_values=input_values),
+        xarray.Dataset,
+        lambda data: data.to_netcdf(datapath),
+        lambda _: None
+    )
+
+
+@curry
+def read_run_save(jsonpath, datapath, total_steps=0, input_values=None):
+    """Read a prams file and then run and save a simulation.
     """
     return pipe(
         jsonpath,
         read_json,
         lambda params: namedtuple('parameters', params.keys())(**params),
-        run(total_steps=total_steps, input_values=input_values),
-        xarray.Dataset,
-        lambda data: data.to_netcdf(datapath)
+        excepts(RuntimeError,
+                run_save(total_steps=total_steps,
+                         input_values=input_values,
+                         datapath=datapath),
+                identity),
     )
 
 
@@ -263,19 +280,41 @@ def restart_sim(treant, steps):
       steps: the number of steps to execute
 
     Returns:
-      an updated treant
+      an updated treant and an error
 
     """
     return pipe(
         latest(treant),
         juxt(xarray.open_dataset,
              lambda datafile: treant[next_datafile(datafile, steps)].abspath),
-        lambda data: run_and_save(
+        lambda data: read_run_save(
             treant['params.json'].abspath,
             data[1],
             total_steps=steps,
             input_values=data[0]),
-        lambda _: treant
+        lambda error: (treant, error)
+    )
+
+
+@curry
+def restart_sim_iter(treant_and_error, steps):
+    """Restart an iterative simulation.
+
+    Runs the simulation if the error is None.
+
+    Args:
+      treant_and_error: a tuple of (treant, error)
+      steps: the number of stpes to execute
+
+    Returns:
+      a treant, error pair
+
+    """
+    return pipe(
+        treant_and_error,
+        ifexpr(lambda x: x[1] is None,
+               lambda x: restart_sim(x[0], steps),
+               identity)
     )
 
 
@@ -292,8 +331,8 @@ def iterate_sim(treant, iterations, steps):
       an updated treant
     """
     return pipe(
-        treant,
-        iterate(restart_sim(steps=steps)),
+        (treant, None),
+        iterate(restart_sim_iter(steps=steps)),
         nth(iterations)
     )
 
@@ -306,7 +345,7 @@ def test_iterate_sim():
             os.path.join(base_path(), 'scripts', 'params.json'),
             init_sim(data_path=dir_),
             iterate_sim(iterations=1, steps=10),
-            lambda treant: treant.leaves.abspaths,
+            lambda x: x[0].leaves.abspaths,
             map(os.path.basename),
             lambda data: 'data0000010.nc' in data,
         )
@@ -320,7 +359,7 @@ def test_restart_sim():
             os.path.join(base_path(), 'scripts', 'params.json'),
             init_sim(data_path=dir_),
             restart_sim(steps=10),
-            lambda treant: treant.leaves.abspaths,
+            lambda x: x[0].leaves.abspaths,
             map(os.path.basename),
             lambda data: 'data0000010.nc' in data,
         )
