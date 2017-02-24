@@ -61,7 +61,7 @@ class PotentialEquation(SweepEquation):
         - surface * (variables.currentDensity - variables.potential * variables.currentDerivative) \
         - fp.ImplicitSourceTerm(surface * variables.currentDerivative) \
         - upper * variables.appliedPotential - fp.ImplicitSourceTerm(upper)
-        self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
+        self.solver = scipy_solvers.LinearLUSolver()
         self.var = variables.potential
 
 
@@ -73,7 +73,7 @@ class CupricEquation(SweepEquation):
         - fp.ImplicitSourceTerm(variables.baseCurrent * variables.surface / \
                                 (params.bulkCupric * params.charge * params.faradaysConstant)) \
         + 1e+5 * params.bulkCupric * cap - fp.ImplicitSourceTerm(1e+5 * cap)
-        self.solver = fp.LinearPCGSolver(tolerance=1e-12)
+        self.solver = scipy_solvers.LinearLUSolver()
         self.var = variables.cupric
 
 
@@ -81,7 +81,8 @@ class SuppressorEquation(SweepEquation):
     def __init__(self, params, variables):
         self.equation = fp.TransientTerm() == fp.DiffusionTerm(params.diffusionSuppressor * variables.harmonic) \
           - fp.ImplicitSourceTerm(params.gamma * params.kPlus * (1 - variables.interfaceTheta) * variables.surface)
-        self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
+        # self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
+        self.solver = scipy_solvers.LinearLUSolver()
         self.var = variables.suppressor
 
 
@@ -94,7 +95,8 @@ class ThetaEquation(SweepEquation):
           - fp.ImplicitSourceTerm(adsorptionCoeff * variables.distance._cellInterfaceFlag) \
           - fp.ImplicitSourceTerm(params.kMinus * variables.depositionRate * self.dt)
         self.var = variables.theta
-        self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
+        # self.solver = fp.LinearPCGSolver(tolerance=params.solver_tol)
+        self.solver = scipy_solvers.LinearLUSolver()
 
     def sweep(self, dt):
         self.dt.setValue(dt)
