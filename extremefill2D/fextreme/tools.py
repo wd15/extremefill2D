@@ -13,6 +13,7 @@ import yaml
 import pandas
 
 
+@curry
 def get_by_uuid(uuid, path='.'):
     """Get a Treant by short ID
 
@@ -23,12 +24,6 @@ def get_by_uuid(uuid, path='.'):
     Returns:
       a Treant
 
-    >>> from click.testing import CliRunner
-    >>> with CliRunner().isolated_filesystem() as dir_:
-    ...     assert pipe(
-    ...         dir_,
-    ...         dtr.Treant,
-    ...         lambda x: x.uuid == get_by_uuid(x.uuid[:8]).uuid)
     """
     return pipe(
         path,
@@ -38,6 +33,16 @@ def get_by_uuid(uuid, path='.'):
         list,
         get(0, default=None)
     )
+
+def test_get_by_uuid():
+    """Test get_by_uuid
+    """
+    from click.testing import CliRunner
+    with CliRunner().isolated_filesystem() as dir_:
+        assert pipe(
+            dir_,
+            dtr.Treant,
+            lambda x: x.uuid == get_by_uuid(x.uuid[:8]).uuid)
 
 
 @curry
