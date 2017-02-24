@@ -1,6 +1,5 @@
 """Functional implementation of the extremefill2D code.
 """
-
 # pylint: disable=no-value-for-parameter
 
 import os
@@ -153,7 +152,6 @@ def init_sim(jsonfile,
             jsonfile,
             read_json,
             lambda params: {**params, **extra_params},
-            # pylint: disable=no-value-for-parameter
             save_json(os.path.join(treant.abspath, 'params.json'))
         )),
         do(lambda treant: read_run_save(

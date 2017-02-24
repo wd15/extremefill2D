@@ -1,14 +1,16 @@
 """General tools not associated with extremefill
 """
+# pylint: disable=no-value-for-parameter
 
 from itertools import repeat, product
 import os
 
 import datreant.core as dtr
 # pylint: disable=no-name-in-module, redefined-builtin
-from toolz.curried import curry, pipe, last, map, get, compose, filter
+from toolz.curried import curry, pipe, last, map, get, compose, filter, merge
 import jinja2
 import yaml
+import pandas
 
 
 def get_by_uuid(uuid, path='.'):
@@ -39,6 +41,69 @@ def get_by_uuid(uuid, path='.'):
 
 
 @curry
+def get_by_tags(tags, path='.'):
+    """Get a Treant by tags
+
+    Args:
+      tags: the identifying tags
+      path: the base path to the treants
+
+    Retuns:
+      a bundle of treants
+    """
+    return pipe(
+        path,
+        dtr.discover,
+        lambda x: x[x.tags[tuple(tags)]],
+    )
+
+
+def get_treant_data(treant):
+    """Extract UUID, tags and categories as a dict from Treant.
+
+    Args:
+      treant: the treant to extract data from
+
+    Returns:
+      a dict of treant data
+    """
+    return merge(
+        dict(uuid=treant.uuid[:8], tags=list(treant.tags)),
+        dict(treant.categories)
+    )
+
+
+def get_treant_df(tags, path='.'):
+    """Get treants as a Pandas DataFrame
+
+    Args:
+      tags: treant tags to identify the treants
+      path: the path to search for treants
+
+    Returns:
+      a Pandas DataFrame with the treant name, tags and categories
+
+    >>> from click.testing import CliRunner
+    >>> from toolz.curried import do
+    >>> with CliRunner().isolated_filesystem() as dir_:
+    ...     assert pipe(
+    ...         dir_,
+    ...         dtr.Treant,
+    ...         do(lambda x: x.__setattr__('tags', ['atag'])),
+    ...         lambda x: x.uuid[:8],
+    ...         lambda x: x == get_treant_df(['atag'], path=dir_).uuid[0]
+    ...     )
+    """
+    return pipe(
+        tags,
+        get_by_tags(path=path),
+        lambda x: x.map(get_treant_data),
+        pandas.DataFrame,
+
+    )
+
+
+@curry
 def enum(func, seq):
     """Enumerate implementation of map.
 
@@ -51,7 +116,7 @@ def enum(func, seq):
     """
     return pipe(
         enumerate(list(seq)),
-        map(tlam(func)),  # pylint: disable=no-value-for-parameter
+        map(tlam(func)),
     )
 
 
@@ -60,7 +125,7 @@ def test_enum():
     """
     assert pipe(
         ('a', 'b', 'c', 'd'),
-        enum(lambda i, x: (i, x)),  # pylint: disable=no-value-for-parameter
+        enum(lambda i, x: (i, x)),
         list,
         lambda x: x == [(0, 'a'), (1, 'b'), (2, 'c'), (3, 'd')]
     )
@@ -180,7 +245,6 @@ def outer_dict(dict_in):
         lambda x: zip(*x),
         list,
         lambda x: (x[0], product(*x[1])),
-        # pylint: disable=no-value-for-parameter
         tlam(lambda x, y: zip(repeat(x), y)),
         map(lambda x: zip(*x)),
         map(dict),
@@ -215,7 +279,6 @@ def test_set_treant_categories():
         assert pipe(
             dir_,
             dtr.Treant,
-            # pylint: disable=no-value-for-parameter
             set_treant_categories(dict(a=1)),
             lambda x: x.categories['a'] == 1
         )
@@ -243,8 +306,51 @@ def ifexpr(fpredicate, ftrue, ffalse, arg):
 def test_ifexpr():
     """Test ifexpr
     """
-    func = ifexpr(lambda x: x > 2.5,  # pylint: disable=no-value-for-parameter
+    func = ifexpr(lambda x: x > 2.5,
                   lambda x: x * 2,
                   lambda x: x / 2)
     assert func(2) == 1
     assert func(3) == 6
+
+
+@curry
+def pmap(client, func, data):
+    """Map with a parallel client.
+
+    Args:
+      client: a parallel client with a map and result method
+      func: the function to map
+      data: the data to map over
+
+    Returns:
+      the result of the mapping
+    """
+    return pipe(
+        client.map(func, data),
+        map(lambda x: x.result()),
+        list
+    )
+
+
+def test_pmap():
+    """Test pmap
+    """
+    # pylint: disable=missing-docstring, too-few-public-methods
+    class DummyResult:
+        def __init__(self, result):
+            self._result = result
+
+        def result(self):
+            return self._result
+
+    # pylint: disable=too-few-public-methods, missing-docstring
+    class DummyClient:
+        def map(self, func, data):  # pylint: disable=no-self-use
+            return pipe(
+                data,
+                map(func),
+                map(DummyResult),
+                list
+            )
+
+    assert [2, 4] == pmap(DummyClient())(lambda x: x * 2, [1, 2])

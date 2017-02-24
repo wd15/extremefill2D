@@ -1,5 +1,7 @@
 """Functions to plot a vega plot from Extremefill data
 """
+# pylint: disable=no-value-for-parameter
+
 import os
 
 import numpy as np
@@ -48,14 +50,14 @@ def vega_plot_treants(treants):
     """
     return pipe(
         treants,
-        # pylint: disable=no-value-for-parameter
         enum(lambda i, x: vega_contours(x, counter=i)),
         concat,
         list,
         lambda x: render_yaml(os.path.join(get_path(__file__),
                                            'templates',
                                            'vega.yaml.j2'),
-                              data=x),
+                              data=x,
+                              title=treants[0].uuid[:8]),
         yaml.load,
         vega.Vega
     )
@@ -73,15 +75,14 @@ def vega_contours(treant, counter=0):
     """
     return pipe(
         treant,
-        all_files('*.nc'),  # pylint: disable=no-value-for-parameter
-        map(contours_from_datafile),  # pylint: disable=no-value-for-parameter
+        all_files('*.nc'),
+        map(contours_from_datafile),
         concat,
         map(pandas.DataFrame),
         map(lambda x: x.rename(columns={0: 'x', 1: 'y'})),
         map(lambda x: x.to_dict(orient='records')),
         map(map(valmap(float))),
         map(list),
-        # pylint: disable=no-value-for-parameter
         enum(lambda i, x: dict(name='contour_data{0}_{1}'.format(i, counter),
                                values=x)),
     )
@@ -122,7 +123,6 @@ def contours(data):
         return pipe(
             arr,
             juxt(min, max),
-            # pylint: disable=no-value-for-parameter
             tlam(lambda x_, y_: np.linspace(x_, y_, (y_ - x_) / spacing))
         )
 
