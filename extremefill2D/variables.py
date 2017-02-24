@@ -170,8 +170,8 @@ class Variables(object):
         exp_backward1 = numerix.exp(-self.coeff_backward1 * self.potential)
         cbar =  self.cupric / params.bulkCupric
 
-        I0 = params.i0 * (1 - self.theta)
-        I1 = params.i1 * self.theta
+        I0 = params.i0 * (1 - self.interfaceTheta)
+        I1 = params.i1 * self.interfaceTheta
 
         self.beta_forward0 = cbar * I0 * exp_forward0
         self.beta_backward0 = cbar * I0 * exp_backward0
