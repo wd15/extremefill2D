@@ -1,0 +1,17 @@
+{%- for id in ids %}
+<div class="vega-embed" id="{{ id }}" style="display: inline-block"></div>
+{%- endfor %}
+
+{% raw %}
+<style>
+.vega-embed svg, .vega-embed canvas {
+  border: 0px dotted gray;
+}
+
+.vega-embed .vega-actions a {
+  margin-right: 6px; color: transparent; font-size: 0px;
+}
+
+
+</style>
+{% endraw %}

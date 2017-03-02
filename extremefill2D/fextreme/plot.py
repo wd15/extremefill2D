@@ -3,18 +3,20 @@
 # pylint: disable=no-value-for-parameter
 
 import os
+import uuid
 
 import numpy as np
 from skimage import measure
 import xarray
 # pylint: disable=redefined-builtin, no-name-in-module
-from toolz.curried import pipe, juxt, valmap, concat, map
+from toolz.curried import pipe, juxt, valmap, concat, map, do
 from scipy.interpolate import griddata
 import pandas
 import yaml
 import vega
+from IPython.display import display, publish_display_data
 
-from .tools import tlam, enum, render_yaml, get_path, all_files
+from .tools import tlam, enum, render_yaml, get_path, all_files, render_j2
 
 
 def vega_plot_treant(treant):
@@ -36,10 +38,10 @@ def vega_plot_treant(treant):
     ...          vega_plot_treant,
     ...          lambda x: type(x) is vega.Vega)
     """
-    return vega_plot_treants([treant])
+    return vega_plot_treants_together([treant])
 
 
-def vega_plot_treants(treants):
+def vega_plot_treants_together(treants):
     """Make a vega plot with multiple treants
 
     Args:
@@ -47,6 +49,46 @@ def vega_plot_treants(treants):
 
     Returns:
       a vega.Vega type
+    """
+    return vega.Vega(render_spec(treants))
+
+
+def vega_plot_treants(treants):
+    """Make a vega plot with side-by-side plots
+
+    Args:
+      treants: a list of treants
+
+    Returns
+      a MultiVega instance
+
+    >>> from click.testing import CliRunner
+    >>> from extremefill2D.fextreme import init_sim
+    >>> from extremefill2D.fextreme.tools import base_path
+    >>> with CliRunner().isolated_filesystem() as dir_:
+    ...      assert pipe(
+    ...          os.path.join(base_path(), 'scripts', 'params.json'),
+    ...          init_sim(data_path=dir_),
+    ...          lambda x: [x, x],
+    ...          vega_plot_treants,
+    ...          lambda x: type(x) is MultiVega)
+    """
+    return pipe(
+        treants,
+        map(lambda x: render_spec([x])),
+        list,
+        MultiVega
+    )
+
+
+def render_spec(treants):
+    """Turn a list of Extremefill treants into a sigle Vega plot
+
+    Args:
+      treants: a list of Extremefill treants
+
+    Returns:
+      a list of vega specs
     """
     return pipe(
         treants,
@@ -56,10 +98,8 @@ def vega_plot_treants(treants):
         lambda x: render_yaml(os.path.join(get_path(__file__),
                                            'templates',
                                            'vega.yaml.j2'),
-                              data=x,
-                              title=treants[0].uuid[:8]),
-        yaml.load,
-        vega.Vega
+                              data=dict(data=x, title=treants[0].uuid[:8])),
+        yaml.load
     )
 
 
@@ -138,3 +178,95 @@ def contours(data):
         lambda x: measure.find_contours(x, 0.0),
         map(lambda x: float(data['dx']) * x)
     )
+
+
+def render_html(ids):
+    """Render the HTML for the IPython Vega plots.
+
+    Args:
+      ids: the tags for each div element
+
+    Returns:
+      the rendered HTML
+    """
+    return render_j2(os.path.join(get_path(__file__),
+                                  'templates/multivega.html.j2'),
+                     dict(ids=ids),
+                     dict())
+
+
+def html_publish_map(data):
+    """Run IPython's 'publish_display_data' for each spec.
+
+    Args:
+      data: list of (id, spec) pairings
+    """
+    pipe(
+        data,
+        map(lambda x: x[0]),
+        list,
+        lambda x: publish_display_data(
+            {'text/html': render_html(x)},
+            metadata={'jupyter-vega': '#{0}'.format(x[0])})
+    )
+
+
+def js_publish(id_, inst):
+    """Generate Vega JS
+
+    Args:
+      id_: a unique ID to tag the element
+      inst: a Vega instance
+
+    """
+    publish_display_data(
+        # pylint: disable=protected-access
+        {'application/javascript': inst._generate_js(id_)},
+        metadata={'jupyter-vega': '#{0}'.format(id_)}
+    )
+
+
+def ipython_display(specs):
+    """Run publish_display_data for the JS and HTML
+
+    Args:
+      specs: a list of Vega specs
+    """
+    pipe(
+        specs,
+        map(lambda x: (uuid.uuid4(), vega.Vega(x))),
+        list,
+        do(html_publish_map),
+        map(tlam(js_publish)),
+        list
+    )
+
+
+class MultiVega(object):  # pylint: disable=too-few-public-methods
+    """Side-by-side vega plots
+
+    >>> from click.testing import CliRunner
+    >>> from extremefill2D.fextreme import init_sim
+    >>> from extremefill2D.fextreme.tools import base_path
+    >>> with CliRunner().isolated_filesystem() as dir_:
+    ...      inst = pipe(
+    ...          os.path.join(base_path(), 'scripts', 'params.json'),
+    ...          init_sim(data_path=dir_),
+    ...          lambda x: [x, x],
+    ...          vega_plot_treants,
+    ...          do(lambda x: x._ipython_display_())
+    ...      )
+    ...      inst.display()
+
+    """
+
+    def __init__(self, specs):
+        self.specs = specs
+
+    def _ipython_display_(self):
+        ipython_display(self.specs)
+
+    def display(self):
+        """Display in IPython Notebook.
+        """
+        display(self)

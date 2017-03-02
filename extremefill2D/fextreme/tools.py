@@ -34,6 +34,7 @@ def get_by_uuid(uuid, path='.'):
         get(0, default=None)
     )
 
+
 def test_get_by_uuid():
     """Test get_by_uuid
     """
@@ -174,21 +175,36 @@ def tlam(func, tup):
 
 
 @curry
-def render_yaml(tpl_path, **kwargs):
-    """Return the rendered yaml template.
+def render_j2(tpl_path, data, filters):
+    """Render a Jinja template
 
     Args:
-      tpl_path: path to the YAML jinja template
-      **kwargs: data to render in the template
+      tpl_path: path to the template
+      data: the template data as a dictionary
+      filters: any filter functions to apply as a dictionary
 
-    Retuns:
-      the rendered template string
+    Returns:
+      rendered template as a string
     """
     path, filename = os.path.split(tpl_path)
     loader = jinja2.FileSystemLoader(path or './')
     env = jinja2.Environment(loader=loader)
-    env.filters['to_yaml'] = yaml.dump
-    return env.get_template(filename).render(**kwargs)
+    env.filters = merge(env.filters, filters)
+    return env.get_template(filename).render(**data)
+
+
+@curry
+def render_yaml(tpl_path, data):
+    """Return the rendered yaml template.
+
+    Args:
+      tpl_path: path to the YAML jinja template
+      data: data to render in the template
+
+    Retuns:
+      the rendered template string
+    """
+    return render_j2(tpl_path, data, dict(to_yaml=yaml.dump))
 
 
 def get_path(file_):
