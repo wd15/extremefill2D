@@ -11,7 +11,7 @@ class _InterfaceVar(_InterfaceSurfactantVariable):
     def _calcValue(self):
         return np.minimum(1, super(_InterfaceVar, self)._calcValue())
 
-    
+
 class PotentialVariable(fp.CellVariable):
     def __init__(self, params, mesh):
         super(PotentialVariable, self).__init__(mesh=mesh, hasOld=True, name=r'$\psi$')
@@ -24,27 +24,27 @@ class CupricVariable(fp.CellVariable):
         self[:] = params.bulkCupric
         self.constrain(params.bulkCupric, self.mesh.facesTop)
 
-        
+
 class SuppressorVariable(fp.CellVariable):
     def __init__(self, params, mesh):
         super(SuppressorVariable, self).__init__(mesh=mesh, hasOld=True, name=r'$c_{\theta}$')
         self[:] = params.bulkSuppressor
         self.constrain(params.bulkSuppressor, self.mesh.facesTop)
 
-        
+
 class DistanceVariableNonUniform(fp.DistanceVariable):
     def __init__(self, params, mesh):
         super(DistanceVariableNonUniform, self).__init__(mesh=mesh, value=1.)
         self.setValue(-1., where=self.mesh.y < -params.featureDepth)
-        self.setValue(-1., where=(self.mesh.y < 0) & (self.mesh.x < params.rinner))        
+        self.setValue(-1., where=(self.mesh.y < 0) & (self.mesh.x < params.rinner))
         self.setValue(-1., where=(self.mesh.y < 0) & (self.mesh.x > params.router))
         self.calcDistanceFunction(order=1)
-        
+
     def getLSMshape(self):
         mesh = self.mesh
 
         min_dx = lambda x: fp.numerix.amin(x) if len(fp.numerix.shape(x)) > 0 else x
-        
+
         if hasattr(mesh, 'nz'):
             raise Exception, "3D meshes not yet implemented"
         elif hasattr(mesh, 'ny'):
@@ -59,7 +59,7 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
         return dx, shape
 
     def deleteIslands(self):
-        cellToCellIDs = self.mesh._getCellToCellIDs()
+        cellToCellIDs = self.mesh._cellToCellIDs
         adjVals = numerix.take(self.value, cellToCellIDs)
         adjInterfaceValues = MA.masked_array(adjVals, mask = (adjVals * self.value) > 0)
         masksum = numerix.sum(numerix.logical_not(MA.getmask(adjInterfaceValues)), 0)
@@ -72,7 +72,7 @@ class AreaVariable(fp.Variable):
         super(AreaVariable, self).__init__()
         self.var = self._requires(var)
         self.distance = self._requires(distance)
-        
+
     def _calcValue(self):
         return float(numerix.sum(np.array(self.var) * np.array(self.distance.cellInterfaceAreas)))
 
@@ -91,7 +91,7 @@ class DepositionMask(fp.CellVariable):
         X = self.params.router - mesh.nominal_dx
         mask[(mesh.y.value < Y) & (mesh.x.value > X)] = 0
         return mask
-        
+
     def _calcValue(self):
         flag = MA.filled(numerix.take(self.distance._interfaceFlag, self.mesh.cellFaceIDs), 0)
         flag = numerix.sum(flag, axis=0)
@@ -113,7 +113,7 @@ class CapVariable(fp.CellVariable):
         self.X, self.Y = X, Y
         if not hasattr(self, 'nearestCellIDs'):
             self.nearestCellIDs = self.mesh._getNearestCellID((X, Y))
-            
+
     def getInterfaceHeight(self):
         from scipy.interpolate import interp1d
         X, Y = self.X, self.Y
@@ -124,7 +124,7 @@ class CapVariable(fp.CellVariable):
         else:
             height = self.ymax
         return height
-        
+
     def _calcValue(self):
         mesh = self.mesh
         y0 = self.getInterfaceHeight()
@@ -138,7 +138,7 @@ class CapVariable(fp.CellVariable):
         radius = np.sqrt((mesh.x - center[0])**2 + (mesh.y - center[1])**2)
         return np.where(radius > cap_radius, 0, 1)
 
-    
+
 class Variables(object):
     def __init__(self, params, mesh):
         self.potential = PotentialVariable(params, mesh)
@@ -157,7 +157,7 @@ class Variables(object):
         self.masked_harmonic = self.harmonic
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
         self.cap = CapVariable(self.distance, params)
-           
+
     def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
         self.coeff_forward = params.alpha * Fbar
@@ -174,17 +174,16 @@ class Variables(object):
         self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
         self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
 
-        
+
 class MaskedVariablesCorner(Variables):
     def __init__(self, params, mesh):
         super(MaskedVariablesCorner, self).__init__(params, mesh)
         deposition_mask = DepositionMask(self.distance, params).mask
         self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
 
-        
+
 class MaskedVariablesNoCorner(Variables):
     def __init__(self, params, mesh):
         super(MaskedVariablesNoCorner, self).__init__(params, mesh)
         deposition_mask = DepositionMask(self.distance, params)
         self.masked_harmonic = ((self.distance > 0) * deposition_mask).harmonicFaceValue
-
