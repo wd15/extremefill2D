@@ -158,7 +158,7 @@ class Variables(object):
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
         self.cap = CapVariable(self.distance, params)
 
-   def calc_dep_vars(self, params):
+    def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
         self.coeff_forward0 = params.alpha0 * Fbar
         self.coeff_backward0 = (params.alpha_ - params.alpha0) * Fbar
