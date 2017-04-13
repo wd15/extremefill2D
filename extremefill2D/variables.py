@@ -158,22 +158,31 @@ class Variables(object):
         self.surface = self.distance.cellInterfaceAreas / self.distance.mesh.cellVolumes
         self.cap = CapVariable(self.distance, params)
 
-    def calc_dep_vars(self, params):
+   def calc_dep_vars(self, params):
         Fbar = params.faradaysConstant / params.gasConstant / params.temperature
-        self.coeff_forward = params.alpha * Fbar
-        self.coeff_backward = (2 - params.alpha) * Fbar
-        exp_forward = numerix.exp(self.coeff_forward * self.potential)
-        exp_backward = numerix.exp(-self.coeff_backward * self.potential)
-        I0 = (params.i0 + params.i1 * self.interfaceTheta)
+        self.coeff_forward0 = params.alpha0 * Fbar
+        self.coeff_backward0 = (params.alpha_ - params.alpha0) * Fbar
+        self.coeff_forward1 = params.alpha1 * Fbar
+        self.coeff_backward1 = (params.alpha_ - params.alpha1) * Fbar
+        exp_forward0 = numerix.exp(self.coeff_forward0 * self.potential)
+        exp_backward0 = numerix.exp(-self.coeff_backward0 * self.potential)
+        exp_forward1 = numerix.exp(self.coeff_forward1 * self.potential)
+        exp_backward1 = numerix.exp(-self.coeff_backward1 * self.potential)
         cbar =  self.cupric / params.bulkCupric
 
-        self.beta_forward = cbar * I0 * exp_forward
-        self.beta_backward = cbar * I0 * exp_backward
-        self.baseCurrent = I0 * (exp_forward - exp_backward)
-        self.currentDensity = cbar * self.baseCurrent
-        self.currentDerivative = cbar * I0 * (self.coeff_forward *  exp_forward + self.coeff_backward * exp_backward)
-        self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
+        I0 = params.i0 * (1 - self.interfaceTheta)
+        I1 = params.i1 * self.interfaceTheta
 
+        self.beta_forward0 = cbar * I0 * exp_forward0
+        self.beta_backward0 = cbar * I0 * exp_backward0
+        self.beta_forward1 = cbar * I1 * exp_forward1
+        self.beta_backward1 = cbar * I1 * exp_backward1
+
+        self.baseCurrent = I0 * (exp_forward0 - exp_backward0) + I1 * (exp_forward1 - exp_backward1)
+        self.currentDensity = cbar * self.baseCurrent
+        self.currentDerivative = cbar * (I0 * (self.coeff_forward0 *  exp_forward0 + self.coeff_backward0 * exp_backward0) \
+                                         + I1 * (self.coeff_forward1 *  exp_forward1 + self.coeff_backward1 * exp_backward1))
+        self.depositionRate = self.currentDensity * params.omega / params.charge / params.faradaysConstant
 
 class MaskedVariablesCorner(Variables):
     def __init__(self, params, mesh):
