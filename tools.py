@@ -48,7 +48,7 @@ def human_readable_duration(seconds):
     (h, rem) = _quotient_remainder(rem, 60 * 60)
     (m, rem) = _quotient_remainder(rem, 60)
     s = rem + fractional_part
-    
+
     return ' '.join(
         templ.format(val)
         for (val, templ) in [
@@ -65,7 +65,7 @@ class CustomHTMLFormatter(HTMLFormatter):
         self.fields = fields
         self.parameters = parameters
         super(CustomHTMLFormatter, self).__init__(records)
-        
+
     def long(self):
         def format_record(record):
             output = "  <dt>%s</dt>\n  <dd>\n    <dl>\n" % record.label
@@ -106,9 +106,9 @@ class CustomHTMLFormatter(HTMLFormatter):
 
             if field in ('label', 'repository', 'version', 'parameters'):
                 c = "<code>" + c + "</code>"
-            
+
             t += (c,)
-        
+
         return "  <tr>\n    <td>" + "</td>\n    <td>".join(t) + "    </td>\n  </tr>"
 
     def style(self, table_out):
@@ -116,7 +116,7 @@ class CustomHTMLFormatter(HTMLFormatter):
                         '<th>'    : '<th style="border:2px solid black;background:#b5cfd2">',
                         '<td>'    : '<td style="border:2px solid black;">',
                         '<code>'  : '<code style="font-size:10px;">'}
-        
+
         for k, v in replacements.iteritems():
             table_out = table_out.replace(k, v)
 
@@ -128,12 +128,12 @@ class CustomHTMLFormatter(HTMLFormatter):
             "\n".join(self.format_record(record) for record in self.records) + \
             "\n</table>" + \
             "\n<br>"
-        
+
         return self.style(table_out)
 
     def ipython_table(self):
         return HTML(self.table())
-        
+
 
 
 def markdown_table(records):
@@ -175,7 +175,7 @@ def getRecord(records=None, **args):
         return None
     else:
         return records[0]
-    
+
 def getData(tags, parameters):
     records = getSMTRecords(tags, parameters)
     record = records[0]
@@ -252,7 +252,7 @@ def write_data(dataFile, elapsedTime, distance, timeStep, **otherFields):
 
 def geometric_spacing(initial_spacing, domain_size, spacing_ratio=1.1):
     """
-    
+
     Caculate grid spacing in one dimension using the inital grid cell
     size given by `initial_spacing`. The grid cells are scaled up by
     `spacing_ratio` and `spacing ratio` must be greater than 1.
@@ -277,7 +277,7 @@ def geometric_spacing(initial_spacing, domain_size, spacing_ratio=1.1):
 
 def get_nonuniform_dx(dx, x0, x1, x2, padding, spacing_ratio=1.1):
     """
-    
+
     Calculate the geometric grid spacing for a grid with an fine grid
     between `r0` and `r1` and a coarse grid elsewhere.
 
@@ -292,13 +292,13 @@ def get_nonuniform_dx(dx, x0, x1, x2, padding, spacing_ratio=1.1):
 
     if x0 <= padding or x2 - x1 <= padding:
         raise Exception, 'padding is too large'
-    
+
     dx0 = geometric_spacing(dx, x0 - padding, spacing_ratio)[::-1]
 
     Lx = x1 - x0 + 2 * padding
     nx = int(Lx / dx)
     dx1 = (Lx / nx) * np.ones(nx)
-    
+
     dx2 = geometric_spacing(dx, x2 - (x1 + padding), spacing_ratio)
 
     return np.concatenate((dx0, dx1, dx2))
@@ -308,7 +308,7 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
         mesh = self.mesh
 
         min_dx = lambda x: fp.numerix.amin(x) if len(fp.numerix.shape(x)) > 0 else x
-        
+
         if hasattr(mesh, 'nz'):
             raise Exception, "3D meshes not yet implemented"
         elif hasattr(mesh, 'ny'):
@@ -326,7 +326,7 @@ class DistanceVariableNonUniform(fp.DistanceVariable):
         from fipy.tools import numerix
         from fipy.tools.numerix import MA
 
-        cellToCellIDs = self.mesh._getCellToCellIDs()
+        cellToCellIDs = self.mesh._cellToCellIDs
         adjVals = numerix.take(self.value, cellToCellIDs)
         adjInterfaceValues = MA.masked_array(adjVals, mask = (adjVals * self.value) > 0)
         masksum = numerix.sum(numerix.logical_not(MA.getmask(adjInterfaceValues)), 0)
@@ -427,7 +427,7 @@ class FeatureProperty(object):
         if len(zeros) % 2 == 0:
             height = 1.
         else:
-            height = (featureDepth + zeros[-1]) / featureDepth 
+            height = (featureDepth + zeros[-1]) / featureDepth
             height = min(height, 1.)
 
         h5file.close()
@@ -436,32 +436,32 @@ class FeatureProperty(object):
 
 def smooth(x,window_len=11,window='hanning'):
     """smooth the data using a window with requested size.
-    
+
     This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal 
+    The signal is prepared by introducing reflected copies of the signal
     (with the window size) in both ends so that transient parts are minimized
     in the begining and end part of the output signal.
-    
+
     input:
-        x: the input signal 
+        x: the input signal
         window_len: the dimension of the smoothing window; should be an odd integer
         window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
             flat window will produce a moving average smoothing.
 
     output:
         the smoothed signal
-        
+
     example:
 
     t=linspace(-2,2,0.1)
     x=sin(t)+randn(len(t))*0.1
     y=smooth(x)
-    
-    see also: 
-    
+
+    see also:
+
     numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
     scipy.signal.lfilter
- 
+
     TODO: the window parameter could be the window itself if an array instead of a string
     NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
     """
@@ -511,7 +511,7 @@ def refine_contour_plot(points, values):
 
     """
     from scipy.spatial import Delaunay
-    tri = Delaunay(points)  
+    tri = Delaunay(points)
     indices, indptr = tri.vertex_neighbor_vertices
     edges = []
     for i in xrange(len(points)):
@@ -521,5 +521,5 @@ def refine_contour_plot(points, values):
     edges = np.array(edges)
     vertexValues = np.array(values)[edges]
     edgeValue = abs(vertexValues[:,0] - vertexValues[:,1])
-    
+
     return ((tri.points[edges[:,0],:] + tri.points[edges[:,1],:]) / 2)[np.argsort(edgeValue)][::-1]
